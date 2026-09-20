@@ -18,8 +18,10 @@ qu'à les lister : elle ne contient aucun code.
 > le code du module ici et écraserait l'index. Après chaque push, GitHub
 > propose spontanément d'ouvrir cette pull request — ignorez-la.
 >
-> La protection de branche n'est pas disponible sur un dépôt privé avec un
-> compte GitHub gratuit : ce garde-fou est documentaire, pas technique.
+> `main` est une branche protégée : les commits de fusion y sont interdits,
+> une pull request approuvée est exigée, et ni le force-push ni la suppression
+> ne sont possibles. Le propriétaire peut passer outre délibérément, jamais
+> par inadvertance.
 
 ## Récupérer un module
 
