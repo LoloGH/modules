@@ -12,6 +12,15 @@ qu'à les lister : elle ne contient aucun code.
 |---|---|---|---|
 | Finance, Caisse et Facturation | [`finance-caisse`](../../tree/finance-caisse) | v0.5.0 | Caisse (sessions, encaissements, décaissements, clôture avec écart, validation), catalogue des actes et tarifs, journal d'audit. |
 
+> [!CAUTION]
+> **Ne fusionnez jamais une branche de module dans `main`.**
+> Les branches n'ont pas d'historique commun : une telle fusion déverserait
+> le code du module ici et écraserait l'index. Après chaque push, GitHub
+> propose spontanément d'ouvrir cette pull request — ignorez-la.
+>
+> La protection de branche n'est pas disponible sur un dépôt privé avec un
+> compte GitHub gratuit : ce garde-fou est documentaire, pas technique.
+
 ## Récupérer un module
 
 ```bash
