@@ -6,6 +6,7 @@ namespace Keneya\FinanceCaisse;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Keneya\FinanceCaisse\Access\FinanceAccessGate;
 use Keneya\FinanceCaisse\Audit\Auditor;
@@ -14,6 +15,7 @@ use Keneya\FinanceCaisse\Console\Commands\SyncPermissions;
 use Keneya\FinanceCaisse\Http\Middleware\EnsureHostGrantsAccess;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
 use Keneya\FinanceCaisse\Standalone\StandaloneMode;
+use Keneya\FinanceCaisse\Support\Money;
 
 /**
  * Montage du module Finance (caisse, facturation) dans une application
@@ -58,6 +60,11 @@ class FinanceServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'finance');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'finance');
+
+        // `$money($montant)` dans les vues : « 5 000 FCFA ».
+        View::composer('finance::*', static function ($view): void {
+            $view->with('money', static fn (int $amount): string => Money::format($amount));
+        });
     }
 
     /**

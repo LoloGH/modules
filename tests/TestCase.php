@@ -48,6 +48,17 @@ abstract class TestCase extends BaseTestCase
     {
         $config = $app['config'];
 
+        // Vues compilées dans un dossier propre à ce lancement : une copie
+        // compilée d'une session précédente ne peut jamais masquer une vue
+        // modifiée (Laravel ne recompile que si le fichier source est plus
+        // récent, ce qui n'est pas garanti après une extraction d'archive).
+        $compiled = sys_get_temp_dir().'/finance-caisse-views-'.getmypid();
+
+        if (! is_dir($compiled)) {
+            mkdir($compiled, 0777, true);
+        }
+
+        $config->set('view.compiled', $compiled);
         $config->set('database.default', 'testing');
         $config->set('queue.default', 'sync');
         $config->set('app.locale', 'fr');

@@ -53,10 +53,12 @@
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "serve": [
             "Composer\\Config::disableProcessTimeout",
+            "@php vendor/bin/testbench finance:demo-setup --ansi",
             "@php vendor/bin/testbench serve --ansi"
         ],
         "serve:docker": [
             "Composer\\Config::disableProcessTimeout",
+            "@php vendor/bin/testbench finance:demo-setup --ansi",
             "@php vendor/bin/testbench serve --host=0.0.0.0 --ansi"
         ],
         "test": "@php vendor/bin/phpunit"

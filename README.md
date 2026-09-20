@@ -3,10 +3,10 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.3.0, caisse (règles métier)** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.4.0, caisse (règles et écrans)** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées).
-Les règles sont codées et testées ; les écrans arrivent avec la tranche suivante.
+Écrans : bureau du caissier, page de session, liste de contrôle, gestion des caisses.
 
 ## Conventions (identiques à DME)
 
@@ -50,8 +50,13 @@ Les règles sont codées et testées ; les écrans arrivent avec la tranche suiv
   - Un encaissement ou décaissement ne se supprime pas : il s'annule (motif, auteur),
     et seulement tant que la session est ouverte.
   - Un décaissement en espèces ne peut pas dépasser ce que contient le tiroir.
-  Ces actions vérifient les règles métier ; les droits (qui peut appeler quoi) se
-  contrôlent dans les contrôleurs et policies de la tranche suivante.
+  Les actions vérifient les règles métier ; les droits se contrôlent route par route
+  (middleware `can:finance.…`). Une règle violée revient à l'écran comme un message,
+  avec la saisie conservée.
+- **Écrans** (`/finance`) : `caisse` (bureau du caissier), `caisse/sessions/{id}`
+  (encaisser, décaisser, clôturer), `sessions` (contrôle et validation),
+  `caisses` (administration). Textes en français écrits directement dans les vues
+  pour l'instant. Le menu ne propose que ce que l'utilisateur a le droit de faire.
 - **Montants en entiers** (franc CFA : aucune décimale).
 - **Écritures immuables** (tranches suivantes) : une facture validée ou un
   paiement ne se modifie ni ne se supprime ; les corrections passent par
@@ -69,7 +74,7 @@ Les règles sont codées et testées ; les écrans arrivent avec la tranche suiv
 ```bash
 composer install
 composer test
-composer serve        # http://127.0.0.1:8000/finance (mode autonome)
+composer serve        # http://127.0.0.1:8000/dev : choisir un profil de démonstration
 ```
 
 ### Sous Docker (PHP 8.4)
@@ -80,6 +85,11 @@ docker compose run --rm app composer install
 docker compose run --rm app composer test
 docker compose run --rm --service-ports app composer serve:docker
 ```
+
+La démonstration prépare d'abord une base SQLite (caisses, moyens de paiement,
+profils), puis ouvre `/dev`. Profils, sans mot de passe : caissier (Salif Konaté,
+Awa Traoré), comptable (Moussa Diarra), direction, administrateur. Pour voir la
+séparation des tâches : un caissier clôture, puis le comptable valide.
 
 ## Intégration dans l'application hôte
 

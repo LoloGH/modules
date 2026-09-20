@@ -1,21 +1,18 @@
-<!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ __('finance::messages.home.title') }}</title>
-    <style>
-        body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; color: #1f2933; background: #f5f7fa; }
-        main { max-width: 42rem; margin: 0 auto; background: #fff; padding: 2rem; border-radius: .5rem; }
-        h1 { margin-top: 0; }
-        .muted { color: #616e7c; }
-    </style>
-</head>
-<body>
-    <main>
+@extends('finance::layout')
+
+@section('content')
+    <div class="card">
         <h1>{{ __('finance::messages.home.title') }}</h1>
         <p class="muted">{{ $facility }} — {{ __('finance::messages.home.subtitle') }}</p>
-        <p>{{ __('finance::messages.home.placeholder') }}</p>
-    </main>
-</body>
-</html>
+
+        @canany(['finance.sessions.view', 'finance.sessions.validate', 'finance.registers.manage'])
+            <ul>
+                @can('finance.sessions.view')<li><a href="{{ route('finance.cash.index') }}">Ma caisse</a> : ouvrir ma session, encaisser, clôturer.</li>@endcan
+                @can('finance.sessions.validate')<li><a href="{{ route('finance.review.index') }}">Sessions à valider</a> : contrôler les clôtures et les écarts.</li>@endcan
+                @can('finance.registers.manage')<li><a href="{{ route('finance.registers.index') }}">Caisses</a> : créer, activer ou désactiver une caisse.</li>@endcan
+            </ul>
+        @else
+            <p>{{ __('finance::messages.home.placeholder') }}</p>
+        @endcanany
+    </div>
+@endsection

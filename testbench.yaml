@@ -4,10 +4,11 @@
 ### sans Keneya Workflow :
 ###
 ###   composer install
-###   composer serve      # http://127.0.0.1:8000/finance
+###   composer serve      # http://127.0.0.1:8000/dev (choix d'un profil)
 ###
-### Le mode autonome de développement y est actif — c'est le seul endroit
-### du dépôt où il l'est.
+### L'hôte de démonstration se comporte comme un vrai hôte : il fournit ses
+### utilisateurs, ses rôles et sa page de connexion (voir workbench/). Le mode
+### autonome du module y est donc désactivé.
 
 providers:
   - Workbench\App\Providers\WorkbenchServiceProvider
@@ -15,7 +16,7 @@ providers:
 migrations: false
 
 workbench:
-  start: '/finance'
+  start: '/dev'
   install: true
   health: false
   discovers:
@@ -39,5 +40,4 @@ env:
   - QUEUE_CONNECTION=sync
   - CACHE_STORE=file
   - MAIL_MAILER=log
-  # Mode autonome : l'autorisation de l'hôte est considérée comme accordée.
-  - FINANCE_STANDALONE_DEV=true
+  - FINANCE_STANDALONE_DEV=false

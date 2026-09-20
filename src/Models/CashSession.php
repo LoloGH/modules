@@ -63,6 +63,16 @@ class CashSession extends Model
         return $query->where('status', self::STATUS_OPEN);
     }
 
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_OPEN => 'Ouverte',
+            self::STATUS_CLOSED => 'Clôturée, à valider',
+            self::STATUS_VALIDATED => 'Validée',
+            default => (string) $this->status,
+        };
+    }
+
     public function isOpen(): bool
     {
         return $this->status === self::STATUS_OPEN;
