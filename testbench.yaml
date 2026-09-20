@@ -1,0 +1,43 @@
+### Application Laravel hôte minimale, fournie par Orchestra Testbench.
+###
+### Elle n'existe que pour vérifier que le module se monte et se navigue
+### sans Keneya Workflow :
+###
+###   composer install
+###   composer serve      # http://127.0.0.1:8000/finance
+###
+### Le mode autonome de développement y est actif — c'est le seul endroit
+### du dépôt où il l'est.
+
+providers:
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+migrations: false
+
+workbench:
+  start: '/finance'
+  install: true
+  health: false
+  discovers:
+    web: false
+    api: false
+    commands: false
+    views: false
+  build: []
+  assets: []
+  sync: []
+
+env:
+  - APP_NAME="Keneya-Finance (hôte de test)"
+  - APP_ENV=local
+  - APP_DEBUG=true
+  - APP_LOCALE=fr
+  - APP_FALLBACK_LOCALE=fr
+  - APP_FAKER_LOCALE=fr_FR
+  - DB_CONNECTION=sqlite
+  - SESSION_DRIVER=file
+  - QUEUE_CONNECTION=sync
+  - CACHE_STORE=file
+  - MAIL_MAILER=log
+  # Mode autonome : l'autorisation de l'hôte est considérée comme accordée.
+  - FINANCE_STANDALONE_DEV=true
