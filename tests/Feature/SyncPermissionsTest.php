@@ -47,11 +47,15 @@ class SyncPermissionsTest extends TestCase
 
         $this->assertTrue($cashier->hasPermissionTo('finance.payments.create'));
         $this->assertTrue($cashier->hasPermissionTo('finance.refunds.request'));
+        $this->assertTrue($cashier->hasPermissionTo('finance.disbursements.create'));
 
         foreach ([
             'finance.catalog.manage',
             'finance.tariffs.manage',
             'finance.sessions.validate',
+            'finance.registers.manage',
+            'finance.payments.cancel',
+            'finance.disbursements.cancel',
             'finance.discounts.approve',
             'finance.refunds.approve',
             'finance.audit.view',

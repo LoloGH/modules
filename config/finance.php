@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 return [
 
-    'version' => '0.2.0',
+    'version' => '0.3.0',
 
     /*
     | Établissement exploitant l'application. Mêmes variables d'environnement
@@ -51,6 +51,7 @@ return [
         'prefixes' => [
             'invoice' => 'FAC',
             'payment' => 'PAI',
+            'disbursement' => 'DEC',
             'cash_session' => 'SES',
             'credit_note' => 'AVO',
             'refund' => 'RBT',
