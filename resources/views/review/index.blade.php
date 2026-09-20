@@ -3,39 +3,54 @@
 @section('title', 'Sessions à valider')
 
 @section('content')
-    <h1>Sessions de caisse</h1>
-    <p>
-        @foreach (['closed' => 'À valider', 'validated' => 'Validées', 'open' => 'Ouvertes', 'all' => 'Toutes'] as $key => $label)
-            <a href="{{ route('finance.review.index', ['status' => $key]) }}" @if ($status === $key) style="font-weight:700" @endif>{{ $label }}</a>@if (! $loop->last) · @endif
-        @endforeach
-    </p>
+    <x-finance::page title="Sessions à valider" sub="Contrôler les clôtures de caisse et les écarts." />
 
-    <section class="card">
+    <nav class="tabs">
+        @foreach (['closed' => 'À valider', 'validated' => 'Validées', 'open' => 'Ouvertes', 'all' => 'Toutes'] as $key => $label)
+            <a href="{{ route('finance.review.index', ['status' => $key]) }}" class="{{ $status === $key ? 'on' : '' }}">{{ $label }}</a>
+        @endforeach
+    </nav>
+
+    <x-finance::card flush>
         @if ($sessions->isEmpty())
-            <p class="muted">Aucune session dans cette liste.</p>
+            <div class="bd">
+                <x-finance::empty title="Aucune session dans cette liste" icon="controle">
+                    Les clôtures en attente de contrôle apparaîtront ici.
+                </x-finance::empty>
+            </div>
         @else
-            <table>
-                <thead><tr><th>Session</th><th>Caisse</th><th>Caissier</th><th>Clôturée le</th><th class="num">Théorique</th><th class="num">Compté</th><th class="num">Écart</th><th>Statut</th><th></th></tr></thead>
-                <tbody>
-                @foreach ($sessions as $item)
+            <div class="tw">
+                <table class="stack wide">
+                    <thead>
                     <tr>
-                        <td>{{ $item->number }}</td>
-                        <td>{{ $item->register->name }}</td>
-                        <td>{{ $item->cashier_name }}</td>
-                        <td>{{ $item->closed_at?->format('d/m/Y H:i') ?? '—' }}</td>
-                        <td class="num">{{ $item->expected_cash === null ? '—' : $money($item->expected_cash) }}</td>
-                        <td class="num">{{ $item->counted_cash === null ? '—' : $money($item->counted_cash) }}</td>
-                        <td class="num">
-                            @if ($item->variance === null) —
-                            @else <span class="{{ $item->variance < 0 ? 'neg' : ($item->variance > 0 ? 'pos' : 'zero') }}">{{ $item->variance > 0 ? '+' : '' }}{{ $money($item->variance) }}</span>
-                            @endif
-                        </td>
-                        <td><span class="badge {{ $item->status }}">{{ $item->statusLabel() }}</span></td>
-                        <td><a href="{{ route('finance.cash.sessions.show', $item) }}">Ouvrir</a></td>
+                        <th>Session</th><th>Caisse</th><th>Caissier</th><th>Clôturée le</th>
+                        <th class="num">Théorique</th><th class="num">Compté</th><th class="num">Écart</th>
+                        <th>Statut</th><th></th>
                     </tr>
-                @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    @foreach ($sessions as $item)
+                        <tr>
+                            <td data-l="Session" class="mono">{{ $item->number }}</td>
+                            <td data-l="Caisse">{{ $item->register->name }}</td>
+                            <td data-l="Caissier">{{ $item->cashier_name }}</td>
+                            <td data-l="Clôturée le">{{ $item->closed_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                            <td data-l="Théorique" class="num">{{ $item->expected_cash === null ? '—' : $money($item->expected_cash) }}</td>
+                            <td data-l="Compté" class="num">{{ $item->counted_cash === null ? '—' : $money($item->counted_cash) }}</td>
+                            <td data-l="Écart" class="num">
+                                @if ($item->variance === null) —
+                                @else <span class="{{ $item->variance < 0 ? 'neg' : ($item->variance > 0 ? 'pos' : 'zero') }}">{{ $item->variance > 0 ? '+' : '' }}{{ $money($item->variance) }}</span>
+                                @endif
+                            </td>
+                            <td data-l="Statut"><span class="badge {{ $item->status }}">{{ $item->statusLabel() }}</span></td>
+                            <td data-l="" class="acts">
+                                <a class="btn ghost sm" href="{{ route('finance.cash.sessions.show', $item) }}">Ouvrir</a>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
-    </section>
+    </x-finance::card>
 @endsection

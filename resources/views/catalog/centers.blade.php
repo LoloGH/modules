@@ -3,63 +3,83 @@
 @section('title', 'Centres analytiques')
 
 @section('content')
-    <h1>Centres analytiques</h1>
-    <p class="muted">Ils disent d'où vient l'argent : combien rapporte le laboratoire, l'imagerie, la maternité.</p>
+    <x-finance::page
+        title="Centres analytiques"
+        sub="Ils disent d'où vient l'argent : combien rapporte le laboratoire, l'imagerie, la maternité." />
 
     @can('finance.catalog.manage')
-        <section class="card">
-            <h2>Nouveau centre</h2>
+        <x-finance::card title="Nouveau centre">
             <form method="post" action="{{ route('finance.catalog.centers.store') }}">
                 @csrf
-                <label>Code (ex. LABORATOIRE) <input name="code" value="{{ old('code') }}" required></label>
-                <label>Nom (ex. Laboratoire) <input name="name" value="{{ old('name') }}" required></label>
-                <label>Rattaché à
-                    <select name="parent_id">
-                        <option value="">— Aucun (centre racine)</option>
-                        @foreach ($parents as $parent)
-                            <option value="{{ $parent->id }}" @selected((string) old('parent_id') === (string) $parent->id)>{{ $parent->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label>Type
-                    <select name="kind" required>
-                        @foreach ($kinds as $key => $label)
-                            <option value="{{ $key }}" @selected(old('kind', 'revenue') === $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <button type="submit">Créer le centre</button>
+                <div class="row">
+                    <label>Code <input name="code" value="{{ old('code') }}" placeholder="LABORATOIRE" required></label>
+                    <label>Nom <input name="name" value="{{ old('name') }}" placeholder="Laboratoire" required></label>
+                </div>
+                <div class="row">
+                    <label>Rattaché à
+                        <select name="parent_id">
+                            <option value="">— Aucun (centre racine)</option>
+                            @foreach ($parents as $parent)
+                                <option value="{{ $parent->id }}" @selected((string) old('parent_id') === (string) $parent->id)>{{ $parent->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label>Type
+                        <select name="kind" required>
+                            @foreach ($kinds as $key => $label)
+                                <option value="{{ $key }}" @selected(old('kind', 'revenue') === $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                </div>
+                <div class="actions">
+                    <button type="submit"><x-finance::icon name="plus" /> Créer le centre</button>
+                </div>
             </form>
-        </section>
+        </x-finance::card>
     @endcan
 
-    <section class="card">
-        <h2>Centres de l'établissement</h2>
+    <x-finance::card title="Centres de l'établissement" hint="{{ count($tree) }} centre(s)" flush>
         @if ($tree === [])
-            <p class="muted">Aucun centre analytique. La commande <code>finance:sync-catalog</code> crée ceux de départ.</p>
+            <div class="bd">
+                <x-finance::empty title="Aucun centre analytique" icon="centre">
+                    La commande finance:sync-catalog crée ceux de départ.
+                </x-finance::empty>
+            </div>
         @else
-            <table>
-                <thead><tr><th>Nom</th><th>Code</th><th>Type</th><th class="num">Actes</th><th>État</th>@can('finance.catalog.manage')<th></th>@endcan</tr></thead>
-                <tbody>
-                @foreach ($tree as $row)
-                    @php ($center = $row['center'])
-                    <tr>
-                        <td>{!! str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $row['depth']) !!}{{ $row['depth'] > 0 ? '└ ' : '' }}{{ $center->name }}</td>
-                        <td>{{ $center->code }}</td>
-                        <td>{{ $center->kindLabel() }}</td>
-                        <td class="num">{{ $center->acts_count }}</td>
-                        <td>{{ $center->is_active ? 'Actif' : 'Désactivé' }}</td>
-                        @can('finance.catalog.manage')
-                            <td>
-                                <form method="post" action="{{ route('finance.catalog.centers.toggle', $center) }}">@csrf
-                                    <button type="submit" class="secondary">{{ $center->is_active ? 'Désactiver' : 'Activer' }}</button>
-                                </form>
+            <div class="tw">
+                <table class="stack">
+                    <thead>
+                    <tr><th>Nom</th><th>Code</th><th>Type</th><th class="num">Actes</th><th>État</th>@can('finance.catalog.manage')<th></th>@endcan</tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($tree as $row)
+                        @php ($center = $row['center'])
+                        <tr>
+                            <td data-l="Nom" class="strong">
+                                @if ($row['depth'] > 0)
+                                    <span class="tree-in">{!! str_repeat('&nbsp;&nbsp;&nbsp;', $row['depth']) !!}└&nbsp;</span>
+                                @endif
+                                {{ $center->name }}
                             </td>
-                        @endcan
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
+                            <td data-l="Code" class="mono">{{ $center->code }}</td>
+                            <td data-l="Type">{{ $center->kindLabel() }}</td>
+                            <td data-l="Actes" class="num">{{ $center->acts_count }}</td>
+                            <td data-l="État">
+                                <span class="badge {{ $center->is_active ? 'ok' : 'off' }}">{{ $center->is_active ? 'Actif' : 'Désactivé' }}</span>
+                            </td>
+                            @can('finance.catalog.manage')
+                                <td data-l="" class="acts">
+                                    <form method="post" action="{{ route('finance.catalog.centers.toggle', $center) }}">@csrf
+                                        <button type="submit" class="ghost sm">{{ $center->is_active ? 'Désactiver' : 'Activer' }}</button>
+                                    </form>
+                                </td>
+                            @endcan
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
-    </section>
+    </x-finance::card>
 @endsection

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keneya\FinanceCaisse;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -61,6 +62,11 @@ class FinanceServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'finance');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'finance');
+
+        // Composants anonymes du module : `<x-finance::card>`, `<x-finance::icon>`…
+        // Mécanisme natif de Blade, préfixé comme les vues pour ne jamais
+        // entrer en collision avec les composants de l'hôte ou de DME.
+        Blade::anonymousComponentNamespace('finance::components', 'finance');
 
         // `$money($montant)` dans les vues : « 5 000 FCFA ».
         View::composer('finance::*', static function ($view): void {

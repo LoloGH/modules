@@ -3,41 +3,51 @@
 @section('title', 'Caisses')
 
 @section('content')
-    <h1>Caisses</h1>
+    <x-finance::page title="Caisses" sub="Les postes d'encaissement de l'établissement. Une caisse se désactive, elle ne se supprime pas." />
 
-    <section class="card">
-        <h2>Nouvelle caisse</h2>
+    <x-finance::card title="Nouvelle caisse">
         <form method="post" action="{{ route('finance.registers.store') }}">
             @csrf
-            <label>Code (ex. CAISSE-TICKET) <input name="code" value="{{ old('code') }}" required></label>
-            <label>Nom (ex. Caisse Ticket) <input name="name" value="{{ old('name') }}" required></label>
-            <button type="submit">Créer la caisse</button>
+            <div class="row">
+                <label>Code <input name="code" value="{{ old('code') }}" placeholder="CAISSE-TICKET" required></label>
+                <label>Nom <input name="name" value="{{ old('name') }}" placeholder="Caisse Ticket" required></label>
+            </div>
+            <div class="actions">
+                <button type="submit"><x-finance::icon name="plus" /> Créer la caisse</button>
+            </div>
         </form>
-    </section>
+    </x-finance::card>
 
-    <section class="card">
-        <h2>Caisses de l'établissement</h2>
+    <x-finance::card title="Caisses de l'établissement" hint="{{ $registers->count() }} caisse(s)" flush>
         @if ($registers->isEmpty())
-            <p class="muted">Aucune caisse.</p>
+            <div class="bd">
+                <x-finance::empty title="Aucune caisse" icon="caisse">
+                    Créez-en une pour que les caissiers puissent ouvrir leur session.
+                </x-finance::empty>
+            </div>
         @else
-            <table>
-                <thead><tr><th>Code</th><th>Nom</th><th>État</th><th>Session ouverte</th><th></th></tr></thead>
-                <tbody>
-                @foreach ($registers as $register)
-                    <tr>
-                        <td>{{ $register->code }}</td>
-                        <td>{{ $register->name }}</td>
-                        <td>{{ $register->is_active ? 'Active' : 'Désactivée' }}</td>
-                        <td>{{ $register->open_sessions_count > 0 ? 'Oui' : 'Non' }}</td>
-                        <td>
-                            <form method="post" action="{{ route('finance.registers.toggle', $register) }}">@csrf
-                                <button type="submit" class="secondary">{{ $register->is_active ? 'Désactiver' : 'Activer' }}</button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
+            <div class="tw">
+                <table class="stack">
+                    <thead><tr><th>Code</th><th>Nom</th><th>État</th><th>Session ouverte</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach ($registers as $register)
+                        <tr>
+                            <td data-l="Code" class="mono">{{ $register->code }}</td>
+                            <td data-l="Nom" class="strong">{{ $register->name }}</td>
+                            <td data-l="État">
+                                <span class="badge {{ $register->is_active ? 'ok' : 'off' }}">{{ $register->is_active ? 'Active' : 'Désactivée' }}</span>
+                            </td>
+                            <td data-l="Session ouverte">{{ $register->open_sessions_count > 0 ? 'Oui' : 'Non' }}</td>
+                            <td data-l="" class="acts">
+                                <form method="post" action="{{ route('finance.registers.toggle', $register) }}">@csrf
+                                    <button type="submit" class="ghost sm">{{ $register->is_active ? 'Désactiver' : 'Activer' }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
-    </section>
+    </x-finance::card>
 @endsection

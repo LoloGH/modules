@@ -74,13 +74,20 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Un centre ou un acte se **désactive**, il ne se supprime pas (`restrictOnDelete`
     partout : on ne cascade pas des données financières). Un centre qui porte encore
     des enfants ou des actes actifs ne se désactive pas.
-- **Écrans** (`/finance`) : `caisse` (bureau du caissier), `caisse/sessions/{id}`
-  (encaisser, décaisser, clôturer), `sessions` (contrôle et validation),
-  `caisses` (administration), `catalogue/actes` (liste et création),
+- **Écrans** (`/finance`) : `/` (tableau de bord), `caisse` (bureau du caissier),
+  `caisse/sessions/{id}` (encaisser, décaisser, clôturer), `sessions` (contrôle et
+  validation), `caisses` (administration), `catalogue/actes` (liste et création),
   `catalogue/actes/{id}` (fiche : tarifs actifs, historique, formulaire de
   tarification), `catalogue/centres` (arborescence des centres analytiques).
   Textes en français écrits directement dans les vues
   pour l'instant. Le menu ne propose que ce que l'utilisateur a le droit de faire.
+- **Tableau de bord** (`Services\DashboardMetrics`) : recettes et dépenses du jour
+  avec leur variation par rapport à la veille, encaissements du jour, clôtures en
+  attente, évolution des recettes sur 7 jours, répartition par moyen de paiement,
+  dernières transactions, et l'état de la caisse du caissier connecté. **Lecture
+  seule et uniquement sur des écritures réelles** : quand il n'y a rien, l'écran le
+  dit au lieu d'afficher un chiffre inventé. Les chiffres ne s'affichent qu'avec
+  `finance.dashboard.view` ou `finance.payments.view`.
 - **Montants en entiers** (franc CFA : aucune décimale).
 - **Écritures immuables** (tranches suivantes) : une facture validée ou un
   paiement ne se modifie ni ne se supprime ; les corrections passent par
@@ -96,6 +103,34 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   présent. `finance_acts.dme_service_id` n'est qu'un repère, sans contrainte.
 - Routes par contrôleur, jamais par closure (sinon `route:cache` échoue chez
   l'hôte).
+
+## Interface
+
+Keneya Finance a sa propre identité — marque « Keneya Finance », sous-titre
+« Gestion financière hospitalière » — et n'affiche aucun menu du DME. La
+présentation reste celle de Keneya Workflow : fond très clair, cartes blanches,
+bordures discrètes, ombres légères, badges de statut sobres.
+
+- **Aucune dépendance front** : ni Vite, ni Tailwind, ni npm, ni bibliothèque
+  d'icônes ou de graphiques. Tout le design system tient dans
+  `resources/views/partials/styles.blade.php`, sous forme de variables CSS
+  (couleurs, rayons, ombres, espacements) : l'identité se change à un seul
+  endroit. Les icônes sont du SVG en ligne
+  (`resources/views/components/icon.blade.php`), les graphiques du CSS et du SVG.
+- **Composants Blade anonymes**, préfixés comme les vues pour ne jamais entrer en
+  collision avec ceux de l'hôte ou de DME : `<x-finance::card>`, `<x-finance::kpi>`,
+  `<x-finance::page>`, `<x-finance::empty>`, `<x-finance::icon>`, `<x-finance::logo>`.
+- **Ossature** : barre latérale + en-tête + contenu. Le menu est décrit une seule
+  fois dans `Support\Navigation`. Une entrée dont la tranche n'est pas encore
+  construite côté serveur (Factures, Paiements, Recettes, Dépenses, Assurances,
+  Créances, Rapports) s'affiche grisée et marquée « bientôt » : elle montre la
+  cible du module sans jamais mener à un écran vide ou à des chiffres inventés.
+  Ces entrées disparaissent pour qui n'a accès à aucun écran réel.
+- **Responsive** vérifié de 1920 à 390 px, sans débordement horizontal : au-dessous
+  de 900 px la barre latérale devient un tiroir (une case à cocher CSS, **aucun
+  JavaScript**) ; au-dessous de 720 px les tableaux se transforment en fiches
+  empilées via `data-l`. Les tableaux larges défilent dans leur carte, jamais la
+  page.
 
 ## Développer et tester
 

@@ -3,179 +3,225 @@
 @section('title', 'Session '.$session->number)
 
 @section('content')
-    <p><a href="{{ $isOwner ? route('finance.cash.index') : route('finance.review.index') }}">← Retour</a></p>
+    <a class="back" href="{{ $isOwner ? route('finance.cash.index') : route('finance.review.index') }}">
+        <x-finance::icon name="retour" /> Retour
+    </a>
 
-    <h1>Session {{ $session->number }} <span class="badge {{ $session->status }}">{{ $session->statusLabel() }}</span></h1>
-    <p class="muted">
-        {{ $session->register->name }} · Caissier : {{ $session->cashier_name }}
-        · Ouverte le {{ $session->opened_at?->format('d/m/Y H:i') }}
-        @if ($session->closed_at) · Clôturée le {{ $session->closed_at->format('d/m/Y H:i') }} @endif
-    </p>
+    <x-finance::page
+        title="Session {{ $session->number }}"
+        sub="{{ $session->register->name }} · Caissier : {{ $session->cashier_name }} · Ouverte le {{ $session->opened_at?->format('d/m/Y H:i') }}{{ $session->closed_at ? ' · Clôturée le '.$session->closed_at->format('d/m/Y H:i') : '' }}">
+        <x-slot:actions>
+            <span class="badge {{ $session->status }}">
+                @if ($session->isOpen())<span class="pt"></span>@endif{{ $session->statusLabel() }}
+            </span>
+        </x-slot:actions>
+    </x-finance::page>
 
-    <section class="card">
-        <h2>Totaux</h2>
-        <div class="grid">
-            <div class="kpi"><small>Fonds initial</small><strong>{{ $money($totals['opening_float']) }}</strong></div>
-            <div class="kpi"><small>Espèces encaissées</small><strong>{{ $money($totals['cash_in']) }}</strong></div>
-            <div class="kpi"><small>Espèces décaissées</small><strong>{{ $money($totals['cash_out']) }}</strong></div>
-            <div class="kpi"><small>Théorique en espèces (tiroir)</small><strong>{{ $money($totals['expected_cash']) }}</strong></div>
-        </div>
+    {{-- Les quatre chiffres qui comptent pour le tiroir. --}}
+    <div class="kpis">
+        <x-finance::kpi label="Fonds initial" icon="caisse" :value="$money($totals['opening_float'])" />
+        <x-finance::kpi label="Espèces encaissées" icon="recette" tone="green" :value="$money($totals['cash_in'])" />
+        <x-finance::kpi label="Espèces décaissées" icon="depense" tone="red" :value="$money($totals['cash_out'])" />
+        <x-finance::kpi label="Théorique en tiroir" icon="paiement" tone="blue" :value="$money($totals['expected_cash'])"
+                        foot="Fonds initial + encaissements − décaissements" />
+    </div>
 
-        @if (! empty($totals['by_method']))
-            <table style="margin-top:1rem">
-                <thead><tr><th>Moyen de paiement</th><th class="num">Encaissé</th><th class="num">Décaissé</th></tr></thead>
-                <tbody>
-                @foreach ($totals['by_method'] as $line)
-                    <tr><td>{{ $line['name'] }}</td><td class="num">{{ $money($line['in']) }}</td><td class="num">{{ $money($line['out']) }}</td></tr>
-                @endforeach
-                </tbody>
-            </table>
-            <p class="muted">Seules les espèces comptent dans le tiroir ; les autres moyens sont totalisés à part.</p>
-        @endif
-    </section>
+    @if (! empty($totals['by_method']))
+        <x-finance::card title="Totaux par moyen de paiement"
+                         hint="Seules les espèces comptent dans le tiroir" flush>
+            <div class="tw">
+                <table class="stack">
+                    <thead><tr><th>Moyen de paiement</th><th class="num">Encaissé</th><th class="num">Décaissé</th></tr></thead>
+                    <tbody>
+                    @foreach ($totals['by_method'] as $line)
+                        <tr>
+                            <td data-l="Moyen">{{ $line['name'] }}</td>
+                            <td data-l="Encaissé" class="num">{{ $money($line['in']) }}</td>
+                            <td data-l="Décaissé" class="num">{{ $money($line['out']) }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-finance::card>
+    @endif
 
     @if (! $session->isOpen())
-        <section class="card">
-            <h2>Clôture</h2>
-            <div class="grid">
-                <div class="kpi"><small>Théorique</small><strong>{{ $money((int) $session->expected_cash) }}</strong></div>
-                <div class="kpi"><small>Compté</small><strong>{{ $money((int) $session->counted_cash) }}</strong></div>
-                <div class="kpi"><small>Écart</small>
-                    <strong class="{{ $session->variance < 0 ? 'neg' : ($session->variance > 0 ? 'pos' : 'zero') }}">
+        <x-finance::card title="Clôture">
+            <dl class="facts">
+                <div class="f"><dt>Théorique</dt><dd>{{ $money((int) $session->expected_cash) }}</dd></div>
+                <div class="f"><dt>Compté</dt><dd>{{ $money((int) $session->counted_cash) }}</dd></div>
+                <div class="f gap">
+                    <dt>Écart</dt>
+                    <dd class="{{ $session->variance < 0 ? 'neg' : ($session->variance > 0 ? 'pos' : 'zero') }}">
                         {{ $session->variance > 0 ? '+' : '' }}{{ $money((int) $session->variance) }}
-                    </strong>
+                    </dd>
                 </div>
-            </div>
+            </dl>
+
             @if ($session->variance_reason)
-                <p><strong>Justification :</strong> {{ $session->variance_reason }}</p>
+                <p style="margin-bottom:0"><strong>Justification :</strong> {{ $session->variance_reason }}</p>
             @endif
             @if ($session->isValidated())
-                <p class="muted">Validée le {{ $session->validated_at?->format('d/m/Y H:i') }} par {{ $session->validator_name }}@if ($session->validation_note) — {{ $session->validation_note }}@endif</p>
+                <p class="muted" style="margin-bottom:0">
+                    Validée le {{ $session->validated_at?->format('d/m/Y H:i') }} par {{ $session->validator_name }}@if ($session->validation_note) — {{ $session->validation_note }}@endif
+                </p>
             @endif
-        </section>
+        </x-finance::card>
     @endif
 
     @if ($session->isOpen() && $isOwner)
-        <div class="two">
+        <div class="cols">
             @can('finance.payments.create')
-                <section class="card">
-                    <h2>Encaisser</h2>
+                <x-finance::card title="Encaisser">
                     <form method="post" action="{{ route('finance.cash.payments.store', $session) }}">
                         @csrf
-                        <label>Moyen de paiement
-                            <select name="payment_method_id" required>
-                                @foreach ($methods as $method)
-                                    <option value="{{ $method->id }}" @selected((string) old('payment_method_id') === (string) $method->id)>{{ $method->name }}@if ($method->requires_reference) (référence obligatoire)@endif</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>Montant (FCFA) <input name="amount" inputmode="numeric" value="{{ old('amount') }}" required></label>
-                        <label>Référence (Mobile Money, chèque…) <input name="reference" value="{{ old('reference') }}"></label>
-                        <label>Nom du patient <input name="patient_name" value="{{ old('patient_name') }}"></label>
-                        <label>Libellé (ex. Consultation) <input name="description" value="{{ old('description') }}"></label>
-                        <button type="submit">Enregistrer l'encaissement</button>
+                        <div class="row">
+                            <label>Moyen de paiement
+                                <select name="payment_method_id" required>
+                                    @foreach ($methods as $method)
+                                        <option value="{{ $method->id }}" @selected((string) old('payment_method_id') === (string) $method->id)>{{ $method->name }}@if ($method->requires_reference) (référence obligatoire)@endif</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Montant
+                                <input name="amount" class="money" inputmode="numeric" value="{{ old('amount') }}" placeholder="0" required>
+                                <span class="help">En FCFA, sans décimale.</span>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label>Nom du patient <input name="patient_name" value="{{ old('patient_name') }}"></label>
+                            <label>Référence <input name="reference" value="{{ old('reference') }}" placeholder="Mobile Money, chèque…"></label>
+                        </div>
+                        <label>Libellé <input name="description" value="{{ old('description') }}" placeholder="ex. Consultation générale"></label>
+                        <div class="actions">
+                            <button type="submit"><x-finance::icon name="recette" /> Enregistrer l'encaissement</button>
+                        </div>
                     </form>
-                </section>
+                </x-finance::card>
             @endcan
 
             @can('finance.disbursements.create')
-                <section class="card">
-                    <h2>Décaisser</h2>
+                <x-finance::card title="Décaisser" hint="Jamais plus que ce que contient le tiroir">
                     <form method="post" action="{{ route('finance.cash.disbursements.store', $session) }}">
                         @csrf
-                        <label>Moyen de paiement
-                            <select name="payment_method_id" required>
-                                @foreach ($methods as $method)
-                                    <option value="{{ $method->id }}">{{ $method->name }}@if ($method->requires_reference) (référence obligatoire)@endif</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>Montant (FCFA) <input name="amount" inputmode="numeric" required></label>
-                        <label>Motif <input name="reason" required></label>
-                        <label>Bénéficiaire <input name="beneficiary"></label>
+                        <div class="row">
+                            <label>Moyen de paiement
+                                <select name="payment_method_id" required>
+                                    @foreach ($methods as $method)
+                                        <option value="{{ $method->id }}">{{ $method->name }}@if ($method->requires_reference) (référence obligatoire)@endif</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Montant
+                                <input name="amount" class="money" inputmode="numeric" placeholder="0" required>
+                                <span class="help">En FCFA, sans décimale.</span>
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label>Motif <input name="reason" required placeholder="ex. Achat de fournitures"></label>
+                            <label>Bénéficiaire <input name="beneficiary"></label>
+                        </div>
                         <label>Référence <input name="reference"></label>
-                        <button type="submit" class="secondary">Enregistrer le décaissement</button>
+                        <div class="actions">
+                            <button type="submit" class="ghost"><x-finance::icon name="depense" /> Enregistrer le décaissement</button>
+                        </div>
                     </form>
-                </section>
+                </x-finance::card>
             @endcan
         </div>
     @endif
 
-    <section class="card">
-        <h2>Opérations ({{ $movements->count() }})</h2>
+    <x-finance::card title="Opérations" hint="{{ $movements->count() }} au total" flush>
         @if ($movements->isEmpty())
-            <p class="muted">Aucune opération dans cette session.</p>
+            <div class="bd">
+                <x-finance::empty title="Aucune opération dans cette session" icon="paiement">
+                    Les encaissements et décaissements apparaîtront ici, annulations comprises.
+                </x-finance::empty>
+            </div>
         @else
-            <table>
-                <thead><tr><th>N°</th><th>Type</th><th>Détail</th><th>Moyen</th><th class="num">Montant</th><th></th></tr></thead>
-                <tbody>
-                @foreach ($movements as $movement)
-                    @php($item = $movement['model'])
-                    <tr class="{{ $item->isCancelled() ? 'cancelled' : '' }}">
-                        <td>{{ $item->number }}</td>
-                        <td>{{ $movement['is_payment'] ? 'Encaissement' : 'Décaissement' }}</td>
-                        <td>
-                            @if ($movement['is_payment'])
-                                {{ $item->patient_name }} @if ($item->description) — {{ $item->description }} @endif
-                            @else
-                                {{ $item->reason }} @if ($item->beneficiary) ({{ $item->beneficiary }}) @endif
-                            @endif
-                            @if ($item->reference) <span class="muted">Réf. {{ $item->reference }}</span> @endif
-                            @if ($item->isCancelled())
-                                <div class="why muted">Annulé par {{ $item->cancelled_by_name }} : {{ $item->cancellation_reason }}</div>
-                            @endif
-                        </td>
-                        <td>{{ $item->method->name }}</td>
-                        <td class="num">{{ $movement['is_payment'] ? '' : '−' }}{{ $money($item->amount) }}</td>
-                        <td>
-                            @if (! $item->isCancelled() && $session->isOpen())
+            <div class="tw">
+                <table class="stack wide">
+                    <thead>
+                    <tr><th>N°</th><th>Type</th><th>Détail</th><th>Moyen</th><th class="num">Montant</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($movements as $movement)
+                        @php($item = $movement['model'])
+                        <tr class="{{ $item->isCancelled() ? 'cancelled' : '' }}">
+                            <td data-l="N°" class="mono">{{ $item->number }}</td>
+                            <td data-l="Type">
+                                <span class="badge {{ $movement['is_payment'] ? 'ok' : 'muted' }}">
+                                    {{ $movement['is_payment'] ? 'Encaissement' : 'Décaissement' }}
+                                </span>
+                            </td>
+                            <td data-l="Détail">
                                 @if ($movement['is_payment'])
-                                    @can('finance.payments.cancel')
-                                        <form class="inline" method="post" action="{{ route('finance.cash.payments.cancel', $item) }}">@csrf
-                                            <input name="reason" placeholder="Motif de l'annulation" required>
-                                            <button class="danger" type="submit">Annuler</button>
-                                        </form>
-                                    @endcan
+                                    {{ $item->patient_name }} @if ($item->description) — {{ $item->description }} @endif
                                 @else
-                                    @can('finance.disbursements.cancel')
-                                        <form class="inline" method="post" action="{{ route('finance.cash.disbursements.cancel', $item) }}">@csrf
+                                    {{ $item->reason }} @if ($item->beneficiary) ({{ $item->beneficiary }}) @endif
+                                @endif
+                                @if ($item->reference) <span class="sub">Réf. {{ $item->reference }}</span> @endif
+                                @if ($item->isCancelled())
+                                    <span class="sub why">Annulé par {{ $item->cancelled_by_name }} : {{ $item->cancellation_reason }}</span>
+                                @endif
+                            </td>
+                            <td data-l="Moyen">{{ $item->method->name }}</td>
+                            <td data-l="Montant" class="num strong">{{ $movement['is_payment'] ? '' : '−' }}{{ $money($item->amount) }}</td>
+                            <td data-l="" class="acts">
+                                @if (! $item->isCancelled() && $session->isOpen())
+                                    @php($route = $movement['is_payment'] ? 'finance.cash.payments.cancel' : 'finance.cash.disbursements.cancel')
+                                    @can($movement['is_payment'] ? 'finance.payments.cancel' : 'finance.disbursements.cancel')
+                                        <form class="inline" method="post" action="{{ route($route, $item) }}">@csrf
                                             <input name="reason" placeholder="Motif de l'annulation" required>
-                                            <button class="danger" type="submit">Annuler</button>
+                                            <button class="danger sm" type="submit">Annuler</button>
                                         </form>
                                     @endcan
                                 @endif
-                            @endif
-                        </td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
-    </section>
+    </x-finance::card>
 
     @if ($session->isOpen() && $isOwner)
         @can('finance.sessions.close')
-            <section class="card">
-                <h2>Clôturer la session</h2>
-                <p class="muted">Comptez les espèces du tiroir et saisissez le montant. Le système calcule l'écart avec le théorique ({{ $money($totals['expected_cash']) }}). Un écart, en plus ou en moins, doit être justifié.</p>
+            <x-finance::card title="Clôturer la session">
+                <p class="muted">
+                    Comptez les espèces du tiroir et saisissez le montant. Le système calcule
+                    l'écart avec le théorique (<strong>{{ $money($totals['expected_cash']) }}</strong>).
+                    Un écart, en plus ou en moins, doit être justifié.
+                </p>
                 <form method="post" action="{{ route('finance.cash.sessions.close', $session) }}">
                     @csrf
-                    <label>Montant compté en espèces (FCFA) <input name="counted_cash" inputmode="numeric" value="{{ old('counted_cash') }}" required></label>
-                    <label>Justification de l'écart (si le compté diffère du théorique) <textarea name="variance_reason" rows="2">{{ old('variance_reason') }}</textarea></label>
-                    <button type="submit">Clôturer la session</button>
+                    <label>Montant compté en espèces
+                        <input name="counted_cash" class="money" inputmode="numeric" value="{{ old('counted_cash') }}" placeholder="0" required>
+                        <span class="help">En FCFA, ce que vous avez réellement compté.</span>
+                    </label>
+                    <label>Justification de l'écart
+                        <textarea name="variance_reason" rows="2" placeholder="Obligatoire si le compté diffère du théorique">{{ old('variance_reason') }}</textarea>
+                    </label>
+                    <div class="actions">
+                        <button type="submit" class="lg"><x-finance::icon name="verrou" /> Clôturer la session</button>
+                        <span class="muted" style="font-size:.8125rem">La session ne pourra plus être modifiée après la clôture.</span>
+                    </div>
                 </form>
-            </section>
+            </x-finance::card>
         @endcan
     @endif
 
     @if ($session->isClosed() && $canReview && ! $isOwner)
-        <section class="card">
-            <h2>Valider la clôture</h2>
+        <x-finance::card title="Valider la clôture" hint="Le caissier ne valide jamais sa propre session">
             <form method="post" action="{{ route('finance.review.approve', $session) }}">
                 @csrf
                 <label>Note (facultatif) <input name="note" value="{{ old('note') }}"></label>
-                <button type="submit">Valider la session</button>
+                <div class="actions">
+                    <button type="submit" class="lg"><x-finance::icon name="check" /> Valider la session</button>
+                </div>
             </form>
-        </section>
+        </x-finance::card>
     @endif
 @endsection
