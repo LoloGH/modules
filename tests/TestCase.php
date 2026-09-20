@@ -115,6 +115,14 @@ abstract class TestCase extends BaseTestCase
         }
 
         (include $stub)->up();
+
+        // Migrations du module. Le chemin est explicite : sans lui, Testbench
+        // rejouerait aussi ses propres migrations et la table `users`
+        // ci-dessus serait créée deux fois.
+        $this->artisan('migrate', [
+            '--path' => dirname(__DIR__).'/database/migrations',
+            '--realpath' => true,
+        ])->assertSuccessful();
     }
 
     /**

@@ -8,8 +8,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Keneya\FinanceCaisse\Access\FinanceAccessGate;
+use Keneya\FinanceCaisse\Audit\Auditor;
+use Keneya\FinanceCaisse\Console\Commands\SyncPaymentMethods;
 use Keneya\FinanceCaisse\Console\Commands\SyncPermissions;
 use Keneya\FinanceCaisse\Http\Middleware\EnsureHostGrantsAccess;
+use Keneya\FinanceCaisse\Services\NumberGenerator;
 use Keneya\FinanceCaisse\Standalone\StandaloneMode;
 
 /**
@@ -31,6 +34,8 @@ class FinanceServiceProvider extends ServiceProvider
 
         $this->app->singleton(StandaloneMode::class);
         $this->app->singleton(FinanceAccessGate::class);
+        $this->app->singleton(Auditor::class);
+        $this->app->singleton(NumberGenerator::class);
     }
 
     public function boot(): void
@@ -97,7 +102,7 @@ class FinanceServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->commands([SyncPermissions::class]);
+        $this->commands([SyncPermissions::class, SyncPaymentMethods::class]);
     }
 
     /**

@@ -3,8 +3,9 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.1.0, squelette** — porte d'entrée, droits, mode autonome. Aucune
-table ni écran métier pour l'instant : ils arrivent par tranches.
+État : **v0.2.0, fondations** — porte d'entrée, droits, mode autonome, numérotation
+sans doublon, journal d'audit non modifiable, moyens de paiement configurables.
+Aucun écran métier pour l'instant : ils arrivent par tranches.
 
 ## Conventions (identiques à DME)
 
@@ -16,7 +17,7 @@ table ni écran métier pour l'instant : ils arrivent par tranches.
 | URL | `/finance` |
 | Noms de routes | `finance.` |
 | Vues et traductions | `finance::` |
-| Tables (à venir) | `finance_` |
+| Tables | `finance_` (`sequences`, `audit_logs`, `payment_methods`) |
 | Configuration | `config/finance.php` |
 | Middleware d'accès | `finance.access` |
 | Capacité d'accès | `finance.access` |
@@ -30,6 +31,13 @@ table ni écran métier pour l'instant : ils arrivent par tranches.
   commande `php artisan finance:sync-permissions` les crée sans seeder,
   sans jamais modifier un rôle existant (sauf l'administrateur, qui reçoit
   toutes les permissions).
+- **Commandes** (idempotentes, sans seeder, sûres sur une base de production) :
+  `finance:sync-permissions` et `finance:sync-payment-methods`. Elles ne modifient
+  jamais ce que l'établissement a déjà réglé.
+- **Numérotation** : `NumberGenerator::next('invoice')` donne `FAC-2026-000001`, attribué
+  sous verrou de ligne ; la séquence repart à 1 chaque année et un numéro n'est jamais réutilisé.
+- **Audit** : `Auditor::record(...)` écrit dans `finance_audit_logs`, qu'aucune ligne
+  ne quitte ni ne change (le modèle refuse la modification et la suppression).
 - **Montants en entiers** (franc CFA : aucune décimale).
 - **Écritures immuables** (tranches suivantes) : une facture validée ou un
   paiement ne se modifie ni ne se supprime ; les corrections passent par
@@ -65,8 +73,8 @@ docker compose run --rm --service-ports app composer serve:docker
 2. Dans le `composer.json` de l'hôte, ajouter un dépôt de type `path`
    (`./modules/finance-caisse`, `symlink: true`) et `"keneya/finance-caisse": "@dev"`
    dans `require`.
-3. `composer update keneya/finance-caisse`, puis
-   `php8.4 artisan finance:sync-permissions`.
+3. `composer update keneya/finance-caisse`, `php8.4 artisan migrate --force`, puis
+   `php8.4 artisan finance:sync-permissions` et `php8.4 artisan finance:sync-payment-methods`.
 4. Déclarer la décision d'accès de l'hôte (résolveur ou capacité) et, si
    besoin, la correspondance des rôles dans `config/finance.php`
    (`'roles' => ['caissier' => 'cashier']`).
