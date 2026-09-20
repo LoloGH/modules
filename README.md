@@ -151,6 +151,22 @@ docker compose run --rm app composer test
 docker compose run --rm --service-ports app composer serve:docker
 ```
 
+> **Sur Windows, `vendor` vit dans un volume Docker, pas dans le dossier du
+> projet.** Le projet est monté depuis Windows (`.:/app`) et, sur Docker
+> Desktop, chaque accès fichier y coûte ~8 ms contre 0,01 ms sur le disque du
+> conteneur. Comme `vendor` contient des dizaines de milliers de fichiers, le
+> démarrage de Laravel y passait plus de deux secondes **par page**.
+>
+> Le volume `vendor` et `docker/php.ini` (qui active OPcache pour le CLI,
+> indispensable puisque `artisan serve` est un processus CLI) ramènent une
+> page de ~2 200 ms à ~180 ms, et la suite de tests de ~4 min à ~35 s.
+>
+> Conséquence pratique : après un changement de dépendances, ou si vous
+> supprimez le volume, relancez `docker compose run --rm app composer install`
+> pour le repeupler. Le `vendor` de l'hôte reste intact pour votre IDE, mais
+> le conteneur ne le voit plus. La base SQLite de démonstration vit elle aussi
+> dans ce volume : `composer serve:docker` la reconstruit à chaque démarrage.
+
 La démonstration prépare d'abord une base SQLite (caisses, moyens de paiement,
 centres analytiques, trois actes tarifés, profils), puis ouvre `/dev`. Profils,
 sans mot de passe : caissier (Salif Konaté, Awa Traoré), comptable (Moussa Diarra),

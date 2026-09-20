@@ -4,5 +4,22 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      # Le dossier du projet est monté depuis Windows, où chaque accès fichier
+      # coûte ~8 ms. `vendor` en contient des dizaines de milliers : on le sort
+      # du montage et on le place sur un volume Docker, c'est-à-dire sur le
+      # disque du conteneur. Le `vendor` de l'hôte reste intact pour l'IDE ;
+      # simplement, le conteneur ne le voit plus et utilise le sien.
+      #
+      # Conséquence : après un changement de dépendances, il faut lancer
+      #   docker compose run --rm app composer install
+      # pour peupler le volume (voir le README).
+      - vendor:/app/vendor
+      # Cache disque d'OPcache, hors du montage lui aussi.
+      - opcache:/tmp/opcache
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/99-keneya.ini:ro
     ports:
       - "8000:8000"
+
+volumes:
+  vendor:
+  opcache:
