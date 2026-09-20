@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keneya\FinanceCaisse\Tests\Feature\Http;
 
+use Keneya\FinanceCaisse\Actions\CloseCashSession;
 use Keneya\FinanceCaisse\Models\CashSession;
 
 class CashDeskHttpTest extends HttpTestCase
@@ -108,7 +109,7 @@ class CashDeskHttpTest extends HttpTestCase
         $other = $this->cashier();
 
         $closedMine = $this->openSession($mine, 0, $this->makeRegister('A'));
-        app(\Keneya\FinanceCaisse\Actions\CloseCashSession::class)->handle($closedMine, 0, $mine);
+        app(CloseCashSession::class)->handle($closedMine, 0, $mine);
         $theirs = $this->openSession($other, 0, $this->makeRegister('B'));
 
         $this->actingAs($mine)

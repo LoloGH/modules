@@ -193,11 +193,15 @@ final class Rbac
                 'finance.receivables.view',
             ],
 
-            // Comptable : contrôle. Valide les clôtures et approuve les
-            // opérations sensibles.
+            // Comptable : contrôle. Valide les clôtures, approuve les
+            // opérations sensibles, et fixe les tarifs — un prix est une
+            // décision de gestion, jamais celle du caissier qui encaisse.
+            // La structure du catalogue (centres, actes) reste à
+            // l'administrateur.
             self::ROLE_ACCOUNTANT => [
                 'finance.access',
                 'finance.catalog.view',
+                'finance.tariffs.manage',
                 'finance.sessions.view', 'finance.sessions.validate',
                 'finance.payments.view',
                 'finance.disbursements.create',

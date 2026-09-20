@@ -66,6 +66,29 @@ class SyncPermissionsTest extends TestCase
         }
     }
 
+    public function test_the_accountant_prices_the_catalog_but_does_not_structure_it(): void
+    {
+        $this->artisan('finance:sync-permissions')->assertSuccessful();
+
+        $accountant = Role::findByName(Rbac::ROLE_ACCOUNTANT);
+
+        // Un prix est une décision de gestion : elle revient au comptable.
+        $this->assertTrue($accountant->hasPermissionTo('finance.catalog.view'));
+        $this->assertTrue($accountant->hasPermissionTo('finance.tariffs.manage'));
+
+        // La structure du catalogue (centres, actes) reste administrative.
+        $this->assertFalse($accountant->hasPermissionTo('finance.catalog.manage'));
+
+        // La direction et le caissier lisent le catalogue, sans plus.
+        foreach ([Rbac::ROLE_DIRECTOR, Rbac::ROLE_CASHIER] as $name) {
+            $role = Role::findByName($name);
+
+            $this->assertTrue($role->hasPermissionTo('finance.catalog.view'), $name);
+            $this->assertFalse($role->hasPermissionTo('finance.catalog.manage'), $name);
+            $this->assertFalse($role->hasPermissionTo('finance.tariffs.manage'), $name);
+        }
+    }
+
     public function test_an_existing_role_is_never_modified(): void
     {
         Role::create([

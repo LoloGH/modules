@@ -9,12 +9,14 @@ namespace Keneya\FinanceCaisse\Tests\Feature\Http;
  */
 class HomeMenuHttpTest extends HttpTestCase
 {
-    public function test_the_cashier_sees_only_the_desk(): void
+    public function test_the_cashier_sees_only_the_desk_and_the_catalog(): void
     {
         $this->actingAs($this->cashier())
             ->get('/finance')
             ->assertOk()
             ->assertSee('Ma caisse')
+            // Il consulte le catalogue (il facture avec), il ne le gère pas.
+            ->assertSee('Actes et prestations')
             ->assertDontSee('Sessions à valider')
             ->assertDontSee('créer, activer ou désactiver');
     }
@@ -34,6 +36,17 @@ class HomeMenuHttpTest extends HttpTestCase
             ->assertOk()
             ->assertSee('Ma caisse')
             ->assertSee('Sessions à valider')
-            ->assertSee('Caisses');
+            ->assertSee('Caisses')
+            ->assertSee('Actes et prestations')
+            ->assertSee('Centres analytiques');
+    }
+
+    public function test_a_user_without_any_finance_right_sees_no_menu(): void
+    {
+        $this->actingAs($this->makeUser())
+            ->get('/finance')
+            ->assertOk()
+            ->assertDontSee('Actes et prestations')
+            ->assertDontSee('Ma caisse');
     }
 }

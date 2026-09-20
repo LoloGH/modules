@@ -8,6 +8,8 @@ return [
         'required' => 'Le champ « :attribute » est obligatoire.',
         'integer' => 'Le champ « :attribute » doit être un nombre entier, sans décimale.',
         'string' => 'Le champ « :attribute » doit être un texte.',
+        'date' => 'Le champ « :attribute » doit être une date.',
+        'in' => 'La valeur choisie pour « :attribute » n\'est pas autorisée.',
         'exists' => 'La valeur choisie pour « :attribute » n\'existe pas.',
         'unique' => 'La valeur de « :attribute » existe déjà.',
         'min' => [
@@ -36,6 +38,12 @@ return [
         'note' => 'note',
         'code' => 'code',
         'name' => 'nom',
+        'parent_id' => 'centre parent',
+        'kind' => 'type',
+        'analytic_center_id' => 'centre analytique',
+        'dme_service_id' => 'service DME',
+        'label' => 'libellé',
+        'effective_from' => 'date d\'application',
     ],
 
 ];

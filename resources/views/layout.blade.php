@@ -44,6 +44,8 @@
         @can('finance.sessions.view')<a href="{{ route('finance.cash.index') }}">Ma caisse</a>@endcan
         @can('finance.sessions.validate')<a href="{{ route('finance.review.index') }}">Sessions à valider</a>@endcan
         @can('finance.registers.manage')<a href="{{ route('finance.registers.index') }}">Caisses</a>@endcan
+        @can('finance.catalog.view')<a href="{{ route('finance.catalog.acts.index') }}">Actes</a>@endcan
+        @can('finance.catalog.view')<a href="{{ route('finance.catalog.centers.index') }}">Centres analytiques</a>@endcan
     </nav>
     <span>{{ auth()->user()?->name }}</span>
 </header>

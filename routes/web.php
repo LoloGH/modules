@@ -3,11 +3,14 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Keneya\FinanceCaisse\Http\Controllers\ActController;
+use Keneya\FinanceCaisse\Http\Controllers\AnalyticCenterController;
 use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
 use Keneya\FinanceCaisse\Http\Controllers\ReviewController;
+use Keneya\FinanceCaisse\Http\Controllers\TariffController;
 
 /*
 | Les droits se contrôlent ici, route par route (middleware `can:`), et les
@@ -53,3 +56,21 @@ Route::middleware('can:finance.registers.manage')->group(function (): void {
     Route::post('caisses', [RegisterController::class, 'store'])->name('registers.store');
     Route::post('caisses/{register}/basculer', [RegisterController::class, 'toggle'])->name('registers.toggle');
 });
+
+// Catalogue des actes et tarifs
+Route::middleware('can:finance.catalog.view')->group(function (): void {
+    Route::get('catalogue/centres', [AnalyticCenterController::class, 'index'])->name('catalog.centers.index');
+    Route::get('catalogue/actes', [ActController::class, 'index'])->name('catalog.acts.index');
+    Route::get('catalogue/actes/{act}', [ActController::class, 'show'])->name('catalog.acts.show');
+});
+
+Route::middleware('can:finance.catalog.manage')->group(function (): void {
+    Route::post('catalogue/centres', [AnalyticCenterController::class, 'store'])->name('catalog.centers.store');
+    Route::post('catalogue/centres/{center}/basculer', [AnalyticCenterController::class, 'toggle'])->name('catalog.centers.toggle');
+    Route::post('catalogue/actes', [ActController::class, 'store'])->name('catalog.acts.store');
+    Route::post('catalogue/actes/{act}/basculer', [ActController::class, 'toggle'])->name('catalog.acts.toggle');
+});
+
+// Fixer ou changer un prix n'est pas gérer le catalogue : droit distinct.
+Route::post('catalogue/actes/{act}/tarifs', [TariffController::class, 'store'])
+    ->middleware('can:finance.tariffs.manage')->name('catalog.tariffs.store');

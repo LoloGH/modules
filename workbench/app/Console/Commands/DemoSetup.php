@@ -9,7 +9,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Keneya\FinanceCaisse\Actions\SetTariff;
+use Keneya\FinanceCaisse\Models\Act;
+use Keneya\FinanceCaisse\Models\AnalyticCenter;
 use Keneya\FinanceCaisse\Models\CashRegister;
+use Keneya\FinanceCaisse\Models\Tariff;
 use Keneya\FinanceCaisse\Support\Rbac;
 use ReflectionClass;
 use Spatie\Permission\PermissionRegistrar;
@@ -17,8 +21,9 @@ use Workbench\App\Models\DemoUser;
 
 /**
  * Prépare la base de démonstration : tables de l'hôte (utilisateurs, rôles),
- * tables du module, rôles et permissions, moyens de paiement, deux caisses et
- * un utilisateur par profil. Rejouable sans rien dupliquer.
+ * tables du module, rôles et permissions, moyens de paiement, deux caisses,
+ * un utilisateur par profil, et un catalogue d'actes tarifés. Rejouable sans
+ * rien dupliquer.
  *
  * Réservé aux environnements local et testing.
  */
@@ -69,6 +74,7 @@ class DemoSetup extends Command
 
         $this->call('finance:sync-permissions');
         $this->call('finance:sync-payment-methods');
+        $this->call('finance:sync-catalog');
 
         foreach ([['CAISSE-TICKET', 'Caisse Ticket'], ['CAISSE-SERVICES', 'Caisse Services']] as [$code, $name]) {
             CashRegister::firstOrCreate(['code' => $code], ['name' => $name, 'is_active' => true]);
@@ -93,8 +99,46 @@ class DemoSetup extends Command
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        $this->seedDemoCatalog();
+
         $this->info('Démonstration prête : ouvrez /dev pour choisir un profil.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Quelques actes de démonstration avec leur tarif standard, pour que le
+     * catalogue ne soit pas vide à l'écran. Rejouable : un acte déjà créé
+     * n'est pas retouché, et un tarif déjà fixé n'est pas remplacé (il le
+     * serait par une nouvelle ligne, ce qui inventerait un historique).
+     */
+    private function seedDemoCatalog(): void
+    {
+        $author = DemoUser::where('email', 'admin@keneya.test')->first();
+
+        if ($author === null) {
+            return;
+        }
+
+        $demo = [
+            ['CONS-GEN', 'Consultation générale', 'CONSULTATION', 2_000],
+            ['LAB-GE', 'Goutte épaisse (paludisme)', 'LABORATOIRE', 1_500],
+            ['IMG-ECHO', 'Échographie abdominale', 'IMAGERIE', 7_500],
+        ];
+
+        foreach ($demo as [$code, $name, $centerCode, $amount]) {
+            $act = Act::firstOrCreate(
+                ['code' => $code],
+                [
+                    'name' => $name,
+                    'analytic_center_id' => AnalyticCenter::where('code', $centerCode)->value('id'),
+                    'is_active' => true,
+                ],
+            );
+
+            if ($act->activeTariff() === null) {
+                app(SetTariff::class)->handle($act, $amount, Tariff::KIND_STANDARD, null, null, $author);
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Keneya\FinanceCaisse\Access\FinanceAccessGate;
 use Keneya\FinanceCaisse\Audit\Auditor;
+use Keneya\FinanceCaisse\Console\Commands\SyncCatalog;
 use Keneya\FinanceCaisse\Console\Commands\SyncPaymentMethods;
 use Keneya\FinanceCaisse\Console\Commands\SyncPermissions;
 use Keneya\FinanceCaisse\Http\Middleware\EnsureHostGrantsAccess;
@@ -109,7 +110,7 @@ class FinanceServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->commands([SyncPermissions::class, SyncPaymentMethods::class]);
+        $this->commands([SyncPermissions::class, SyncPaymentMethods::class, SyncCatalog::class]);
     }
 
     /**

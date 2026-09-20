@@ -3,10 +3,12 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.4.0, caisse (règles et écrans)** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.5.0, caisse + catalogue des actes** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
-décaissements, clôture avec écart, validation, annulations tracées).
-Écrans : bureau du caissier, page de session, liste de contrôle, gestion des caisses.
+décaissements, clôture avec écart, validation, annulations tracées), référentiel des
+actes facturables avec centres analytiques et tarifs historisés.
+Écrans : bureau du caissier, page de session, liste de contrôle, gestion des caisses,
+catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
 
 ## Conventions (identiques à DME)
 
@@ -18,7 +20,7 @@ décaissements, clôture avec écart, validation, annulations tracées).
 | URL | `/finance` |
 | Noms de routes | `finance.` |
 | Vues et traductions | `finance::` |
-| Tables | `finance_` (`sequences`, `audit_logs`, `payment_methods`, `cash_registers`, `cash_sessions`, `payments`, `disbursements`) |
+| Tables | `finance_` (`sequences`, `audit_logs`, `payment_methods`, `cash_registers`, `cash_sessions`, `payments`, `disbursements`, `analytic_centers`, `acts`, `tariffs`) |
 | Configuration | `config/finance.php` |
 | Middleware d'accès | `finance.access` |
 | Capacité d'accès | `finance.access` |
@@ -33,8 +35,9 @@ décaissements, clôture avec écart, validation, annulations tracées).
   sans jamais modifier un rôle existant (sauf l'administrateur, qui reçoit
   toutes les permissions).
 - **Commandes** (idempotentes, sans seeder, sûres sur une base de production) :
-  `finance:sync-permissions` et `finance:sync-payment-methods`. Elles ne modifient
-  jamais ce que l'établissement a déjà réglé.
+  `finance:sync-permissions`, `finance:sync-payment-methods` et
+  `finance:sync-catalog`. Elles ne modifient jamais ce que l'établissement a
+  déjà réglé.
 - **Numérotation** : `NumberGenerator::next('invoice')` donne `FAC-2026-000001`, attribué
   sous verrou de ligne ; la séquence repart à 1 chaque année et un numéro n'est jamais réutilisé.
 - **Audit** : `Auditor::record(...)` écrit dans `finance_audit_logs`, qu'aucune ligne
@@ -53,17 +56,44 @@ décaissements, clôture avec écart, validation, annulations tracées).
   Les actions vérifient les règles métier ; les droits se contrôlent route par route
   (middleware `can:finance.…`). Une règle violée revient à l'écran comme un message,
   avec la saisie conservée.
+- **Catalogue des actes** (`src/Models/AnalyticCenter.php`, `Act.php`, `Tariff.php`,
+  `src/Actions/SetTariff.php`) : le référentiel de ce qui se facture, indépendant
+  des factures pour que les prix évoluent sans réécrire l'historique.
+  - **Centres analytiques** (`finance_analytic_centers`) : hiérarchie libre et
+    auto-référencée (Pôle → Service → Activité), `kind` = produits, charges ou les
+    deux. Ils répondront à « combien rapporte le laboratoire ».
+  - **Actes** (`finance_acts`) : rattachés à un centre, avec un `dme_service_id`
+    facultatif — lien **mou** vers `dme_services` de l'hôte, sans clé étrangère,
+    utilisé seulement pour les rapprochements. Le module ne dépend pas de DME.
+  - **Tarifs** (`finance_tariffs`) : plusieurs par acte selon le contexte (`kind` :
+    `standard` aujourd'hui, un code d'assureur plus tard), mais **un seul actif par
+    contexte**. Changer un prix ne modifie jamais la ligne existante : `SetTariff`
+    la désactive et en crée une nouvelle, sous verrou et en écrivant au journal
+    d'audit. Les lignes désactivées sont l'historique des prix. `Act::activeTariff($kind)`
+    donne le tarif du jour.
+  - Un centre ou un acte se **désactive**, il ne se supprime pas (`restrictOnDelete`
+    partout : on ne cascade pas des données financières). Un centre qui porte encore
+    des enfants ou des actes actifs ne se désactive pas.
 - **Écrans** (`/finance`) : `caisse` (bureau du caissier), `caisse/sessions/{id}`
   (encaisser, décaisser, clôturer), `sessions` (contrôle et validation),
-  `caisses` (administration). Textes en français écrits directement dans les vues
+  `caisses` (administration), `catalogue/actes` (liste et création),
+  `catalogue/actes/{id}` (fiche : tarifs actifs, historique, formulaire de
+  tarification), `catalogue/centres` (arborescence des centres analytiques).
+  Textes en français écrits directement dans les vues
   pour l'instant. Le menu ne propose que ce que l'utilisateur a le droit de faire.
 - **Montants en entiers** (franc CFA : aucune décimale).
 - **Écritures immuables** (tranches suivantes) : une facture validée ou un
   paiement ne se modifie ni ne se supprime ; les corrections passent par
   annulation, avoir, remboursement ou ajustement, liés à l'opération d'origine.
+- **Séparation des tâches sur les prix** : `finance.catalog.view` est donné à tous
+  les profils (on facture avec le catalogue, il faut le lire) ;
+  `finance.catalog.manage` — créer ou désactiver un centre, un acte — reste
+  **administratif** ; `finance.tariffs.manage` va au **comptable** et à
+  l'administrateur : fixer un prix est une décision de gestion, jamais celle du
+  caissier qui encaisse.
 - Le module ne dépend pas de `keneya/dme` : les branchements sur les actes
   médicaux viendront dans un sous-dossier dédié, actif seulement si DME est
-  présent.
+  présent. `finance_acts.dme_service_id` n'est qu'un repère, sans contrainte.
 - Routes par contrôleur, jamais par closure (sinon `route:cache` échoue chez
   l'hôte).
 
@@ -87,9 +117,11 @@ docker compose run --rm --service-ports app composer serve:docker
 ```
 
 La démonstration prépare d'abord une base SQLite (caisses, moyens de paiement,
-profils), puis ouvre `/dev`. Profils, sans mot de passe : caissier (Salif Konaté,
-Awa Traoré), comptable (Moussa Diarra), direction, administrateur. Pour voir la
-séparation des tâches : un caissier clôture, puis le comptable valide.
+centres analytiques, trois actes tarifés, profils), puis ouvre `/dev`. Profils,
+sans mot de passe : caissier (Salif Konaté, Awa Traoré), comptable (Moussa Diarra),
+direction, administrateur. Pour voir la séparation des tâches : un caissier
+clôture, puis le comptable valide ; le caissier lit le catalogue, le comptable
+change un tarif, l'administrateur crée un acte.
 
 ## Intégration dans l'application hôte
 
@@ -98,7 +130,8 @@ séparation des tâches : un caissier clôture, puis le comptable valide.
    (`./modules/finance-caisse`, `symlink: true`) et `"keneya/finance-caisse": "@dev"`
    dans `require`.
 3. `composer update keneya/finance-caisse`, `php8.4 artisan migrate --force`, puis
-   `php8.4 artisan finance:sync-permissions` et `php8.4 artisan finance:sync-payment-methods`.
+   `php8.4 artisan finance:sync-permissions`, `php8.4 artisan finance:sync-payment-methods`
+   et `php8.4 artisan finance:sync-catalog`.
 4. Déclarer la décision d'accès de l'hôte (résolveur ou capacité) et, si
    besoin, la correspondance des rôles dans `config/finance.php`
    (`'roles' => ['caissier' => 'cashier']`).
