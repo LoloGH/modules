@@ -74,4 +74,36 @@ class AnalyticCenter extends Model
     {
         return $query->where('is_active', true)->orderBy('name');
     }
+
+    /**
+     * Les centres qui peuvent porter une recette (un acte, un encaissement).
+     *
+     * @param  Builder<AnalyticCenter>  $query
+     * @return Builder<AnalyticCenter>
+     */
+    public function scopeForRevenue(Builder $query): Builder
+    {
+        return $query->active()->whereIn('kind', [self::KIND_REVENUE, self::KIND_BOTH]);
+    }
+
+    /**
+     * Les centres qui peuvent porter une charge (un décaissement).
+     *
+     * @param  Builder<AnalyticCenter>  $query
+     * @return Builder<AnalyticCenter>
+     */
+    public function scopeForCharges(Builder $query): Builder
+    {
+        return $query->active()->whereIn('kind', [self::KIND_COST, self::KIND_BOTH]);
+    }
+
+    public function acceptsRevenue(): bool
+    {
+        return in_array($this->kind, [self::KIND_REVENUE, self::KIND_BOTH], true);
+    }
+
+    public function acceptsCharges(): bool
+    {
+        return in_array($this->kind, [self::KIND_COST, self::KIND_BOTH], true);
+    }
 }

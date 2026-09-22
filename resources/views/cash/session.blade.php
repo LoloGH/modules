@@ -236,6 +236,19 @@
                             </label>
                             <label>Référence <input name="reference"></label>
                         </div>
+                        <div class="row">
+                            {{-- Qui porte la charge : sans centre, la dépense
+                                 ne se lit dans le résultat d'aucun service. --}}
+                            <label>Centre analytique
+                                <select name="analytic_center_id">
+                                    <option value="">— Non rattachée</option>
+                                    @foreach (\Keneya\FinanceCaisse\Models\AnalyticCenter::query()->forCharges()->get() as $center)
+                                        <option value="{{ $center->id }}" @selected((string) old('analytic_center_id') === (string) $center->id)>{{ $center->name }}</option>
+                                    @endforeach
+                                </select>
+                                <span class="help">Seuls les centres qui portent des charges.</span>
+                            </label>
+                        </div>
                         <div class="actions">
                             <button type="submit" class="ghost"><x-finance::icon name="depense" /> Enregistrer le décaissement</button>
                         </div>

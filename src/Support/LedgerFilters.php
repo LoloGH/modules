@@ -15,6 +15,9 @@ use Keneya\FinanceCaisse\Models\Payment;
  * période, moyen de paiement, statut, recherche, centre analytique (service)
  * et acte (activité).
  *
+ * Le centre se lit sur l'écriture elle-même, et prend toute sa descendance :
+ * un pôle rapporte ce que ses services rapportent.
+ *
  * Lecture seule, sur les écritures réelles de caisse. Un caissier ne voit que
  * les mouvements de ses propres sessions (`cashierScope`) ; le contrôle voit
  * tout.
@@ -33,6 +36,9 @@ final class LedgerFilters
         public readonly ?int $actId = null,
         public readonly ?string $cashierScope = null,
     ) {}
+
+    /** @var list<int>|null la descendance du centre filtré, lue une seule fois */
+    private ?array $scope = null;
 
     /**
      * Par défaut : du premier jour du mois à aujourd'hui, tous statuts. Une
@@ -71,7 +77,7 @@ final class LedgerFilters
             ->when($this->methodId, fn (Builder $q) => $q->where('payment_method_id', $this->methodId))
             ->when($this->status !== self::STATUS_ALL, fn (Builder $q) => $q->where('status', $this->status))
             ->when($this->actId, fn (Builder $q) => $q->where('act_id', $this->actId))
-            ->when($this->centerId, fn (Builder $q) => $q->whereHas('act', fn (Builder $act) => $act->where('analytic_center_id', $this->centerId)))
+            ->when($this->centerId, fn (Builder $q) => $q->whereIn('analytic_center_id', $this->centerScope() ?? []))
             ->when($this->search, function (Builder $q): void {
                 $like = '%'.$this->search.'%';
                 $q->where(fn (Builder $w) => $w
@@ -87,6 +93,21 @@ final class LedgerFilters
     }
 
     /**
+     * Le centre choisi et tout ce qu'il porte : filtrer sur un pôle prend ses
+     * services, sans avoir à les désigner un par un.
+     *
+     * @return list<int>|null nul si aucun centre n'est demandé
+     */
+    public function centerScope(): ?array
+    {
+        if ($this->centerId === null) {
+            return null;
+        }
+
+        return $this->scope ??= AnalyticTree::load()->withDescendants($this->centerId);
+    }
+
+    /**
      * @return Builder<Disbursement>
      */
     public function disbursements(): Builder
@@ -94,6 +115,7 @@ final class LedgerFilters
         $query = Disbursement::query()
             ->whereBetween('created_at', [$this->from, $this->to])
             ->when($this->methodId, fn (Builder $q) => $q->where('payment_method_id', $this->methodId))
+            ->when($this->centerId, fn (Builder $q) => $q->whereIn('analytic_center_id', $this->centerScope() ?? []))
             ->when($this->status !== self::STATUS_ALL, fn (Builder $q) => $q->where('status', $this->status))
             ->when($this->search, function (Builder $q): void {
                 $like = '%'.$this->search.'%';

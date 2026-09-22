@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Http\Requests\AnalyticCenterRequest;
+use Keneya\FinanceCaisse\Http\Requests\AnalyticCenterUpdateRequest;
 use Keneya\FinanceCaisse\Models\AnalyticCenter;
+use Keneya\FinanceCaisse\Support\AnalyticTree;
 use Keneya\FinanceCaisse\Support\Text;
 
 /**
@@ -30,7 +32,7 @@ final class AnalyticCenterController extends FinanceController
 
         return view('finance::catalog.centers', [
             'centers' => $centers,
-            'tree' => $this->tree($centers),
+            'tree' => (new AnalyticTree($centers))->flat(),
             'parents' => $centers->where('is_active', true)->values(),
             'kinds' => AnalyticCenter::kindLabels(),
         ]);
@@ -59,6 +61,86 @@ final class AnalyticCenterController extends FinanceController
 
         return redirect()->route('finance.catalog.centers.index')
             ->with('finance_status', "Le centre « {$center->name} » a été créé.");
+    }
+
+    /**
+     * Modifier un centre : son nom, son rattachement et sa nature. Le code ne
+     * change pas — les rapports et les exports passés s'y réfèrent.
+     */
+    public function update(AnalyticCenterUpdateRequest $request, AnalyticCenter $center, Auditor $auditor): RedirectResponse
+    {
+        $user = $this->user($request);
+        $parentId = $request->validated('parent_id');
+        $parentId = $parentId === null ? null : (int) $parentId;
+        $kind = (string) $request->validated('kind');
+
+        $message = DB::transaction(function () use ($center, $parentId, $kind, $request, $user, $auditor): string {
+            $center = AnalyticCenter::query()->whereKey($center->getKey())->lockForUpdate()->firstOrFail();
+
+            $this->assertParentAllowed($center, $parentId);
+            $this->assertKindAllowed($center, $kind);
+
+            $before = ['name' => $center->name, 'parent_id' => $center->parent_id, 'kind' => $center->kind];
+
+            $center->update([
+                'name' => (string) Text::clean($request->validated('name')),
+                'parent_id' => $parentId,
+                'kind' => $kind,
+            ]);
+
+            $auditor->record(
+                'analytic_center_updated',
+                $center,
+                sprintf('Centre analytique « %s » modifié (%s)', $center->name, $center->kindLabel()),
+                $before,
+                ['name' => $center->name, 'parent_id' => $center->parent_id, 'kind' => $center->kind],
+                $user,
+            );
+
+            return sprintf('Le centre « %s » a été modifié.', $center->name);
+        });
+
+        return redirect()->route('finance.catalog.centers.index')->with('finance_status', $message);
+    }
+
+    /**
+     * Un centre ne se rattache ni à lui-même ni à l'un des siens : la
+     * hiérarchie tournerait en rond et aucun total ne se calculerait.
+     */
+    private function assertParentAllowed(AnalyticCenter $center, ?int $parentId): void
+    {
+        if ($parentId === null) {
+            return;
+        }
+
+        $descendants = AnalyticTree::load()->withDescendants((int) $center->id);
+
+        if (in_array($parentId, $descendants, true)) {
+            throw new FinanceRuleViolation(
+                "Le centre « {$center->name} » ne peut pas être rattaché à lui-même ni à l'un de ses sous-centres."
+            );
+        }
+
+        $parent = AnalyticCenter::query()->findOrFail($parentId);
+
+        if (! $parent->is_active) {
+            throw new FinanceRuleViolation("Le centre « {$parent->name} » est désactivé : on ne s'y rattache pas.");
+        }
+    }
+
+    /**
+     * Un centre qui porte des actes garde une nature qui accepte les
+     * produits : sinon ses recettes se rangeraient dans un centre de charges.
+     */
+    private function assertKindAllowed(AnalyticCenter $center, string $kind): void
+    {
+        if ($kind !== AnalyticCenter::KIND_COST || ! $center->acts()->exists()) {
+            return;
+        }
+
+        throw new FinanceRuleViolation(
+            "Le centre « {$center->name} » porte des actes : il ne peut pas devenir un centre de charges seules."
+        );
     }
 
     public function toggle(Request $request, AnalyticCenter $center, Auditor $auditor): RedirectResponse

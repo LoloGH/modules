@@ -75,7 +75,7 @@
                                     @endif
                                 </td>
                                 <td data-l="Service / activité">
-                                    {{ $payment->act?->center?->name ?? ($payment->act ? 'Sans centre analytique' : 'Hors catalogue') }}
+                                    {{ $payment->center?->name ?? ($payment->act_id ? 'Sans centre analytique' : 'Hors catalogue') }}
                                     @if ($payment->act) <span class="sub">{{ $payment->act->name }}</span> @endif
                                 </td>
                                 <td data-l="Moyen">{{ $payment->method?->name }}</td>

@@ -21,6 +21,7 @@ final class DisbursementRequest extends FinanceRequest
             'amount' => ['required', 'integer', 'min:1'],
             'reason' => ['required', 'string', 'max:1000'],
             'category' => ['nullable', 'string', Rule::in(array_keys(Disbursement::categories()))],
+            'analytic_center_id' => ['nullable', 'integer', 'exists:finance_analytic_centers,id'],
             'beneficiary' => ['nullable', 'string', 'max:191'],
             'reference' => ['nullable', 'string', 'max:191'],
         ];

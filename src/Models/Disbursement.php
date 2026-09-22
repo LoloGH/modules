@@ -29,6 +29,14 @@ class Disbursement extends Model
         ];
     }
 
+    /**
+     * Le centre analytique qui porte la charge, choisi à l'enregistrement.
+     */
+    public function center(): BelongsTo
+    {
+        return $this->belongsTo(AnalyticCenter::class, 'analytic_center_id');
+    }
+
     public function session(): BelongsTo
     {
         return $this->belongsTo(CashSession::class, 'cash_session_id');

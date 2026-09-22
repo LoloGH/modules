@@ -61,14 +61,14 @@ final class LedgerController extends FinanceController
         $filters = $this->filters($request);
         $base = $filters->payments()->where('status', Payment::STATUS_VALID);
 
-        $byCenter = (clone $base)->with('act.center')->get()
-            ->groupBy(fn (Payment $p): string => $p->act?->center?->name ?? ($p->act === null ? 'Hors catalogue' : 'Sans centre analytique'))
+        $byCenter = (clone $base)->with('center')->get()
+            ->groupBy(fn (Payment $p): string => $p->center?->name ?? ($p->act_id === null ? 'Hors catalogue' : 'Sans centre analytique'))
             ->map(fn ($group): int => (int) $group->sum('amount'))
             ->sortDesc();
 
         return view('finance::ledger.revenue', [
             'filters' => $filters,
-            'items' => (clone $base)->with(['method', 'act.center', 'session.register'])
+            'items' => (clone $base)->with(['method', 'act', 'center', 'session.register'])
                 ->latest('created_at')->latest('id')
                 ->paginate(self::PER_PAGE)->withQueryString(),
             'total' => (int) (clone $base)->sum('amount'),
@@ -102,7 +102,7 @@ final class LedgerController extends FinanceController
             'filters' => $filters,
             'category' => $category,
             'categories' => $categories,
-            'items' => (clone $base)->with(['method', 'session.register'])
+            'items' => (clone $base)->with(['method', 'center', 'session.register'])
                 ->latest('created_at')->latest('id')
                 ->paginate(self::PER_PAGE)->withQueryString(),
             'stats' => [
@@ -114,6 +114,12 @@ final class LedgerController extends FinanceController
                 ->groupBy(fn (Disbursement $d): string => $d->categoryLabel())
                 ->map(fn ($group): int => (int) $group->sum('amount'))
                 ->sortDesc(),
+            // Ce que chaque centre coûte, en regard de ce qu'il rapporte.
+            'byCenter' => (clone $valid)->with('center')->get()
+                ->groupBy(fn (Disbursement $d): string => $d->center?->name ?? 'Non rattaché')
+                ->map(fn ($group): int => (int) $group->sum('amount'))
+                ->sortDesc(),
+            'centers' => AnalyticCenter::query()->orderBy('name')->get(),
             'methods' => PaymentMethod::query()->orderBy('name')->get(),
             'scoped' => $filters->cashierScope !== null,
         ]);

@@ -19,8 +19,9 @@ use Keneya\FinanceCaisse\Support\LedgerFilters;
  * et décaissements VALIDES de caisse (un mouvement annulé ne compte pas) et
  * règlements reçus des assureurs (hors tiroir, datés du jour de réception).
  *
- * Les filtres service et activité ne portent que sur les encaissements ; le
- * moyen de paiement, sur les encaissements et les décaissements.
+ * Le filtre activité ne porte que sur les encaissements ; le centre analytique
+ * et le moyen de paiement portent sur les encaissements comme sur les
+ * décaissements, chacun étant rattaché à un centre.
  *
  * Chaque rapport rend des lignes « libellé, nombre, montant » (ou, pour la
  * synthèse, « jour, recettes, dépenses, solde »), plus un total : la même
@@ -28,10 +29,14 @@ use Keneya\FinanceCaisse\Support\LedgerFilters;
  */
 final class ReportBuilder
 {
+    public function __construct(private readonly AnalyticResult $analytics) {}
+
     public const TYPES = [
         'recettes-centre' => 'Recettes par service (centre analytique)',
+        'resultat-centre' => 'Résultat par centre analytique : produits, charges, solde',
         'recettes-acte' => 'Recettes par activité (acte)',
         'recettes-moyen' => 'Recettes par moyen de paiement',
+        'depenses-centre' => 'Dépenses par centre analytique',
         'depenses-categorie' => 'Dépenses par catégorie',
         'depenses-moyen' => 'Dépenses par moyen de paiement',
         'reglements-assurance' => 'Règlements des assureurs, par assureur',
@@ -64,6 +69,12 @@ final class ReportBuilder
                 static fn (Payment $p): string => $p->method?->name ?? '—',
                 'Moyen de paiement',
             ),
+            'resultat-centre' => $this->resultByCenter($filters),
+            'depenses-centre' => $this->grouped(
+                $filters->disbursements()->where('status', Disbursement::STATUS_VALID)->with('center')->get(),
+                static fn (Disbursement $d): string => $d->center?->name ?? 'Non rattaché',
+                'Centre analytique',
+            ),
             'depenses-categorie' => $this->grouped(
                 $filters->disbursements()->where('status', Disbursement::STATUS_VALID)->get(),
                 static fn (Disbursement $d): string => $d->categoryLabel(),
@@ -83,8 +94,8 @@ final class ReportBuilder
             ),
             'synthese' => $this->daily($filters),
             default => $this->grouped(
-                $this->payments($filters)->load('act.center'),
-                static fn (Payment $p): string => $p->act?->center?->name ?? ($p->act === null ? 'Hors catalogue' : 'Sans centre analytique'),
+                $this->payments($filters)->load('center'),
+                static fn (Payment $p): string => $p->center?->name ?? ($p->act_id === null ? 'Hors catalogue' : 'Sans centre analytique'),
                 'Service (centre analytique)',
             ),
         };
@@ -172,6 +183,27 @@ final class ReportBuilder
             'rows' => $rows,
             'total' => ['Total', array_sum(array_column($rows, 1)), array_sum(array_column($rows, 2)), array_sum(array_column($rows, 3))],
             'money' => [2, 3],
+        ];
+    }
+
+    /**
+     * Le résultat par centre : produits (caisse et assureurs), charges, solde.
+     * Chaque centre porte le sien et celui de sa descendance.
+     *
+     * @return array{columns: list<string>, rows: list<list<string|int>>, total: list<string|int>, money: list<int>}
+     */
+    private function resultByCenter(LedgerFilters $filters): array
+    {
+        $result = $this->analytics->build($filters);
+
+        return [
+            'columns' => ['Centre analytique', 'Recettes caisse', 'Règlements assurance', 'Dépenses', 'Résultat'],
+            'rows' => array_map(
+                static fn (array $row): array => [$row['label'], $row['revenue'], $row['settlements'], $row['expenses'], $row['net']],
+                $result['rows'],
+            ),
+            'total' => ['Total', $result['total']['revenue'], $result['total']['settlements'], $result['total']['expenses'], $result['total']['net']],
+            'money' => [1, 2, 3, 4],
         ];
     }
 

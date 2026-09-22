@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Actions\Concerns\GuardsCashSession;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
+use Keneya\FinanceCaisse\Models\AnalyticCenter;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
@@ -35,7 +36,7 @@ final class RecordDisbursement
     ) {}
 
     /**
-     * @param  array{beneficiary?: ?string, reference?: ?string, category?: ?string}  $details
+     * @param  array{beneficiary?: ?string, reference?: ?string, category?: ?string, analytic_center_id?: ?int}  $details
      */
     public function handle(
         CashSession $session,
@@ -88,6 +89,8 @@ final class RecordDisbursement
                 }
             }
 
+            $center = $this->center($details['analytic_center_id'] ?? null);
+
             $disbursement = Disbursement::create([
                 'number' => $this->numbers->next('disbursement'),
                 'cash_session_id' => $session->id,
@@ -95,6 +98,7 @@ final class RecordDisbursement
                 'amount' => $amount,
                 'reason' => $reason,
                 'category' => Text::clean($details['category'] ?? null),
+                'analytic_center_id' => $center?->id,
                 'beneficiary' => Text::clean($details['beneficiary'] ?? null),
                 'reference' => $reference,
                 'status' => Disbursement::STATUS_VALID,
@@ -105,11 +109,37 @@ final class RecordDisbursement
                 $disbursement,
                 sprintf('Décaissement %s : %s (%s), motif : %s', $disbursement->number, Money::format($amount), $method->name, $reason),
                 [],
-                ['amount' => $amount, 'method' => $method->code, 'cash_session' => $session->number, 'reason' => $reason],
+                ['amount' => $amount, 'method' => $method->code, 'cash_session' => $session->number, 'reason' => $reason, 'center' => $center?->code],
                 $cashier,
             );
 
             return $disbursement;
         });
+    }
+
+    /**
+     * Le centre analytique qui porte la charge. Un centre de produits n'en
+     * porte pas : la dépense y serait invisible au moment de lire ce que
+     * chaque centre coûte.
+     */
+    private function center(?int $centerId): ?AnalyticCenter
+    {
+        if ($centerId === null) {
+            return null;
+        }
+
+        $center = AnalyticCenter::query()->find($centerId);
+
+        if ($center === null || ! $center->is_active) {
+            throw new FinanceRuleViolation('Ce centre analytique est introuvable ou désactivé.');
+        }
+
+        if (! $center->acceptsCharges()) {
+            throw new FinanceRuleViolation(
+                "Le centre « {$center->name} » ne porte que des produits : il ne peut pas porter une dépense."
+            );
+        }
+
+        return $center;
     }
 }

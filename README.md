@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.14.0, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.15.0, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,32 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Rattachement analytique fin** — chaque écriture porte SON centre
+  analytique, gravé au moment où elle est écrite (`analytic_center_id` sur
+  `finance_payments`, `finance_invoice_lines` et `finance_disbursements`).
+  - **Le passé ne se réécrit pas** : rattacher un acte à un autre centre
+    (`catalogue/actes/{acte}/centre`, `finance.catalog.manage`) ne déplace
+    aucune recette déjà encaissée ou facturée. Seules les écritures
+    suivantes suivent le nouveau rattachement.
+  - **Les dépenses se rattachent aussi** : le décaissement porte un centre,
+    choisi à la caisse. Un centre de produits refuse une charge — la dépense
+    y serait invisible au moment de lire ce que le centre coûte
+    (`kind` : Produits, Charges, Produits et charges).
+  - **La hiérarchie totalise** (`Support\AnalyticTree`) : filtrer ou totaliser
+    sur un pôle prend tout ce que ses services portent, à toutes les
+    profondeurs. Un centre se modifie (nom, rattachement, nature ;
+    `catalogue/centres/{centre}`), jamais son code : les rapports passés s'y
+    réfèrent. Une boucle de parenté est refusée, et un centre qui porte des
+    actes ne devient pas un centre de charges seules.
+  - **Résultat par centre** (`Services\AnalyticResult`, rapport
+    `resultat-centre`) : produits de caisse + règlements d'assureurs
+    **répartis au prorata de la part prise en charge de chaque ligne** de la
+    facture réglée, moins les charges. Le total est celui des écritures, pas
+    la somme des lignes : ce qu'un pôle partage avec ses services n'est pas
+    compté deux fois. Les écritures sans centre sont rassemblées sous « Non
+    rattaché ». Écrans concernés : Recettes, Dépenses (filtre et répartition
+    par centre), Rapports (`recettes-centre`, `depenses-centre`,
+    `resultat-centre`).
 - **Utilisateurs** (`utilisateurs`, `finance.roles.manage`, administrateur) :
   les capacités de chacun dans le module, réglées dans Finance sans rien
   changer chez l'hôte (ni rôle, ni type de personnel).

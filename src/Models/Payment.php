@@ -40,6 +40,15 @@ class Payment extends Model
         return $this->belongsTo(Invoice::class, 'invoice_id');
     }
 
+    /**
+     * Le centre analytique gravé sur l'écriture : celui de l'acte au moment
+     * où elle a été écrite, que le catalogue ne réécrit plus après coup.
+     */
+    public function center(): BelongsTo
+    {
+        return $this->belongsTo(AnalyticCenter::class, 'analytic_center_id');
+    }
+
     public function act(): BelongsTo
     {
         return $this->belongsTo(Act::class, 'act_id');

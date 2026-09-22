@@ -27,6 +27,14 @@
                             @endforeach
                         </select>
                     </label>
+                        <label>Centre analytique
+                            <select name="centre">
+                                <option value="">Tous</option>
+                                @foreach ($centers as $center)
+                                    <option value="{{ $center->id }}" @selected($filters->centerId === $center->id)>{{ $center->name }}</option>
+                                @endforeach
+                            </select>
+                        </label>
                         <label>Catégorie
                             <select name="categorie">
                                 <option value="">Toutes</option>
@@ -60,13 +68,14 @@
                 <div class="tw">
                     <table class="stack wide">
                         <thead>
-                        <tr><th>Date</th><th>Catégorie</th><th>Motif</th><th>Bénéficiaire</th><th>Moyen</th><th>Référence</th><th>Statut</th><th class="num">Montant</th><th></th></tr>
+                        <tr><th>Date</th><th>Catégorie</th><th>Centre</th><th>Motif</th><th>Bénéficiaire</th><th>Moyen</th><th>Référence</th><th>Statut</th><th class="num">Montant</th><th></th></tr>
                         </thead>
                         <tbody>
                         @foreach ($items as $item)
                             <tr class="{{ $item->isCancelled() ? 'cancelled' : '' }}">
                                 <td data-l="Date">{{ $item->created_at?->format('d/m/Y H:i') }} <span class="sub mono">{{ $item->number }}</span></td>
                                 <td data-l="Catégorie">{{ $item->categoryLabel() }}</td>
+                                <td data-l="Centre">{{ $item->center?->name ?? '—' }}</td>
                                 <td data-l="Motif" class="strong">{{ $item->reason }}</td>
                                 <td data-l="Bénéficiaire">{{ $item->beneficiary ?? '—' }}</td>
                                 <td data-l="Moyen">{{ $item->method?->name }}</td>
@@ -93,17 +102,32 @@
             @endif
         </x-finance::card>
 
-        <x-finance::card title="Par catégorie">
-            @if ($byCategory->isEmpty())
-                <p class="muted" style="margin:0">Aucune dépense sur la période.</p>
-            @else
-                <dl class="facts">
-                    @foreach ($byCategory as $name => $amount)
-                        <div class="f"><dt>{{ $name }}</dt><dd>{{ $money($amount) }}</dd></div>
-                    @endforeach
-                    <div class="f gap"><dt>Total</dt><dd>{{ $money($stats['total']) }}</dd></div>
-                </dl>
-            @endif
-        </x-finance::card>
+        <div class="pile">
+            <x-finance::card title="Par centre analytique">
+                @if ($byCenter->isEmpty())
+                    <p class="muted" style="margin:0">Aucune dépense sur la période.</p>
+                @else
+                    <dl class="facts">
+                        @foreach ($byCenter as $name => $amount)
+                            <div class="f"><dt>{{ $name }}</dt><dd>{{ $money($amount) }}</dd></div>
+                        @endforeach
+                        <div class="f gap"><dt>Total</dt><dd>{{ $money($stats['total']) }}</dd></div>
+                    </dl>
+                @endif
+            </x-finance::card>
+
+            <x-finance::card title="Par catégorie">
+                @if ($byCategory->isEmpty())
+                    <p class="muted" style="margin:0">Aucune dépense sur la période.</p>
+                @else
+                    <dl class="facts">
+                        @foreach ($byCategory as $name => $amount)
+                            <div class="f"><dt>{{ $name }}</dt><dd>{{ $money($amount) }}</dd></div>
+                        @endforeach
+                        <div class="f gap"><dt>Total</dt><dd>{{ $money($stats['total']) }}</dd></div>
+                    </dl>
+                @endif
+            </x-finance::card>
+        </div>
     </div>
 @endsection

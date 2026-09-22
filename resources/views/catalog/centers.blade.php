@@ -39,6 +39,46 @@
         </x-finance::card>
     @endcan
 
+    @can('finance.catalog.manage')
+        <x-finance::card title="Modifier un centre" hint="Le code ne change pas : les rapports passés s'y réfèrent">
+            @if ($centers->isEmpty())
+                <p class="muted" style="margin:0">Aucun centre à modifier.</p>
+            @else
+                @foreach ($tree as $row)
+                    @php ($center = $row['center'])
+                    <details class="center-edit">
+                        <summary>{{ $center->name }} <span class="muted">· {{ $center->code }} · {{ $center->kindLabel() }}</span></summary>
+                        <form method="post" action="{{ route('finance.catalog.centers.update', $center) }}">
+                            @csrf
+                            <div class="row">
+                                <label>Nom <input name="name" value="{{ $center->name }}" required></label>
+                                <label>Rattaché à
+                                    <select name="parent_id">
+                                        <option value="">— Aucun (centre racine)</option>
+                                        @foreach ($parents as $parent)
+                                            @continue($parent->id === $center->id)
+                                            <option value="{{ $parent->id }}" @selected($center->parent_id === $parent->id)>{{ $parent->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                                <label>Type
+                                    <select name="kind" required>
+                                        @foreach ($kinds as $key => $label)
+                                            <option value="{{ $key }}" @selected($center->kind === $key)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="actions">
+                                <button type="submit" class="ghost sm"><x-finance::icon name="check" /> Enregistrer</button>
+                            </div>
+                        </form>
+                    </details>
+                @endforeach
+            @endif
+        </x-finance::card>
+    @endcan
+
     <x-finance::card title="Centres de l'établissement" hint="{{ count($tree) }} centre(s)" flush>
         @if ($tree === [])
             <div class="bd">

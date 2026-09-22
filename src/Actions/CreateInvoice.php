@@ -81,6 +81,7 @@ final class CreateInvoice
 
                 $rows[] = [
                     'act_id' => $act->id,
+                    'analytic_center_id' => $act->analytic_center_id,
                     'label' => $act->name,
                     'quantity' => $quantity,
                     'unit_price' => $unit,

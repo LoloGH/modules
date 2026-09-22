@@ -74,6 +74,9 @@ final class RecordPayment
                 'cash_session_id' => $session->id,
                 'payment_method_id' => $method->id,
                 'act_id' => $act?->id,
+                // Le centre est gravé ici : rattacher l'acte ailleurs plus
+                // tard ne déplace pas les recettes déjà encaissées.
+                'analytic_center_id' => $act?->analytic_center_id,
                 'amount' => $amount,
                 'reference' => $reference,
                 'patient_id' => $patientId === null ? $invoice?->patient_id : (string) $patientId,

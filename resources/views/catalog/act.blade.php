@@ -39,6 +39,25 @@
     </x-finance::card>
 
     @can('finance.catalog.manage')
+        <x-finance::card title="Centre analytique">
+            <form method="post" action="{{ route('finance.catalog.acts.center', $act) }}" class="inline">
+                @csrf
+                <label class="sr" for="acte-centre">Centre analytique</label>
+                <select id="acte-centre" name="analytic_center_id">
+                    <option value="">— Aucun</option>
+                    @foreach ($centers as $center)
+                        <option value="{{ $center->id }}" @selected($act->analytic_center_id === $center->id)>{{ $center->name }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="ghost sm"><x-finance::icon name="check" /> Rattacher</button>
+            </form>
+            <p class="muted">
+                Le centre qui porte les recettes de cet acte. Le changer ne déplace
+                rien de ce qui a déjà été encaissé ou facturé : chaque écriture garde
+                le centre qu'elle avait le jour où elle a été écrite.
+            </p>
+        </x-finance::card>
+
         <x-finance::card title="Ticket de consultation">
             <form method="post" action="{{ route('finance.catalog.acts.ticket', $act) }}" class="inline">
                 @csrf

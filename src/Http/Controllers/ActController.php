@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Actions\SetConsultationTicket;
 use Keneya\FinanceCaisse\Audit\Auditor;
+use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
+use Keneya\FinanceCaisse\Http\Requests\ActCenterRequest;
 use Keneya\FinanceCaisse\Http\Requests\ActRequest;
 use Keneya\FinanceCaisse\Http\Requests\ConsultationTicketRequest;
 use Keneya\FinanceCaisse\Models\Act;
@@ -28,7 +30,8 @@ final class ActController extends FinanceController
     {
         return view('finance::catalog.acts', [
             'acts' => Act::query()->with(['center', 'standardTariff'])->orderBy('name')->get(),
-            'centers' => AnalyticCenter::query()->active()->get(),
+            // Un acte porte un produit : les centres de charges ne s'y prêtent pas.
+            'centers' => AnalyticCenter::query()->forRevenue()->get(),
         ]);
     }
 
@@ -38,6 +41,7 @@ final class ActController extends FinanceController
 
         return view('finance::catalog.act', [
             'act' => $act,
+            'centers' => AnalyticCenter::query()->forRevenue()->get(),
             // Les tarifs actifs d'abord, puis l'historique du plus récent au
             // plus ancien : le prix du jour se lit sans chercher.
             'tariffs' => $act->tariffs()->orderByDesc('is_active')->orderByDesc('id')->get(),
@@ -75,6 +79,43 @@ final class ActController extends FinanceController
 
         return redirect()->route('finance.catalog.acts.show', $act)
             ->with('finance_status', "L'acte « {$act->name} » a été créé. Fixez son tarif.");
+    }
+
+    /**
+     * Rattacher l'acte à un centre analytique, ou l'en détacher.
+     *
+     * Ce qui a déjà été encaissé ou facturé ne bouge pas : chaque écriture
+     * porte le centre qu'elle avait au moment où elle a été écrite.
+     */
+    public function center(ActCenterRequest $request, Act $act, Auditor $auditor): RedirectResponse
+    {
+        $centerId = $request->validated('analytic_center_id');
+        $center = $centerId === null ? null : AnalyticCenter::query()->findOrFail((int) $centerId);
+
+        if ($center !== null && (! $center->is_active || ! $center->acceptsRevenue())) {
+            throw new FinanceRuleViolation(
+                "Le centre « {$center->name} » ne porte pas de produits : un acte ne peut pas s'y rattacher."
+            );
+        }
+
+        $before = $act->center?->code;
+        $act->update(['analytic_center_id' => $center?->id]);
+
+        $auditor->record(
+            'act_center_set',
+            $act,
+            sprintf('Acte « %s » rattaché à %s', $act->name, $center?->name ?? 'aucun centre analytique'),
+            ['analytic_center' => $before],
+            ['analytic_center' => $center?->code],
+            $this->user($request),
+        );
+
+        return redirect()->route('finance.catalog.acts.show', $act)->with(
+            'finance_status',
+            $center === null
+                ? "L'acte « {$act->name} » n'est plus rattaché à un centre analytique."
+                : "L'acte « {$act->name} » est rattaché à « {$center->name} ». Les écritures passées gardent leur centre.",
+        );
     }
 
     public function toggle(Request $request, Act $act, Auditor $auditor): RedirectResponse

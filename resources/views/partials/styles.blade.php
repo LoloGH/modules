@@ -245,6 +245,11 @@
     .checks { display: flex; flex-wrap: wrap; gap: .3125rem .875rem; }
     .checks label { display: inline-flex; align-items: center; gap: .375rem; margin: 0; font-size: .8438rem; font-weight: 500; white-space: nowrap; cursor: pointer; }
 
+    /* Modifier un centre analytique : un volet par centre. */
+    .center-edit > summary { cursor: pointer; font-weight: 600; font-size: .875rem; padding: .375rem 0; }
+    .center-edit + .center-edit { border-top: 1px solid var(--line-soft); }
+    .center-edit[open] > summary { color: var(--brand); }
+
     /* Capacités d'un utilisateur : une colonne par domaine. */
     .user-perms details > summary { cursor: pointer; font-weight: 600; font-size: .875rem; color: var(--brand); margin: .5rem 0; }
     .user-perms details[open] > summary { margin-bottom: 1rem; }
