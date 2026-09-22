@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.9.0, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.10.0, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -106,6 +106,21 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   Les actions vérifient les règles métier ; les droits se contrôlent route par route
   (middleware `can:finance.…`). Une règle violée revient à l'écran comme un message,
   avec la saisie conservée.
+- **Factures** (`Models\Invoice`, `InvoiceLine`, `Actions\CreateInvoice`,
+  `CancelInvoice`) : numéro `FAC-AAAA-NNNNNN`, patient (identifiant et nom
+  copiés de l'hôte), lignes du catalogue au **tarif standard du jour, figé**
+  sur la ligne (le guichet ne saisit pas de prix), total, payé, solde.
+  - Statuts : `unpaid` Impayée, `partial` Partielle, `paid` Payée — tenus à
+    jour sous verrou à chaque encaissement rattaché (`finance_payments.invoice_id`)
+    et à chaque annulation d'encaissement ; `cancelled` Annulée (contrôle,
+    motif obligatoire, seulement sans encaissement valide) ; `refunded`
+    Remboursée, réservé au remboursement (pas encore de geste qui y mène).
+  - Encaisser : depuis la fiche, « Encaisser dans <caisse> » ouvre la session
+    avec patient et solde pré-remplis ; règlement partiel possible, jamais
+    au-delà du solde ; retour à la facture.
+  - Écrans `factures` (onglets par statut, recherche, montant/payé/solde),
+    `factures/nouvelle`, `factures/{id}`. Droits : `finance.invoices.view`,
+    `.create` (caissier), `.cancel` (comptable).
 - **Catalogue des actes** (`src/Models/AnalyticCenter.php`, `Act.php`, `Tariff.php`,
   `src/Actions/SetTariff.php`) : le référentiel de ce qui se facture, indépendant
   des factures pour que les prix évoluent sans réécrire l'historique.

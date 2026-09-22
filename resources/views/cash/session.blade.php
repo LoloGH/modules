@@ -76,6 +76,12 @@
                             </a>
                         </p>
                     @endif
+                    @if ($fromInvoice)
+                        <p class="flash ok" id="encaisser">
+                            Facture <strong>{{ $fromInvoice->number }}</strong> — {{ $fromInvoice->patient_name ?? $fromInvoice->patient_id }} :
+                            solde de {{ $money($fromInvoice->balance()) }}. Un règlement partiel est possible.
+                        </p>
+                    @endif
                     @if ($fromQueue)
                         <p class="flash ok" id="encaisser">
                             Patient appelé : <strong>{{ $fromQueue->patientName }}</strong>
@@ -85,6 +91,9 @@
                     @endif
                     <form method="post" action="{{ route('finance.cash.payments.store', $session) }}">
                         @csrf
+                        @if ($fromInvoice)
+                            <input type="hidden" name="invoice_id" value="{{ $fromInvoice->id }}">
+                        @endif
                         @if ($fromQueue)
                             {{-- La visite réglée : l'encaissement la fera avancer chez l'hôte. --}}
                             <input type="hidden" name="queue_ref" value="{{ request()->query('file') }}">
@@ -100,7 +109,7 @@
                             </label>
                             <label>Montant
                                 <input id="montant-encaissement" name="amount" class="money" inputmode="numeric"
-                                       value="{{ old('amount', $fromQueue?->expectedAmount()) }}" placeholder="0" required>
+                                       value="{{ old('amount', $fromQueue?->expectedAmount() ?? $fromInvoice?->balance()) }}" placeholder="0" required>
                                 <span class="help">En FCFA, sans décimale. Le tarif de l'acte le remplit automatiquement.</span>
                             </label>
                         </div>
@@ -126,10 +135,10 @@
                                  homonymes ne se confondent pas sur un encaissement. Venu de
                                  la file, il est celui du dossier et ne se retape pas. --}}
                             <label>Identifiant du patient
-                                <input name="patient_id" value="{{ old('patient_id', $fromQueue?->patientRef) }}"
+                                <input name="patient_id" value="{{ old('patient_id', $fromQueue?->patientRef ?? $fromInvoice?->patient_id) }}"
                                        placeholder="ex. PAT-00001" @if ($fromQueue) readonly @endif>
                             </label>
-                            <label>Nom du patient <input name="patient_name" value="{{ old('patient_name', $fromQueue?->patientName) }}"></label>
+                            <label>Nom du patient <input name="patient_name" value="{{ old('patient_name', $fromQueue?->patientName ?? $fromInvoice?->patient_name) }}"></label>
                         </div>
                         <label>Référence <input name="reference" value="{{ old('reference') }}" placeholder="Mobile Money, chèque…"></label>
                         <label>Libellé

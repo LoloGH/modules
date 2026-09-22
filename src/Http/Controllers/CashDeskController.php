@@ -21,6 +21,7 @@ use Keneya\FinanceCaisse\Models\CashierSetting;
 use Keneya\FinanceCaisse\Models\CashRegister;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
+use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Queue\QueuedVisit;
@@ -144,6 +145,8 @@ final class CashDeskController extends FinanceController
             // Venu de la file : « Encaisser » pré-remplit patient, acte et
             // montant. Le caissier relit et valide ; rien n'est enregistré ici.
             'fromQueue' => $fromQueue = ($session->isOpen() && $isOwner ? $this->queuedVisit($request) : null),
+            // Venu d'une facture : patient et solde pré-remplis.
+            'fromInvoice' => $fromQueue === null && $session->isOpen() && $isOwner ? $this->invoiceToCollect($request) : null,
             // La file d'où venait un encaissement qui n'a pas abouti (refusé, ou
             // lien périmé) : l'écran propose d'y retourner.
             'reopenQueue' => $fromQueue === null && $session->isOpen() && $isOwner
@@ -181,6 +184,19 @@ final class CashDeskController extends FinanceController
         }
 
         return Finance::cashQueue()->findVisit($queue, $visit);
+    }
+
+    private function invoiceToCollect(Request $request): ?Invoice
+    {
+        $id = $request->query('facture');
+
+        if (! is_string($id) || ! ctype_digit($id)) {
+            return null;
+        }
+
+        $invoice = Invoice::query()->find((int) $id);
+
+        return $invoice?->canBePaid() ? $invoice : null;
     }
 
     private function reopenQueueRef(Request $request): ?string

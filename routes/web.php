@@ -9,6 +9,7 @@ use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
 use Keneya\FinanceCaisse\Http\Controllers\CashierAccessController;
 use Keneya\FinanceCaisse\Http\Controllers\CashQueueController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
+use Keneya\FinanceCaisse\Http\Controllers\InvoiceController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
 use Keneya\FinanceCaisse\Http\Controllers\ReviewController;
@@ -57,6 +58,18 @@ Route::post('caisse/encaissements/{payment}/annulation', [MovementController::cl
 
 Route::post('caisse/decaissements/{disbursement}/annulation', [MovementController::class, 'cancelDisbursement'])
     ->middleware('can:finance.disbursements.cancel')->name('cash.disbursements.cancel');
+
+// Factures. « nouvelle » avant {invoice}, que l'on restreint aux nombres.
+Route::get('factures', [InvoiceController::class, 'index'])
+    ->middleware('can:finance.invoices.view')->name('invoices.index');
+Route::get('factures/nouvelle', [InvoiceController::class, 'create'])
+    ->middleware('can:finance.invoices.create')->name('invoices.create');
+Route::post('factures', [InvoiceController::class, 'store'])
+    ->middleware('can:finance.invoices.create')->name('invoices.store');
+Route::get('factures/{invoice}', [InvoiceController::class, 'show'])
+    ->middleware('can:finance.invoices.view')->whereNumber('invoice')->name('invoices.show');
+Route::post('factures/{invoice}/annulation', [InvoiceController::class, 'cancel'])
+    ->middleware('can:finance.invoices.cancel')->whereNumber('invoice')->name('invoices.cancel');
 
 // Contrôle
 Route::middleware('can:finance.sessions.validate')->group(function (): void {

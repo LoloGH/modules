@@ -260,6 +260,7 @@
     /* ---------------------------------------------------------- Tableaux */
 
     .tw { width: 100%; overflow-x: auto; }
+    .pager { display: flex; gap: .75rem; align-items: center; justify-content: center; border-top: 1px solid var(--line-soft); }
 
     table { width: 100%; border-collapse: collapse; font-size: .875rem; }
     /* Un tableau large défile dans sa carte plutôt que d'écraser ses colonnes. */

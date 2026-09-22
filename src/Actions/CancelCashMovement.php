@@ -11,6 +11,7 @@ use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
+use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Support\Actor;
 use Keneya\FinanceCaisse\Support\Money;
@@ -69,6 +70,11 @@ final class CancelCashMovement
                 );
             }
 
+            // La facture réglée, verrouillée avant de changer ce qu'elle a reçu.
+            $invoice = $fresh instanceof Payment && $fresh->invoice_id !== null
+                ? Invoice::query()->whereKey($fresh->invoice_id)->lockForUpdate()->first()
+                : null;
+
             $fresh->update([
                 'status' => Payment::STATUS_CANCELLED,
                 'cancelled_at' => now(),
@@ -85,6 +91,9 @@ final class CancelCashMovement
                 ['status' => Payment::STATUS_CANCELLED, 'reason' => $reason],
                 $actor,
             );
+
+            // La facture retrouve ce qu'elle doit encore.
+            $invoice?->recalculate();
 
             return $fresh;
         });

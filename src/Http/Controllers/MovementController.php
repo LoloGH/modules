@@ -34,6 +34,7 @@ final class MovementController extends FinanceController
             'patient_name' => $data['patient_name'] ?? null,
             'description' => $data['description'] ?? null,
             'act_id' => isset($data['act_id']) ? (int) $data['act_id'] : null,
+            'invoice_id' => isset($data['invoice_id']) ? (int) $data['invoice_id'] : null,
         ];
 
         // Un patient appelé depuis la file : l'encaissement fait aussi avancer
@@ -55,6 +56,16 @@ final class MovementController extends FinanceController
         }
 
         $payment = $action->handle($session, $method, (int) $data['amount'], $this->user($request), $details);
+
+        // Réglée sur facture : on revient à la facture, qui montre son solde.
+        if ($payment->invoice_id !== null) {
+            return redirect()->route('finance.invoices.show', $payment->invoice_id)->with('finance_status', sprintf(
+                'Encaissement %s enregistré : %s. Solde de la facture : %s.',
+                $payment->number,
+                Money::format($payment->amount),
+                Money::format($payment->invoice->fresh()->balance()),
+            ));
+        }
 
         return redirect()
             ->route('finance.cash.sessions.show', $session)

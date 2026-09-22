@@ -18,6 +18,8 @@ final class PaymentRequest extends FinanceRequest
             // Motif de l'encaissement : l'acte du catalogue. Facultatif, tout
             // encaissement ne correspond pas à une prestation tarifée.
             'act_id' => ['nullable', 'integer', 'exists:finance_acts,id'],
+            // La facture réglée, si l'encaissement vient d'une facture.
+            'invoice_id' => ['nullable', 'integer', 'exists:finance_invoices,id'],
             'amount' => ['required', 'integer', 'min:1'],
             'reference' => ['nullable', 'string', 'max:191'],
             'patient_id' => ['nullable', 'string', 'max:64'],

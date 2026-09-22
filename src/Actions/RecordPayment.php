@@ -11,6 +11,7 @@ use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\CashSession;
+use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
@@ -64,6 +65,10 @@ final class RecordPayment
 
             $act = $this->act($details['act_id'] ?? null);
 
+            // Un encaissement sur facture : la facture doit pouvoir le
+            // recevoir, sans dépasser ce qui reste dû.
+            $invoice = $this->invoice($details['invoice_id'] ?? null, $amount);
+
             $payment = Payment::create([
                 'number' => $this->numbers->next('payment'),
                 'cash_session_id' => $session->id,
@@ -71,12 +76,14 @@ final class RecordPayment
                 'act_id' => $act?->id,
                 'amount' => $amount,
                 'reference' => $reference,
-                'patient_id' => $patientId === null ? null : (string) $patientId,
-                'patient_name' => Text::clean($details['patient_name'] ?? null),
-                // Sans libellé saisi, le nom de l'acte fait office de motif :
-                // une ligne de caisse ne doit jamais rester muette.
-                'description' => Text::clean($details['description'] ?? null) ?? $act?->name,
-                'invoice_id' => $details['invoice_id'] ?? null,
+                'patient_id' => $patientId === null ? $invoice?->patient_id : (string) $patientId,
+                'patient_name' => Text::clean($details['patient_name'] ?? null) ?? $invoice?->patient_name,
+                // Sans libellé saisi, l'acte ou la facture fait office de
+                // motif : une ligne de caisse ne doit jamais rester muette.
+                'description' => Text::clean($details['description'] ?? null)
+                    ?? $act?->name
+                    ?? ($invoice === null ? null : 'Facture '.$invoice->number),
+                'invoice_id' => $invoice?->id,
                 // La visite de l'hôte réglée par cet encaissement, venu de la file.
                 'host_visit_ref' => $details['host_visit_ref'] ?? null,
                 'status' => Payment::STATUS_VALID,
@@ -103,8 +110,42 @@ final class RecordPayment
                 $cashier,
             );
 
+            $invoice?->recalculate();
+
             return $payment;
         });
+    }
+
+    /**
+     * La facture réglée par cet encaissement, verrouillée : ni annulée ni
+     * remboursée, et le montant ne dépasse pas son solde.
+     */
+    private function invoice(?int $invoiceId, int $amount): ?Invoice
+    {
+        if ($invoiceId === null) {
+            return null;
+        }
+
+        $invoice = Invoice::query()->whereKey($invoiceId)->lockForUpdate()->first();
+
+        if ($invoice === null) {
+            throw new FinanceRuleViolation("La facture choisie n'existe pas.");
+        }
+
+        if ($invoice->isClosed()) {
+            throw new FinanceRuleViolation("La facture {$invoice->number} est {$invoice->statusLabel()} : elle ne s'encaisse plus.");
+        }
+
+        if ($amount > $invoice->balance()) {
+            throw new FinanceRuleViolation(sprintf(
+                "La facture %s ne doit plus que %s : impossible d'encaisser %s.",
+                $invoice->number,
+                Money::format($invoice->balance()),
+                Money::format($amount),
+            ));
+        }
+
+        return $invoice;
     }
 
     /**
