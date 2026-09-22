@@ -11,12 +11,14 @@ use Keneya\FinanceCaisse\Models\CashRegister;
 use Keneya\FinanceCaisse\Models\CashSession;
 
 /**
- * Ouvre plusieurs caisses d'un coup, chacune avec son fonds initial.
+ * Ouvre plusieurs caisses d'un coup, avec UN seul fonds initial.
  *
- * Un caissier autorisé à tenir plusieurs tiroirs (Ticket, Services, …)
- * ouvre sa journée en une fois au lieu de trois. Chaque caisse garde sa
- * propre session — son fonds, ses mouvements, sa clôture et son écart : un
- * tiroir reste un tiroir.
+ * Le cas visé : un seul caissier encaisse tout (Ticket, Services, Pharmacie…)
+ * avec un seul tiroir. Il coche ses caisses et saisit le fonds qu'il a en
+ * main, une fois. Chaque caisse garde sa propre session — ses mouvements, sa
+ * clôture —, mais le fonds n'est compté qu'une fois : il est porté par la
+ * première caisse cochée, les autres s'ouvrent à zéro. La somme des fonds
+ * initiaux est ainsi exactement le fonds réel.
  *
  * Tout ou rien : chaque ouverture passe par `OpenCashSession` et ses règles
  * (affectation, caisse libre, limite), dans une seule transaction. Si une
@@ -27,23 +29,27 @@ final class OpenCashSessions
     public function __construct(private readonly OpenCashSession $open) {}
 
     /**
-     * @param  array<int, int>  $floats  fonds initial par identifiant de caisse
+     * @param  list<int>  $registerIds  dans l'ordre coché ; la première porte le fonds
      * @return list<CashSession>
      */
-    public function handle(array $floats, Authenticatable $cashier): array
+    public function handle(array $registerIds, int $openingFloat, Authenticatable $cashier): array
     {
-        if ($floats === []) {
+        if ($registerIds === []) {
             throw new FinanceRuleViolation('Cochez au moins une caisse à ouvrir.');
         }
 
-        return DB::transaction(function () use ($floats, $cashier): array {
+        if ($openingFloat < 0) {
+            throw new FinanceRuleViolation('Le fonds initial ne peut pas être négatif.');
+        }
+
+        return DB::transaction(function () use ($registerIds, $openingFloat, $cashier): array {
             $sessions = [];
 
-            foreach ($floats as $registerId => $float) {
+            foreach (array_values($registerIds) as $index => $registerId) {
                 $register = CashRegister::query()->findOrFail($registerId);
 
                 try {
-                    $sessions[] = $this->open->handle($register, $cashier, $float);
+                    $sessions[] = $this->open->handle($register, $cashier, $index === 0 ? $openingFloat : 0);
                 } catch (FinanceRuleViolation $e) {
                     throw new FinanceRuleViolation(sprintf(
                         'Aucune session ouverte. %s : %s',

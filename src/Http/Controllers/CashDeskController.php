@@ -90,20 +90,24 @@ final class CashDeskController extends FinanceController
     }
 
     /**
-     * Plusieurs caisses d'un coup : une session par caisse cochée, chacune avec
-     * son fonds initial. Tout ou rien (voir `OpenCashSessions`).
+     * Plusieurs caisses d'un coup, un seul fonds initial : une session par
+     * caisse cochée, le fonds porté par la première. Tout ou rien (voir
+     * `OpenCashSessions`).
      */
     public function openMany(OpenSessionsRequest $request, OpenCashSessions $action): RedirectResponse
     {
-        $sessions = $action->handle($request->floatsByRegister(), $this->user($request));
-
-        $total = array_sum(array_map(static fn (CashSession $session): int => (int) $session->opening_float, $sessions));
+        $sessions = $action->handle(
+            $request->registerIds(),
+            (int) $request->validated('opening_float'),
+            $this->user($request),
+        );
 
         return redirect()->route('finance.cash.index')->with('finance_status', sprintf(
-            '%d session(s) ouverte(s) : %s. Fonds initial total : %s.',
+            '%d session(s) ouverte(s) : %s. Fonds initial de %s, porté par %s.',
             count($sessions),
             collect($sessions)->map(fn (CashSession $session): string => $session->register->name)->implode(', '),
-            Money::format($total),
+            Money::format((int) $sessions[0]->opening_float),
+            $sessions[0]->register->name,
         ));
     }
 

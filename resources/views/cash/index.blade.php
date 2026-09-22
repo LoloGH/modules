@@ -48,63 +48,28 @@
                         @endif
                     </x-finance::empty>
                 @elseif ($remaining > 1 && $registers->count() > 1)
-                    {{-- Il peut tenir plusieurs tiroirs : il les ouvre en une fois,
-                         chacun avec son fonds, et lit le total qu'il a en main. --}}
-                    <form method="post" action="{{ route('finance.cash.sessions.open-many') }}" data-open-many>
+                    {{-- Un seul caissier pour plusieurs caisses : il les coche et
+                         saisit une fois le fonds qu'il a en main. --}}
+                    <form method="post" action="{{ route('finance.cash.sessions.open-many') }}">
                         @csrf
-                        <p class="muted">
-                            Cochez les caisses à ouvrir (jusqu'à {{ $remaining }}) et saisissez le fonds
-                            initial de chacune. Chaque caisse garde sa propre session et sa clôture.
-                        </p>
-                        <div class="tw">
-                            <table class="stack">
-                                <thead><tr><th style="width:3rem"></th><th>Caisse</th><th style="width:12rem">Fonds initial</th></tr></thead>
-                                <tbody>
-                                @foreach ($registers as $register)
-                                    @php ($checked = old('registers') === null || in_array((string) $register->id, array_map('strval', (array) old('registers')), true))
-                                    <tr>
-                                        <td data-l="">
-                                            <input type="checkbox" name="registers[]" value="{{ $register->id }}"
-                                                   aria-label="Ouvrir {{ $register->name }}" @checked($checked)>
-                                        </td>
-                                        <td data-l="Caisse" class="strong">{{ $register->name }}</td>
-                                        <td data-l="Fonds initial">
-                                            <input name="floats[{{ $register->id }}]" class="money" inputmode="numeric"
-                                                   value="{{ old('floats.'.$register->id, 0) }}" aria-label="Fonds initial de {{ $register->name }}">
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="strong" style="margin:.75rem 0 0">
-                            Fonds initial total : <span data-total>—</span>
-                        </p>
+                        <fieldset class="checks" style="border:0;padding:0;margin:0 0 .75rem">
+                            <legend class="lbl" style="margin-bottom:.375rem">Caisses à ouvrir (jusqu'à {{ $remaining }})</legend>
+                            @foreach ($registers as $register)
+                                @php ($checked = old('registers') === null || in_array((string) $register->id, array_map('strval', (array) old('registers')), true))
+                                <label>
+                                    <input type="checkbox" name="registers[]" value="{{ $register->id }}" @checked($checked)>
+                                    {{ $register->name }}
+                                </label>
+                            @endforeach
+                        </fieldset>
+                        <label>Fonds initial
+                            <input name="opening_float" class="money" inputmode="numeric" value="{{ old('opening_float', 0) }}" required>
+                            <span class="help">En FCFA, une seule fois : ce que contient votre tiroir. Il est porté par la première caisse cochée.</span>
+                        </label>
                         <div class="actions">
                             <button type="submit" class="lg"><x-finance::icon name="caisse" /> Ouvrir les caisses cochées</button>
                         </div>
                     </form>
-                    <script>
-                        (() => {
-                            const form = document.querySelector('[data-open-many]');
-                            if (!form) return;
-                            const out = form.querySelector('[data-total]');
-                            const fmt = (n) => n.toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ') + ' FCFA';
-                            const total = () => {
-                                let sum = 0;
-                                form.querySelectorAll('tbody tr').forEach((row) => {
-                                    const box = row.querySelector('input[type=checkbox]');
-                                    const input = row.querySelector('input.money');
-                                    input.disabled = !box.checked;
-                                    if (box.checked) sum += parseInt((input.value || '0').replace(/\s/g, ''), 10) || 0;
-                                });
-                                out.textContent = fmt(sum);
-                            };
-                            form.addEventListener('input', total);
-                            form.addEventListener('change', total);
-                            total();
-                        })();
-                    </script>
                 @else
                     <form method="post" action="{{ route('finance.cash.sessions.open') }}">
                         @csrf
@@ -124,6 +89,12 @@
                         <div class="actions">
                             <button type="submit" class="lg"><x-finance::icon name="caisse" /> Ouvrir la session</button>
                         </div>
+                        @if ($remaining === 1 && $registers->count() > 1)
+                            <p class="help" style="margin-bottom:0">
+                                Vous ne pouvez tenir qu'une caisse à la fois. Pour les ouvrir toutes d'un coup,
+                                un administrateur relève votre limite (écran « Caisses »).
+                            </p>
+                        @endif
                     </form>
                 @endif
             </x-finance::card>
