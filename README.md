@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.11.0, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.12.0, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -138,6 +138,13 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   `insurer_due_days`, défaut 30) et statut À échoir / Échue (jours de retard) ;
   filtres échéance, assureur, recherche ; indicateurs et ancienneté (0–30,
   31–60, 61–90, > 90 jours). Lecture seule.
+- **Rapports** (`rapports`, `finance.reports.view` : comptable, direction,
+  administrateur ; `Services\ReportBuilder`) : recettes par service, par
+  activité, par moyen ; dépenses par catégorie, par moyen ; règlements des
+  assureurs par assureur ; synthèse journalière (recettes caisse, règlements
+  assurance, dépenses, solde). Filtres période, service, activité, moyen ;
+  chiffres clés de la période ; **export CSV** (séparateur « ; », UTF-8 avec
+  BOM, montants entiers). Écritures valides uniquement, tout l'établissement.
 - **Paiements** (`paiements`, `finance.payments.view`, `Support\LedgerFilters`) :
   les encaissements, en lecture — n°, date et caisse, patient et identifiant,
   objet, moyen, référence, facture associée (lien), statut, montant, reçu.

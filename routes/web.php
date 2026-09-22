@@ -16,6 +16,7 @@ use Keneya\FinanceCaisse\Http\Controllers\MovementController;
 use Keneya\FinanceCaisse\Http\Controllers\PrintController;
 use Keneya\FinanceCaisse\Http\Controllers\ReceivableController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
+use Keneya\FinanceCaisse\Http\Controllers\ReportController;
 use Keneya\FinanceCaisse\Http\Controllers\ReviewController;
 use Keneya\FinanceCaisse\Http\Controllers\TariffController;
 
@@ -104,6 +105,12 @@ Route::middleware('can:finance.insurance.manage')->group(function (): void {
 // Créances : ce que patients et assureurs doivent encore (lecture).
 Route::get('creances', [ReceivableController::class, 'index'])
     ->middleware('can:finance.receivables.view')->name('receivables.index');
+
+// Rapports : pilotage de tout l'établissement, avec export CSV.
+Route::middleware('can:finance.reports.view')->group(function (): void {
+    Route::get('rapports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('rapports/export', [ReportController::class, 'export'])->name('reports.export');
+});
 
 // Contrôle
 Route::middleware('can:finance.sessions.validate')->group(function (): void {
