@@ -240,6 +240,18 @@
 
     input.money { font-variant-numeric: tabular-nums; }
 
+    /* Cases à cocher : elles ne suivent pas la mise en forme des champs texte. */
+    input[type="checkbox"], input[type="radio"] { width: auto; display: inline-block; margin: 0; padding: 0; accent-color: var(--brand); }
+    .checks { display: flex; flex-wrap: wrap; gap: .3125rem .875rem; }
+    .checks label { display: inline-flex; align-items: center; gap: .375rem; margin: 0; font-size: .8438rem; font-weight: 500; white-space: nowrap; cursor: pointer; }
+
+    /* Groupe de liens présentés comme des boutons (bascule entre sessions). */
+    .switch { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; margin: 0 0 1rem; font-size: .8438rem; }
+    .switch .lbl { color: var(--muted); }
+    /* La caisse qu'on regarde : enfoncée, et elle ne mène nulle part. */
+    .switch .btn.on { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-ring); cursor: default; }
+    .switch .btn.on:hover { background: var(--brand-soft); color: var(--brand); }
+
     form.inline { display: flex; flex-wrap: wrap; gap: .375rem; align-items: center; }
     form.inline input { width: auto; min-width: 9rem; flex: 1; }
 

@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 return [
 
-    'version' => '0.5.0',
+    'version' => '0.6.0',
 
     /*
     | Établissement exploitant l'application. Mêmes variables d'environnement
@@ -57,6 +57,25 @@ return [
             'refund' => 'RBT',
             'deposit' => 'AVA',
         ],
+    ],
+
+    /*
+    | Caisse.
+    |
+    | `max_open_sessions_per_cashier` : combien de sessions un caissier peut
+    | tenir ouvertes en même temps dans cet établissement. 1 correspond au
+    | fonctionnement classique — un caissier, un tiroir. Au-delà, une même
+    | personne peut tenir plusieurs caisses (par exemple Ticket et Services)
+    | sans clôturer entre les deux.
+    |
+    | Ce nombre est un défaut : il se surcharge caissier par caissier dans la
+    | table `finance_cashier_settings` (écran « Caisses »).
+    |
+    | Une seule session ouverte par caisse reste vraie quoi qu'il arrive :
+    | deux personnes ne tiennent jamais le même tiroir.
+    */
+    'cash' => [
+        'max_open_sessions_per_cashier' => (int) env('FINANCE_MAX_OPEN_SESSIONS_PER_CASHIER', 1),
     ],
 
     /*

@@ -50,4 +50,69 @@
             </div>
         @endif
     </x-finance::card>
+
+    <x-finance::card title="Caissiers"
+                     hint="Défaut de l'établissement : {{ $defaultLimit }} session(s)">
+        <p class="muted">
+            Combien de sessions un caissier peut tenir ouvertes, et sur quelles caisses.
+            Limite vide = le défaut de l'établissement. Aucune caisse cochée = toutes
+            les caisses. Une caisse reste toujours tenue par une seule personne à la fois.
+        </p>
+
+        @if ($cashiers === [])
+            <x-finance::empty title="Aucun caissier connu" icon="caisse">
+                Un caissier apparaît ici après avoir ouvert sa première session.
+            </x-finance::empty>
+        @else
+            <div class="tw">
+                <table class="stack wide">
+                    <thead>
+                    <tr><th>Caissier</th><th class="num">Ouvertes</th><th style="width:7rem">Limite</th><th>Caisses autorisées</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($cashiers as $cashier)
+                        <tr>
+                            <td data-l="Caissier" class="strong">
+                                {{ $cashier['name'] }}
+                                <span class="sub">
+                                    {{ $cashier['override'] === null ? 'Limite par défaut' : 'Limite propre' }}
+                                    · {{ $cashier['registers'] === [] ? 'Toutes les caisses' : count($cashier['registers']).' caisse(s)' }}
+                                </span>
+                            </td>
+                            <td data-l="Ouvertes" class="num">{{ $cashier['open'] }} / {{ $cashier['limit'] }}</td>
+                            <td data-l="Limite">
+                                <input form="acces-{{ $loop->index }}" name="max_open_sessions" inputmode="numeric"
+                                       value="{{ $cashier['override'] }}" placeholder="{{ $defaultLimit }}"
+                                       aria-label="Limite de {{ $cashier['name'] }}">
+                            </td>
+                            <td data-l="Caisses autorisées">
+                                @if ($assignable->isEmpty())
+                                    <span class="muted">Aucune caisse active.</span>
+                                @else
+                                    <div class="checks">
+                                        @foreach ($assignable as $register)
+                                            <label>
+                                                <input form="acces-{{ $loop->parent->index }}" type="checkbox"
+                                                       name="registers[]" value="{{ $register->id }}"
+                                                       @checked(in_array($register->id, $cashier['registers'], true))>
+                                                {{ $register->name }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </td>
+                            <td data-l="" class="acts">
+                                <form id="acces-{{ $loop->index }}" method="post" action="{{ route('finance.registers.access.store') }}">
+                                    @csrf
+                                    <input type="hidden" name="cashier_id" value="{{ $cashier['id'] }}">
+                                    <button type="submit" class="ghost sm">Enregistrer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </x-finance::card>
 @endsection

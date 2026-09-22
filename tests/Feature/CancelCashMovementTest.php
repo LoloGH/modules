@@ -25,7 +25,7 @@ class CancelCashMovementTest extends TestCase
     public function test_a_cancelled_payment_stays_visible_but_leaves_the_totals(): void
     {
         $cashier = $this->makeUser();
-        $accountant = $this->makeUser(['name' => 'Comptable HFD']);
+        $accountant = $this->makeUser(['name' => 'Comptable du centre']);
         $session = $this->openSession($cashier, 0);
         $payment = app(RecordPayment::class)->handle($session, $this->cashMethod(), 9_000, $cashier);
 
@@ -33,7 +33,7 @@ class CancelCashMovementTest extends TestCase
 
         $this->assertTrue($cancelled->isCancelled());
         $this->assertSame('Patient parti sans soins', $cancelled->cancellation_reason);
-        $this->assertSame('Comptable HFD', $cancelled->cancelled_by_name);
+        $this->assertSame('Comptable du centre', $cancelled->cancelled_by_name);
         $this->assertNotNull($cancelled->cancelled_at);
 
         // Toujours en base, mais plus dans les totaux.

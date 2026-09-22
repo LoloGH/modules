@@ -26,8 +26,18 @@ class Payment extends Model
         return [
             'amount' => 'integer',
             'invoice_id' => 'integer',
+            'act_id' => 'integer',
             'cancelled_at' => 'datetime',
         ];
+    }
+
+    /**
+     * L'acte encaissé, quand l'encaissement en désigne un. Null pour ce qui
+     * ne figure pas au catalogue (une avance, un reliquat).
+     */
+    public function act(): BelongsTo
+    {
+        return $this->belongsTo(Act::class, 'act_id');
     }
 
     public function session(): BelongsTo

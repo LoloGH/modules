@@ -5,12 +5,47 @@
 @section('content')
     <x-finance::page title="Ma caisse" sub="Ouvrez votre session pour encaisser et décaisser." />
 
+    @if ($openSessions->isNotEmpty())
+        <x-finance::card title="Mes sessions ouvertes"
+                         hint="{{ $openSessions->count() }} sur {{ $limit }} autorisée(s)" flush>
+            <div class="tw">
+                <table class="stack">
+                    <thead><tr><th>Caisse</th><th>Session</th><th>Ouverte le</th><th class="num">Fonds initial</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach ($openSessions as $item)
+                        <tr>
+                            <td data-l="Caisse" class="strong">{{ $item->register->name }}</td>
+                            <td data-l="Session" class="mono">{{ $item->number }}</td>
+                            <td data-l="Ouverte le">{{ $item->opened_at?->format('d/m/Y H:i') }}</td>
+                            <td data-l="Fonds initial" class="num">{{ $money($item->opening_float) }}</td>
+                            <td data-l="" class="acts">
+                                <a class="btn sm" href="{{ route('finance.cash.sessions.show', $item) }}">Ouvrir</a>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-finance::card>
+    @endif
+
     <div class="cols wide">
         @can('finance.sessions.open')
             <x-finance::card title="Ouvrir ma session" hint="Une session par caisse et par caissier">
-                @if ($registers->isEmpty())
+                @if (! $canOpenMore)
+                    <x-finance::empty title="Limite atteinte" icon="verrou">
+                        Vous tenez déjà {{ $openSessions->count() }} session(s) ouverte(s) sur les {{ $limit }} autorisée(s).
+                        Clôturez-en une pour en ouvrir une autre.
+                    </x-finance::empty>
+                @elseif ($registers->isEmpty())
                     <x-finance::empty title="Aucune caisse active" icon="caisse">
-                        Demandez à un administrateur d'en créer une avant d'ouvrir votre session.
+                        @if ($isRestricted)
+                            Les caisses auxquelles vous êtes affecté sont déjà tenues, ou désactivées.
+                            Demandez à un administrateur de revoir vos affectations.
+                        @else
+                            Toutes les caisses actives sont déjà tenues, ou aucune n'a été créée.
+                            Demandez à un administrateur d'en créer une avant d'ouvrir votre session.
+                        @endif
                     </x-finance::empty>
                 @else
                     <form method="post" action="{{ route('finance.cash.sessions.open') }}">

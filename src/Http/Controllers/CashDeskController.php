@@ -12,6 +12,9 @@ use Keneya\FinanceCaisse\Actions\CloseCashSession;
 use Keneya\FinanceCaisse\Actions\OpenCashSession;
 use Keneya\FinanceCaisse\Http\Requests\CloseSessionRequest;
 use Keneya\FinanceCaisse\Http\Requests\OpenSessionRequest;
+use Keneya\FinanceCaisse\Models\Act;
+use Keneya\FinanceCaisse\Models\CashierRegister;
+use Keneya\FinanceCaisse\Models\CashierSetting;
 use Keneya\FinanceCaisse\Models\CashRegister;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
@@ -22,7 +25,12 @@ use Keneya\FinanceCaisse\Support\Actor;
 use Keneya\FinanceCaisse\Support\Money;
 
 /**
- * Le bureau du caissier : ouvrir sa session, la suivre, la clôturer.
+ * Le bureau du caissier : ouvrir ses sessions, les suivre, les clôturer.
+ *
+ * Un caissier peut tenir plusieurs caisses à la fois si l'établissement
+ * l'autorise (voir `finance.cash.max_open_sessions_per_cashier`). Avec la
+ * limite à 1 — le cas courant — le bureau se comporte comme avant : une
+ * session ouverte mène directement à sa page.
  */
 final class CashDeskController extends FinanceController
 {
@@ -30,15 +38,36 @@ final class CashDeskController extends FinanceController
     {
         $cashierId = Actor::id($this->user($request));
 
-        $open = CashSession::query()->open()->where('cashier_id', $cashierId)->first();
+        $open = CashSession::query()->open()->with('register')
+            ->where('cashier_id', $cashierId)
+            ->orderBy('id')
+            ->get();
 
-        if ($open !== null) {
-            return redirect()->route('finance.cash.sessions.show', $open);
+        $limit = CashierSetting::limitFor($cashierId);
+
+        // Un caissier, un tiroir : on l'amène droit à sa session, comme avant.
+        if ($limit === 1 && $open->count() === 1) {
+            return redirect()->route('finance.cash.sessions.show', $open->first());
         }
 
+        // Liste vide = aucune restriction, donc toutes les caisses.
+        $assigned = CashierRegister::assignedIdsFor($cashierId);
+
         return view('finance::cash.index', [
-            'registers' => CashRegister::query()->active()->get(),
-            'recent' => CashSession::query()->with('register')->where('cashier_id', $cashierId)->latest('id')->limit(10)->get(),
+            'openSessions' => $open,
+            'limit' => $limit,
+            'canOpenMore' => $open->count() < $limit,
+            // On ne propose que les caisses libres ET auxquelles il est
+            // affecté : une caisse déjà tenue ne s'ouvre pas deux fois, pas
+            // même par son propre caissier.
+            'registers' => CashRegister::query()->active()
+                ->whereDoesntHave('sessions', fn ($query) => $query->where('status', CashSession::STATUS_OPEN))
+                ->when($assigned !== [], fn ($query) => $query->whereIn('id', $assigned))
+                ->get(),
+            'isRestricted' => $assigned !== [],
+            'recent' => CashSession::query()->with('register')
+                ->where('cashier_id', $cashierId)
+                ->latest('id')->limit(10)->get(),
         ]);
     }
 
@@ -70,7 +99,7 @@ final class CashDeskController extends FinanceController
             ? $calculator->totals($session)
             : ($session->totals ?? $calculator->totals($session));
 
-        $movements = $session->payments()->with('method')->get()
+        $movements = $session->payments()->with(['method', 'act'])->get()
             ->map(fn (Payment $payment): array => ['is_payment' => true, 'model' => $payment])
             ->concat(
                 $session->disbursements()->with('method')->get()
@@ -84,8 +113,18 @@ final class CashDeskController extends FinanceController
             'totals' => $totals,
             'movements' => $movements,
             'methods' => PaymentMethod::query()->active()->get(),
+            // Le motif d'encaissement : le catalogue des actes, avec leur
+            // centre et leur tarif standard du jour.
+            'acts' => Act::query()->active()->with(['center', 'standardTariff'])->get(),
             'isOwner' => $isOwner,
             'canReview' => $canReview,
+            // Tous ses tiroirs ouverts, celui-ci compris, pour basculer sans
+            // repasser par le bureau. La vue marque celui qu'on regarde.
+            'openSessions' => $isOwner
+                ? CashSession::query()->open()->with('register')
+                    ->where('cashier_id', $session->cashier_id)
+                    ->orderBy('id')->get()
+                : collect(),
         ]);
     }
 

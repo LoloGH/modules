@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Keneya\FinanceCaisse\Http\Controllers\ActController;
 use Keneya\FinanceCaisse\Http\Controllers\AnalyticCenterController;
 use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
+use Keneya\FinanceCaisse\Http\Controllers\CashierAccessController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
@@ -55,6 +56,7 @@ Route::middleware('can:finance.registers.manage')->group(function (): void {
     Route::get('caisses', [RegisterController::class, 'index'])->name('registers.index');
     Route::post('caisses', [RegisterController::class, 'store'])->name('registers.store');
     Route::post('caisses/{register}/basculer', [RegisterController::class, 'toggle'])->name('registers.toggle');
+    Route::post('caisses/caissiers', [CashierAccessController::class, 'store'])->name('registers.access.store');
 });
 
 // Catalogue des actes et tarifs

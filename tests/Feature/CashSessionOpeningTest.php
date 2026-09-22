@@ -63,7 +63,7 @@ class CashSessionOpeningTest extends TestCase
         $this->assertViolation('sur cette caisse', fn () => $this->openSession($this->makeUser(), 0, $register));
     }
 
-    public function test_only_one_open_session_per_cashier(): void
+    public function test_only_one_open_session_per_cashier_by_default(): void
     {
         $cashier = $this->makeUser();
         $this->openSession($cashier, 0, $this->makeRegister('A'));

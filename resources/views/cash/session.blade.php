@@ -7,6 +7,20 @@
         <x-finance::icon name="retour" /> Retour
     </a>
 
+    @if ($openSessions->count() > 1)
+        <nav class="switch" aria-label="Mes caisses ouvertes">
+            <span class="lbl">Mes caisses ouvertes :</span>
+            @foreach ($openSessions as $other)
+                @php ($current = $other->is($session))
+                <a class="btn sm {{ $current ? 'on' : 'ghost' }}"
+                   href="{{ route('finance.cash.sessions.show', $other) }}"
+                   @if ($current) aria-current="page" @endif>
+                    <x-finance::icon name="caisse" /> {{ $other->register->name }}
+                </a>
+            @endforeach
+        </nav>
+    @endif
+
     <x-finance::page
         title="Session {{ $session->number }}"
         sub="{{ $session->register->name }} · Caissier : {{ $session->cashier_name }} · Ouverte le {{ $session->opened_at?->format('d/m/Y H:i') }}{{ $session->closed_at ? ' · Clôturée le '.$session->closed_at->format('d/m/Y H:i') : '' }}">
@@ -25,26 +39,6 @@
         <x-finance::kpi label="Théorique en tiroir" icon="paiement" tone="blue" :value="$money($totals['expected_cash'])"
                         foot="Fonds initial + encaissements − décaissements" />
     </div>
-
-    @if (! empty($totals['by_method']))
-        <x-finance::card title="Totaux par moyen de paiement"
-                         hint="Seules les espèces comptent dans le tiroir" flush>
-            <div class="tw">
-                <table class="stack">
-                    <thead><tr><th>Moyen de paiement</th><th class="num">Encaissé</th><th class="num">Décaissé</th></tr></thead>
-                    <tbody>
-                    @foreach ($totals['by_method'] as $line)
-                        <tr>
-                            <td data-l="Moyen">{{ $line['name'] }}</td>
-                            <td data-l="Encaissé" class="num">{{ $money($line['in']) }}</td>
-                            <td data-l="Décaissé" class="num">{{ $money($line['out']) }}</td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </x-finance::card>
-    @endif
 
     @if (! $session->isOpen())
         <x-finance::card title="Clôture">
@@ -85,19 +79,41 @@
                                 </select>
                             </label>
                             <label>Montant
-                                <input name="amount" class="money" inputmode="numeric" value="{{ old('amount') }}" placeholder="0" required>
-                                <span class="help">En FCFA, sans décimale.</span>
+                                <input id="montant-encaissement" name="amount" class="money" inputmode="numeric"
+                                       value="{{ old('amount') }}" placeholder="0" required>
+                                <span class="help">En FCFA, sans décimale. Le tarif de l'acte le remplit automatiquement.</span>
                             </label>
                         </div>
+                        <label>Acte encaissé
+                            <select name="act_id" data-fills="montant-encaissement">
+                                <option value="">— Aucun (encaissement hors catalogue)</option>
+                                @foreach ($acts->groupBy(fn ($act) => $act->center?->name ?? 'Sans centre analytique') as $centre => $group)
+                                    <optgroup label="{{ $centre }}">
+                                        @foreach ($group as $act)
+                                            <option value="{{ $act->id }}"
+                                                    @if ($act->standardTariff) data-amount="{{ (int) $act->standardTariff->amount }}" @endif
+                                                    @selected((string) old('act_id') === (string) $act->id)>
+                                                {{ $act->name }}@if ($act->standardTariff) — {{ $money((int) $act->standardTariff->amount) }}@endif
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                            <span class="help">Consultation, analyse, imagerie… Sert à savoir ce que rapporte chaque service.</span>
+                        </label>
                         <div class="row">
                             <label>Nom du patient <input name="patient_name" value="{{ old('patient_name') }}"></label>
                             <label>Référence <input name="reference" value="{{ old('reference') }}" placeholder="Mobile Money, chèque…"></label>
                         </div>
-                        <label>Libellé <input name="description" value="{{ old('description') }}" placeholder="ex. Consultation générale"></label>
+                        <label>Libellé
+                            <input name="description" value="{{ old('description') }}" placeholder="Repris de l'acte si laissé vide">
+                        </label>
                         <div class="actions">
                             <button type="submit"><x-finance::icon name="recette" /> Enregistrer l'encaissement</button>
                         </div>
                     </form>
+
+                    @include('finance::partials.tariff-fill')
                 </x-finance::card>
             @endcan
 
@@ -157,7 +173,12 @@
                             </td>
                             <td data-l="Détail">
                                 @if ($movement['is_payment'])
-                                    {{ $item->patient_name }} @if ($item->description) — {{ $item->description }} @endif
+                                    {{ $item->act?->name ?? $item->description ?? 'Encaissement' }}
+                                    @if ($item->act?->center) <span class="badge muted">{{ $item->act->center->name }}</span> @endif
+                                    @if ($item->patient_name) <span class="sub">{{ $item->patient_name }}</span> @endif
+                                    @if ($item->description && $item->description !== $item->act?->name)
+                                        <span class="sub">{{ $item->description }}</span>
+                                    @endif
                                 @else
                                     {{ $item->reason }} @if ($item->beneficiary) ({{ $item->beneficiary }}) @endif
                                 @endif
@@ -186,6 +207,28 @@
             </div>
         @endif
     </x-finance::card>
+
+    {{-- Le récapitulatif par moyen vient juste avant la clôture : c'est ce
+         qu'on relit pour compter le tiroir. --}}
+    @if (! empty($totals['by_method']))
+        <x-finance::card title="Totaux par moyen de paiement"
+                         hint="Seules les espèces comptent dans le tiroir" flush>
+            <div class="tw">
+                <table class="stack">
+                    <thead><tr><th>Moyen de paiement</th><th class="num">Encaissé</th><th class="num">Décaissé</th></tr></thead>
+                    <tbody>
+                    @foreach ($totals['by_method'] as $line)
+                        <tr>
+                            <td data-l="Moyen">{{ $line['name'] }}</td>
+                            <td data-l="Encaissé" class="num">{{ $money($line['in']) }}</td>
+                            <td data-l="Décaissé" class="num">{{ $money($line['out']) }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-finance::card>
+    @endif
 
     @if ($session->isOpen() && $isOwner)
         @can('finance.sessions.close')

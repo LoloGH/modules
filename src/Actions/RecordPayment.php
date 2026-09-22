@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Actions\Concerns\GuardsCashSession;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
+use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
@@ -29,7 +30,7 @@ final class RecordPayment
     ) {}
 
     /**
-     * @param  array{reference?: ?string, patient_id?: string|int|null, patient_name?: ?string, description?: ?string, invoice_id?: ?int}  $details
+     * @param  array{reference?: ?string, patient_id?: string|int|null, patient_name?: ?string, description?: ?string, invoice_id?: ?int, act_id?: ?int}  $details
      */
     public function handle(
         CashSession $session,
@@ -61,15 +62,20 @@ final class RecordPayment
 
             $patientId = $details['patient_id'] ?? null;
 
+            $act = $this->act($details['act_id'] ?? null);
+
             $payment = Payment::create([
                 'number' => $this->numbers->next('payment'),
                 'cash_session_id' => $session->id,
                 'payment_method_id' => $method->id,
+                'act_id' => $act?->id,
                 'amount' => $amount,
                 'reference' => $reference,
                 'patient_id' => $patientId === null ? null : (string) $patientId,
                 'patient_name' => Text::clean($details['patient_name'] ?? null),
-                'description' => Text::clean($details['description'] ?? null),
+                // Sans libellé saisi, le nom de l'acte fait office de motif :
+                // une ligne de caisse ne doit jamais rester muette.
+                'description' => Text::clean($details['description'] ?? null) ?? $act?->name,
                 'invoice_id' => $details['invoice_id'] ?? null,
                 'status' => Payment::STATUS_VALID,
             ]);
@@ -77,13 +83,49 @@ final class RecordPayment
             $this->auditor->record(
                 'payment_recorded',
                 $payment,
-                sprintf('Encaissement %s : %s (%s), session %s', $payment->number, Money::format($amount), $method->name, $session->number),
+                sprintf(
+                    'Encaissement %s : %s (%s), session %s%s',
+                    $payment->number,
+                    Money::format($amount),
+                    $method->name,
+                    $session->number,
+                    $act === null ? '' : ', acte '.$act->code,
+                ),
                 [],
-                ['amount' => $amount, 'method' => $method->code, 'cash_session' => $session->number],
+                array_filter([
+                    'amount' => $amount,
+                    'method' => $method->code,
+                    'cash_session' => $session->number,
+                    'act' => $act?->code,
+                ], static fn ($value): bool => $value !== null),
                 $cashier,
             );
 
             return $payment;
         });
+    }
+
+    /**
+     * L'acte encaissé, s'il y en a un. Un acte désactivé ne se facture plus :
+     * il reste lisible sur les encaissements passés, mais on n'en crée pas de
+     * nouveaux.
+     */
+    private function act(?int $actId): ?Act
+    {
+        if ($actId === null) {
+            return null;
+        }
+
+        $act = Act::query()->find($actId);
+
+        if ($act === null) {
+            throw new FinanceRuleViolation("L'acte choisi n'existe pas.");
+        }
+
+        if (! $act->is_active) {
+            throw new FinanceRuleViolation("L'acte « {$act->name} » est désactivé : il ne peut plus être encaissé.");
+        }
+
+        return $act;
     }
 }

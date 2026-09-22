@@ -8,6 +8,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
+use Keneya\FinanceCaisse\Models\CashierRegister;
+use Keneya\FinanceCaisse\Models\CashierSetting;
 use Keneya\FinanceCaisse\Models\CashRegister;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
@@ -17,8 +19,14 @@ use Keneya\FinanceCaisse\Support\Money;
 /**
  * Ouvre une session de caisse.
  *
- * Règles : une seule session ouverte par caisse, une seule par caissier, une
- * caisse désactivée ne s'ouvre pas, le fonds initial n'est pas négatif.
+ * Règles : une seule session ouverte par caisse (deux personnes ne tiennent
+ * jamais le même tiroir), le caissier est affecté à cette caisse, il ne
+ * dépasse pas sa limite de sessions ouvertes simultanées, une caisse
+ * désactivée ne s'ouvre pas, le fonds initial n'est pas négatif.
+ *
+ * La limite vaut 1 par défaut — un caissier, un tiroir — et se règle par
+ * établissement dans la configuration, puis caissier par caissier dans
+ * `finance_cashier_settings`.
  */
 final class OpenCashSession
 {
@@ -42,15 +50,11 @@ final class OpenCashSession
                 throw new FinanceRuleViolation("La caisse {$register->name} est désactivée.");
             }
 
-            if (CashSession::query()->open()->where('cash_register_id', $register->id)->exists()) {
-                throw new FinanceRuleViolation('Une session est déjà ouverte sur cette caisse.');
-            }
-
             $cashierId = Actor::id($cashier);
 
-            if (CashSession::query()->open()->where('cashier_id', $cashierId)->exists()) {
-                throw new FinanceRuleViolation('Ce caissier a déjà une session ouverte.');
-            }
+            $this->assertAssignedTo($register, $cashierId);
+            $this->assertRegisterIsFree($register, $cashierId);
+            $this->assertUnderLimit($cashierId);
 
             $session = CashSession::create([
                 'number' => $this->numbers->next('cash_session'),
@@ -73,5 +77,58 @@ final class OpenCashSession
 
             return $session;
         });
+    }
+
+    /**
+     * Le caissier est affecté à cette caisse — ou n'est restreint à aucune,
+     * ce qui les autorise toutes.
+     */
+    private function assertAssignedTo(CashRegister $register, string $cashierId): void
+    {
+        if (! CashierRegister::allows($cashierId, (int) $register->id)) {
+            throw new FinanceRuleViolation("Vous n'êtes pas affecté à la caisse {$register->name}.");
+        }
+    }
+
+    /**
+     * Un tiroir, une personne. Le message distingue les deux cas : se voir
+     * répondre « une session est déjà ouverte » quand c'est la sienne
+     * n'aiderait personne.
+     */
+    private function assertRegisterIsFree(CashRegister $register, string $cashierId): void
+    {
+        $occupant = CashSession::query()->open()->where('cash_register_id', $register->id)->first();
+
+        if ($occupant === null) {
+            return;
+        }
+
+        if ((string) $occupant->cashier_id === $cashierId) {
+            throw new FinanceRuleViolation("Vous tenez déjà la caisse {$register->name} (session {$occupant->number}).");
+        }
+
+        throw new FinanceRuleViolation('Une session est déjà ouverte sur cette caisse.');
+    }
+
+    /**
+     * Le caissier reste sous sa limite de sessions ouvertes simultanées.
+     *
+     * Le verrou porte sur ses sessions ouvertes : deux ouvertures simultanées
+     * sur deux caisses différentes se succèdent au lieu de compter toutes les
+     * deux l'état d'avant.
+     */
+    private function assertUnderLimit(string $cashierId): void
+    {
+        $limit = CashierSetting::limitFor($cashierId);
+
+        $open = CashSession::query()->open()->where('cashier_id', $cashierId)->lockForUpdate()->count();
+
+        if ($open < $limit) {
+            return;
+        }
+
+        throw new FinanceRuleViolation($limit === 1
+            ? 'Ce caissier a déjà une session ouverte : clôturez-la avant d\'en ouvrir une autre.'
+            : sprintf('Vous avez déjà %d session(s) ouverte(s), limite atteinte.', $open));
     }
 }

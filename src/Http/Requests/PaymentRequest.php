@@ -15,6 +15,9 @@ final class PaymentRequest extends FinanceRequest
     {
         return [
             'payment_method_id' => ['required', 'integer', 'exists:finance_payment_methods,id'],
+            // Motif de l'encaissement : l'acte du catalogue. Facultatif, tout
+            // encaissement ne correspond pas à une prestation tarifée.
+            'act_id' => ['nullable', 'integer', 'exists:finance_acts,id'],
             'amount' => ['required', 'integer', 'min:1'],
             'reference' => ['nullable', 'string', 'max:191'],
             'patient_id' => ['nullable', 'string', 'max:64'],

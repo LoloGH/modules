@@ -36,6 +36,7 @@ final class MovementController extends FinanceController
                 'patient_id' => $data['patient_id'] ?? null,
                 'patient_name' => $data['patient_name'] ?? null,
                 'description' => $data['description'] ?? null,
+                'act_id' => isset($data['act_id']) ? (int) $data['act_id'] : null,
             ],
         );
 

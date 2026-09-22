@@ -30,13 +30,13 @@ class CashSessionValidationTest extends TestCase
     public function test_another_user_validates_a_closed_session(): void
     {
         [, $session] = $this->closedSession();
-        $accountant = $this->makeUser(['name' => 'Comptable HFD']);
+        $accountant = $this->makeUser(['name' => 'Comptable du centre']);
 
         $validated = app(ValidateCashSession::class)->handle($session, $accountant, '  Conforme  ');
 
         $this->assertTrue($validated->isValidated());
         $this->assertSame((string) $accountant->id, $validated->validator_id);
-        $this->assertSame('Comptable HFD', $validated->validator_name);
+        $this->assertSame('Comptable du centre', $validated->validator_name);
         $this->assertSame('Conforme', $validated->validation_note);
         $this->assertNotNull($validated->validated_at);
     }

@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.5.0, caisse + catalogue des actes** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.6.0, caisse + catalogue des actes** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés.
@@ -20,7 +20,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
 | URL | `/finance` |
 | Noms de routes | `finance.` |
 | Vues et traductions | `finance::` |
-| Tables | `finance_` (`sequences`, `audit_logs`, `payment_methods`, `cash_registers`, `cash_sessions`, `payments`, `disbursements`, `analytic_centers`, `acts`, `tariffs`) |
+| Tables | `finance_` (`sequences`, `audit_logs`, `payment_methods`, `cash_registers`, `cash_sessions`, `payments`, `disbursements`, `analytic_centers`, `acts`, `tariffs`, `cashier_settings`, `cashier_registers`) |
 | Configuration | `config/finance.php` |
 | Middleware d'accès | `finance.access` |
 | Capacité d'accès | `finance.access` |
@@ -45,7 +45,33 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
 - **Caisse** (`src/Actions/`) : `OpenCashSession`, `RecordPayment`, `RecordDisbursement`,
   `CancelCashMovement`, `CloseCashSession`, `ValidateCashSession`. Chaque action est
   transactionnelle, verrouille la session, et écrit dans le journal d'audit.
-  - Une session ouverte par caisse et par caissier ; fonds initial jamais négatif.
+  - **Une seule session ouverte par caisse**, toujours : deux personnes ne
+    tiennent jamais le même tiroir. Fonds initial jamais négatif.
+  - **Plusieurs caisses pour un même caissier**, si l'établissement le règle
+    ainsi. `finance.cash.max_open_sessions_per_cashier` (défaut **1**) fixe
+    combien de sessions un caissier peut tenir ouvertes en même temps. Avec 1,
+    le fonctionnement est celui d'avant : un caissier, un tiroir.
+    - Ce nombre se surcharge caissier par caissier dans
+      `finance_cashier_settings` (`cashier_id` unique, `max_open_sessions`
+      nullable). Pas de ligne, ou valeur nulle, veut dire « le défaut de
+      l'établissement ». Le choix d'une table plutôt qu'un champ sur
+      l'utilisateur tient à ce que le module ne possède pas la table des
+      utilisateurs de l'hôte : il n'en connaît qu'un identifiant en chaîne.
+    - `CashierSetting::limitFor($cashierId)` donne la limite effective.
+  - **Quelles caisses un caissier peut ouvrir** : `finance_cashier_registers`
+    affecte un caissier à des caisses précises. **Aucune ligne pour un
+    caissier vaut « toutes les caisses »** : l'affectation est une restriction
+    volontaire, pas un passage obligé, et personne ne se retrouve enfermé
+    dehors parce qu'une case n'a pas été cochée.
+    `CashierRegister::allows($cashierId, $registerId)` tranche.
+    L'affectation se contrôle **à l'ouverture** : une session déjà ouverte
+    n'est pas interrompue si le réglage change ensuite.
+    - Les deux réglages se font sur l'écran **Caisses**, sous
+      `can:finance.registers.manage`, dans un seul formulaire par caissier.
+      Chaque écriture est tracée (`cashier_limit_set`,
+      `cashier_registers_set`). Un caissier n'y apparaît qu'après avoir ouvert
+      une première session, puisque c'est la seule façon pour le module de
+      le connaître.
   - Théorique du tiroir = fonds initial + espèces encaissées - espèces décaissées
     (Mobile Money, carte, etc. sont totalisés par moyen mais n'entrent pas dans le tiroir).
   - Écart = compté - théorique ; tout écart doit être justifié.
@@ -53,6 +79,15 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Un encaissement ou décaissement ne se supprime pas : il s'annule (motif, auteur),
     et seulement tant que la session est ouverte.
   - Un décaissement en espèces ne peut pas dépasser ce que contient le tiroir.
+  - **Un encaissement désigne l'acte qu'il paie** (`finance_payments.act_id`,
+    nullable, `restrictOnDelete`) : consultation, analyse, imagerie… Le
+    formulaire propose le catalogue groupé par centre analytique, avec le tarif
+    standard du jour, qui **remplit automatiquement le champ « Montant »**. Le
+    montant reste malgré tout la décision du caissier : il peut l'écraser, et
+    un acompte sur un acte tarifé est possible. Sans libellé saisi,
+    le nom de l'acte fait office de motif ; un acte désactivé ne s'encaisse
+    plus, et un encaissement hors catalogue (avance, reliquat) reste permis.
+    C'est ce lien qui permettra de dire ce que rapporte chaque service.
   Les actions vérifient les règles métier ; les droits se contrôlent route par route
   (middleware `can:finance.…`). Une règle violée revient à l'écran comme un message,
   avec la saisie conservée.
@@ -74,6 +109,14 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Un centre ou un acte se **désactive**, il ne se supprime pas (`restrictOnDelete`
     partout : on ne cascade pas des données financières). Un centre qui porte encore
     des enfants ou des actes actifs ne se désactive pas.
+- **Bureau du caissier** : il liste **toutes** ses sessions ouvertes et ne
+  propose à l'ouverture que les caisses actives **libres** et auxquelles il est
+  affecté. Quand la limite est atteinte, le formulaire cède la place à un
+  message. Depuis une session, un bandeau de boutons liste **toutes** ses
+  caisses ouvertes, celle qu'il regarde comprise et marquée comme active ; il
+  n'apparaît que s'il en tient plus d'une. Avec la limite à 1 — le cas
+  courant — le bureau redirige directement vers l'unique session, exactement
+  comme avant.
 - **Écrans** (`/finance`) : `/` (tableau de bord), `caisse` (bureau du caissier),
   `caisse/sessions/{id}` (encaisser, décaisser, clôturer), `sessions` (contrôle et
   validation), `caisses` (administration), `catalogue/actes` (liste et création),
@@ -117,6 +160,13 @@ bordures discrètes, ombres légères, badges de statut sobres.
   (couleurs, rayons, ombres, espacements) : l'identité se change à un seul
   endroit. Les icônes sont du SVG en ligne
   (`resources/views/components/icon.blade.php`), les graphiques du CSS et du SVG.
+- **Un seul script**, dans `resources/views/partials/tariff-fill.blade.php` : le
+  report du tarif de l'acte choisi dans le champ « Montant » de l'encaissement.
+  Une vingtaine de lignes sans bibliothèque, et la page reste entièrement
+  utilisable sans lui — le tarif figure aussi dans l'intitulé de chaque option.
+  Il ne piétine jamais une saisie manuelle : il ne remplit que si le champ est
+  vide ou porte encore une valeur qu'il avait lui-même posée, et il ne vide
+  jamais le champ.
 - **Composants Blade anonymes**, préfixés comme les vues pour ne jamais entrer en
   collision avec ceux de l'hôte ou de DME : `<x-finance::card>`, `<x-finance::kpi>`,
   `<x-finance::page>`, `<x-finance::empty>`, `<x-finance::icon>`, `<x-finance::logo>`.

@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Http\Requests\RegisterRequest;
+use Keneya\FinanceCaisse\Models\CashierRegister;
+use Keneya\FinanceCaisse\Models\CashierSetting;
 use Keneya\FinanceCaisse\Models\CashRegister;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Support\Text;
@@ -23,12 +25,66 @@ final class RegisterController extends FinanceController
 {
     public function index(): View
     {
+        $registers = CashRegister::query()
+            ->withCount(['sessions as open_sessions_count' => fn ($query) => $query->where('status', CashSession::STATUS_OPEN)])
+            ->orderBy('name')
+            ->get();
+
         return view('finance::registers.index', [
-            'registers' => CashRegister::query()
-                ->withCount(['sessions as open_sessions_count' => fn ($query) => $query->where('status', CashSession::STATUS_OPEN)])
-                ->orderBy('name')
-                ->get(),
+            'registers' => $registers,
+            // On ne propose d'affecter que les caisses actives : cocher une
+            // caisse désactivée n'aurait aucun effet.
+            'assignable' => $registers->where('is_active', true)->values(),
+            'cashiers' => $this->knownCashiers(),
+            'defaultLimit' => CashierSetting::defaultLimit(),
         ]);
+    }
+
+    /**
+     * Les caissiers que le module connaît, avec leur limite effective.
+     *
+     * Le module ne possède pas la table des utilisateurs : un caissier
+     * n'apparaît ici qu'après avoir tenu une caisse au moins une fois, ou
+     * parce qu'il a déjà une surcharge enregistrée.
+     *
+     * @return list<array{id: string, name: string, open: int, limit: int, override: ?int, registers: list<int>}>
+     */
+    private function knownCashiers(): array
+    {
+        $fromSessions = CashSession::query()
+            ->selectRaw('cashier_id, MAX(cashier_name) as cashier_name')
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as open_count', [CashSession::STATUS_OPEN])
+            ->groupBy('cashier_id')
+            ->get()
+            ->keyBy('cashier_id');
+
+        $overrides = CashierSetting::query()->get()->keyBy('cashier_id');
+
+        $assignments = CashierRegister::query()->get()
+            ->groupBy('cashier_id')
+            ->map(fn ($rows): array => $rows->pluck('cash_register_id')->map(static fn ($id): int => (int) $id)->all());
+
+        $ids = $fromSessions->keys()->merge($overrides->keys())->merge($assignments->keys())->unique();
+
+        $default = CashierSetting::defaultLimit();
+
+        return $ids
+            ->map(function (string $id) use ($fromSessions, $overrides, $assignments, $default): array {
+                $override = $overrides->get($id)?->max_open_sessions;
+
+                return [
+                    'id' => $id,
+                    'name' => $fromSessions->get($id)?->cashier_name ?? $overrides->get($id)?->cashier_name ?? $id,
+                    'open' => (int) ($fromSessions->get($id)?->open_count ?? 0),
+                    'limit' => $override === null ? $default : max(1, $override),
+                    'override' => $override,
+                    // Liste vide = aucune restriction, donc toutes les caisses.
+                    'registers' => $assignments->get($id, []),
+                ];
+            })
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
     }
 
     public function store(RegisterRequest $request, Auditor $auditor): RedirectResponse
