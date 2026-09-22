@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Keneya\FinanceCaisse\Actions\CloseCashSession;
 use Keneya\FinanceCaisse\Actions\OpenCashSession;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Http\Requests\CloseSessionRequest;
 use Keneya\FinanceCaisse\Http\Requests\OpenSessionRequest;
 use Keneya\FinanceCaisse\Models\Act;
@@ -20,6 +21,7 @@ use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
+use Keneya\FinanceCaisse\Queue\QueuedVisit;
 use Keneya\FinanceCaisse\Services\CashSessionCalculator;
 use Keneya\FinanceCaisse\Support\Actor;
 use Keneya\FinanceCaisse\Support\Money;
@@ -110,6 +112,9 @@ final class CashDeskController extends FinanceController
 
         return view('finance::cash.session', [
             'session' => $session,
+            // Venu de la file : « Encaisser » pré-remplit patient, acte et
+            // montant. Le caissier relit et valide ; rien n'est enregistré ici.
+            'fromQueue' => $session->isOpen() && $isOwner ? $this->queuedVisit($request) : null,
             'totals' => $totals,
             'movements' => $movements,
             'methods' => PaymentMethod::query()->active()->get(),
@@ -126,6 +131,22 @@ final class CashDeskController extends FinanceController
                     ->orderBy('id')->get()
                 : collect(),
         ]);
+    }
+
+    /**
+     * La visite appelée depuis la file, si l'URL en désigne une qui attend
+     * encore un encaissement. Une référence périmée ne pré-remplit rien.
+     */
+    private function queuedVisit(Request $request): ?QueuedVisit
+    {
+        $queue = $request->query('file');
+        $visit = $request->query('visite');
+
+        if (! is_string($queue) || $queue === '' || ! is_string($visit) || $visit === '') {
+            return null;
+        }
+
+        return Finance::cashQueue()->findVisit($queue, $visit);
     }
 
     public function close(CloseSessionRequest $request, CashSession $session, CloseCashSession $action): RedirectResponse

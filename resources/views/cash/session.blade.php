@@ -68,8 +68,18 @@
         <div class="cols">
             @can('finance.payments.create')
                 <x-finance::card title="Encaisser">
+                    @if ($fromQueue)
+                        <p class="flash ok" id="encaisser">
+                            Patient appelé : <strong>{{ $fromQueue->patientName }}</strong>
+                            ({{ $fromQueue->patientRef }}), ticket n° {{ $fromQueue->token }}@if ($fromQueue->destinationService), vers {{ $fromQueue->destinationService }}@endif.
+                            Vérifiez puis enregistrez.
+                        </p>
+                    @endif
                     <form method="post" action="{{ route('finance.cash.payments.store', $session) }}">
                         @csrf
+                        @if ($fromQueue)
+                            <input type="hidden" name="patient_id" value="{{ old('patient_id', $fromQueue->patientRef) }}">
+                        @endif
                         <div class="row">
                             <label>Moyen de paiement
                                 <select name="payment_method_id" required>
@@ -80,7 +90,7 @@
                             </label>
                             <label>Montant
                                 <input id="montant-encaissement" name="amount" class="money" inputmode="numeric"
-                                       value="{{ old('amount') }}" placeholder="0" required>
+                                       value="{{ old('amount', $fromQueue?->expectedAmount()) }}" placeholder="0" required>
                                 <span class="help">En FCFA, sans décimale. Le tarif de l'acte le remplit automatiquement.</span>
                             </label>
                         </div>
@@ -92,7 +102,7 @@
                                         @foreach ($group as $act)
                                             <option value="{{ $act->id }}"
                                                     @if ($act->standardTariff) data-amount="{{ (int) $act->standardTariff->amount }}" @endif
-                                                    @selected((string) old('act_id') === (string) $act->id)>
+                                                    @selected((string) old('act_id', $fromQueue?->act?->id) === (string) $act->id)>
                                                 {{ $act->name }}@if ($act->standardTariff) — {{ $money((int) $act->standardTariff->amount) }}@endif
                                             </option>
                                         @endforeach
@@ -102,7 +112,7 @@
                             <span class="help">Consultation, analyse, imagerie… Sert à savoir ce que rapporte chaque service.</span>
                         </label>
                         <div class="row">
-                            <label>Nom du patient <input name="patient_name" value="{{ old('patient_name') }}"></label>
+                            <label>Nom du patient <input name="patient_name" value="{{ old('patient_name', $fromQueue?->patientName) }}"></label>
                             <label>Référence <input name="reference" value="{{ old('reference') }}" placeholder="Mobile Money, chèque…"></label>
                         </div>
                         <label>Libellé

@@ -7,6 +7,7 @@ use Keneya\FinanceCaisse\Http\Controllers\ActController;
 use Keneya\FinanceCaisse\Http\Controllers\AnalyticCenterController;
 use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
 use Keneya\FinanceCaisse\Http\Controllers\CashierAccessController;
+use Keneya\FinanceCaisse\Http\Controllers\CashQueueController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
@@ -29,6 +30,14 @@ Route::middleware('can:finance.sessions.view')->group(function (): void {
 
 Route::post('caisse/sessions', [CashDeskController::class, 'open'])
     ->middleware('can:finance.sessions.open')->name('cash.sessions.open');
+
+// File d'attente des caisses, fournie par l'hôte : on la consulte avec le
+// droit de voir ses sessions, on appelle le suivant avec celui d'encaisser.
+Route::get('file', [CashQueueController::class, 'index'])
+    ->middleware('can:finance.sessions.view')->name('queue.index');
+
+Route::post('file/appeler', [CashQueueController::class, 'callNext'])
+    ->middleware('can:finance.payments.create')->name('queue.call');
 
 Route::post('caisse/sessions/{session}/cloture', [CashDeskController::class, 'close'])
     ->middleware('can:finance.sessions.close')->name('cash.sessions.close');

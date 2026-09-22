@@ -3,11 +3,12 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.7.0, caisse + catalogue des actes exposé à l'hôte** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.8.0, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
-via le contrat `CatalogProvider` (`Finance::catalog()`), ticket de consultation.
+via le contrat `CatalogProvider` (`Finance::catalog()`), ticket de consultation,
+file de caisse de l'hôte lue par le contrat `CashQueueProvider` (`Finance::cashQueue()`).
 Écrans : bureau du caissier, page de session, liste de contrôle, gestion des caisses,
 catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
 
@@ -142,6 +143,23 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
 
   $ticket = Finance::catalog()->ticketAct(); // ?CatalogAct
   ```
+- **File de caisse fournie par l'hôte** — le caissier appelle et encaisse dans
+  Finance ; la file (visites, tickets) appartient à l'hôte, qui l'**implémente** :
+  - `Contracts\CashQueueProvider`, lu par `Finance::cashQueue()` :
+    `queues()` (les caisses), `pendingVisits($queueRef)` (appelés d'abord, puis
+    par ticket), `callNext($queueRef, $cashier)`, `findVisit($queueRef, $visitRef)`.
+    Par défaut `Queue\NoCashQueue` (aucune file, lié par `singletonIf`) ; l'hôte
+    lie sa propre implémentation dans son fournisseur de services.
+  - Objets de valeur `Queue\CashQueue` (`ref`, `name`) et `Queue\QueuedVisit`
+    (`ref`, `token`, `status`, `patientRef`, `patientName`, `originService`,
+    `destinationService`, `act` : `?CatalogAct` avec son tarif). Les `ref` sont
+    opaques : Finance les transporte sans les interpréter.
+  - Écran `file` (`finance.queue.index`, `can:finance.sessions.view`) : la file
+    du jour d'une caisse ; « Appeler le suivant » (`finance.queue.call`,
+    `can:finance.payments.create`) ; pour un patient appelé, « Encaisser » ouvre
+    la session avec patient, acte et montant **pré-remplis** — le caissier relit
+    et valide, rien n'est enregistré sans lui. Sans session ouverte, l'écran
+    invite d'abord à l'ouvrir et l'appel est refusé.
 - **Bureau du caissier** : il liste **toutes** ses sessions ouvertes et ne
   propose à l'ouverture que les caisses actives **libres** et auxquelles il est
   affecté. Quand la limite est atteinte, le formulaire cède la place à un

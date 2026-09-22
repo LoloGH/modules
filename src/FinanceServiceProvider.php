@@ -15,8 +15,10 @@ use Keneya\FinanceCaisse\Catalog\EloquentCatalogProvider;
 use Keneya\FinanceCaisse\Console\Commands\SyncCatalog;
 use Keneya\FinanceCaisse\Console\Commands\SyncPaymentMethods;
 use Keneya\FinanceCaisse\Console\Commands\SyncPermissions;
+use Keneya\FinanceCaisse\Contracts\CashQueueProvider;
 use Keneya\FinanceCaisse\Contracts\CatalogProvider;
 use Keneya\FinanceCaisse\Http\Middleware\EnsureHostGrantsAccess;
+use Keneya\FinanceCaisse\Queue\NoCashQueue;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
 use Keneya\FinanceCaisse\Standalone\StandaloneMode;
 use Keneya\FinanceCaisse\Support\Money;
@@ -45,6 +47,11 @@ class FinanceServiceProvider extends ServiceProvider
 
         // Le catalogue exposé à l'hôte (`Finance::catalog()`).
         $this->app->singleton(CatalogProvider::class, EloquentCatalogProvider::class);
+
+        // La file des caisses (`Finance::cashQueue()`) : l'hôte la fournit en
+        // liant sa propre implémentation. `singletonIf` pour ne jamais écraser
+        // celle qu'un hôte aurait enregistrée avant le module.
+        $this->app->singletonIf(CashQueueProvider::class, NoCashQueue::class);
     }
 
     public function boot(): void

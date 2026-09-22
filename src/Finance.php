@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Auth\User as FrameworkUser;
 use Illuminate\Http\Request;
+use Keneya\FinanceCaisse\Contracts\CashQueueProvider;
 use Keneya\FinanceCaisse\Contracts\CatalogProvider;
 
 /**
@@ -61,6 +62,16 @@ final class Finance
     public static function catalog(): CatalogProvider
     {
         return app(CatalogProvider::class);
+    }
+
+    /**
+     * La file d'attente des caisses, fournie par l'hôte : il lie sa propre
+     * implémentation de `CashQueueProvider` dans le conteneur. Sans hôte, une
+     * file vide.
+     */
+    public static function cashQueue(): CashQueueProvider
+    {
+        return app(CashQueueProvider::class);
     }
 
     /**
