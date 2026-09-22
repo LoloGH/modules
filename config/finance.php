@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 return [
 
-    'version' => '0.8.0',
+    'version' => '0.9.0',
 
     /*
     | Établissement exploitant l'application. Mêmes variables d'environnement

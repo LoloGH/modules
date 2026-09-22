@@ -6,6 +6,7 @@ namespace Keneya\FinanceCaisse\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Keneya\FinanceCaisse\Actions\CancelCashMovement;
+use Keneya\FinanceCaisse\Actions\CollectQueuedVisit;
 use Keneya\FinanceCaisse\Actions\RecordDisbursement;
 use Keneya\FinanceCaisse\Actions\RecordPayment;
 use Keneya\FinanceCaisse\Http\Requests\CancelMovementRequest;
@@ -22,23 +23,38 @@ use Keneya\FinanceCaisse\Support\Money;
  */
 final class MovementController extends FinanceController
 {
-    public function storePayment(PaymentRequest $request, CashSession $session, RecordPayment $action): RedirectResponse
+    public function storePayment(PaymentRequest $request, CashSession $session, RecordPayment $action, CollectQueuedVisit $collect): RedirectResponse
     {
         $data = $request->validated();
 
-        $payment = $action->handle(
-            $session,
-            PaymentMethod::query()->findOrFail((int) $data['payment_method_id']),
-            (int) $data['amount'],
-            $this->user($request),
-            [
-                'reference' => $data['reference'] ?? null,
-                'patient_id' => $data['patient_id'] ?? null,
-                'patient_name' => $data['patient_name'] ?? null,
-                'description' => $data['description'] ?? null,
-                'act_id' => isset($data['act_id']) ? (int) $data['act_id'] : null,
-            ],
-        );
+        $method = PaymentMethod::query()->findOrFail((int) $data['payment_method_id']);
+        $details = [
+            'reference' => $data['reference'] ?? null,
+            'patient_id' => $data['patient_id'] ?? null,
+            'patient_name' => $data['patient_name'] ?? null,
+            'description' => $data['description'] ?? null,
+            'act_id' => isset($data['act_id']) ? (int) $data['act_id'] : null,
+        ];
+
+        // Un patient appelé depuis la file : l'encaissement fait aussi avancer
+        // sa visite chez l'hôte, ou rien n'est enregistré.
+        if (isset($data['visit_ref'], $data['queue_ref'])) {
+            $payment = $collect->handle(
+                $session, $method, (int) $data['amount'], $this->user($request),
+                (string) $data['queue_ref'], (string) $data['visit_ref'], $details,
+            );
+
+            return redirect()
+                ->route('finance.queue.index', ['file' => $data['queue_ref'], 'session' => $session->id])
+                ->with('finance_status', sprintf(
+                    'Encaissement %s enregistré : %s. %s poursuit son parcours.',
+                    $payment->number,
+                    Money::format($payment->amount),
+                    $payment->patient_name ?? 'Le patient',
+                ));
+        }
+
+        $payment = $action->handle($session, $method, (int) $data['amount'], $this->user($request), $details);
 
         return redirect()
             ->route('finance.cash.sessions.show', $session)

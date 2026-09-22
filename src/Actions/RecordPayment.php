@@ -30,7 +30,7 @@ final class RecordPayment
     ) {}
 
     /**
-     * @param  array{reference?: ?string, patient_id?: string|int|null, patient_name?: ?string, description?: ?string, invoice_id?: ?int, act_id?: ?int}  $details
+     * @param  array{reference?: ?string, patient_id?: string|int|null, patient_name?: ?string, description?: ?string, invoice_id?: ?int, act_id?: ?int, host_visit_ref?: ?string}  $details
      */
     public function handle(
         CashSession $session,
@@ -77,6 +77,8 @@ final class RecordPayment
                 // une ligne de caisse ne doit jamais rester muette.
                 'description' => Text::clean($details['description'] ?? null) ?? $act?->name,
                 'invoice_id' => $details['invoice_id'] ?? null,
+                // La visite de l'hôte réglée par cet encaissement, venu de la file.
+                'host_visit_ref' => $details['host_visit_ref'] ?? null,
                 'status' => Payment::STATUS_VALID,
             ]);
 

@@ -17,8 +17,10 @@ use Keneya\FinanceCaisse\Console\Commands\SyncPaymentMethods;
 use Keneya\FinanceCaisse\Console\Commands\SyncPermissions;
 use Keneya\FinanceCaisse\Contracts\CashQueueProvider;
 use Keneya\FinanceCaisse\Contracts\CatalogProvider;
+use Keneya\FinanceCaisse\Contracts\VisitAdvancer;
 use Keneya\FinanceCaisse\Http\Middleware\EnsureHostGrantsAccess;
 use Keneya\FinanceCaisse\Queue\NoCashQueue;
+use Keneya\FinanceCaisse\Queue\NoVisitAdvancer;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
 use Keneya\FinanceCaisse\Standalone\StandaloneMode;
 use Keneya\FinanceCaisse\Support\Money;
@@ -52,6 +54,7 @@ class FinanceServiceProvider extends ServiceProvider
         // liant sa propre implémentation. `singletonIf` pour ne jamais écraser
         // celle qu'un hôte aurait enregistrée avant le module.
         $this->app->singletonIf(CashQueueProvider::class, NoCashQueue::class);
+        $this->app->singletonIf(VisitAdvancer::class, NoVisitAdvancer::class);
     }
 
     public function boot(): void

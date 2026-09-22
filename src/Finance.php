@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as FrameworkUser;
 use Illuminate\Http\Request;
 use Keneya\FinanceCaisse\Contracts\CashQueueProvider;
 use Keneya\FinanceCaisse\Contracts\CatalogProvider;
+use Keneya\FinanceCaisse\Contracts\VisitAdvancer;
 
 /**
  * Point d'entrée statique du module : réglages que l'hôte pose depuis son
@@ -72,6 +73,15 @@ final class Finance
     public static function cashQueue(): CashQueueProvider
     {
         return app(CashQueueProvider::class);
+    }
+
+    /**
+     * Ce qui fait avancer, chez l'hôte, une visite que Finance vient
+     * d'encaisser. Sans hôte, rien.
+     */
+    public static function visitAdvancer(): VisitAdvancer
+    {
+        return app(VisitAdvancer::class);
     }
 
     /**

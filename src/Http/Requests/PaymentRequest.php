@@ -23,6 +23,10 @@ final class PaymentRequest extends FinanceRequest
             'patient_id' => ['nullable', 'string', 'max:64'],
             'patient_name' => ['nullable', 'string', 'max:191'],
             'description' => ['nullable', 'string', 'max:191'],
+            // Venu de la file : la caisse et la visite de l'hôte, références
+            // opaques. Les deux ensemble, ou aucune.
+            'queue_ref' => ['nullable', 'string', 'max:64', 'required_with:visit_ref'],
+            'visit_ref' => ['nullable', 'string', 'max:64', 'required_with:queue_ref'],
         ];
     }
 }

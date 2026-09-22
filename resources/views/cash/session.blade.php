@@ -72,13 +72,16 @@
                         <p class="flash ok" id="encaisser">
                             Patient appelé : <strong>{{ $fromQueue->patientName }}</strong>
                             ({{ $fromQueue->patientRef }}), ticket n° {{ $fromQueue->token }}@if ($fromQueue->destinationService), vers {{ $fromQueue->destinationService }}@endif.
-                            Vérifiez puis enregistrez.
+                            Vérifiez puis enregistrez : le patient poursuivra alors son parcours.
                         </p>
                     @endif
                     <form method="post" action="{{ route('finance.cash.payments.store', $session) }}">
                         @csrf
                         @if ($fromQueue)
+                            {{-- La visite réglée : l'encaissement la fera avancer chez l'hôte. --}}
                             <input type="hidden" name="patient_id" value="{{ old('patient_id', $fromQueue->patientRef) }}">
+                            <input type="hidden" name="queue_ref" value="{{ request()->query('file') }}">
+                            <input type="hidden" name="visit_ref" value="{{ $fromQueue->ref }}">
                         @endif
                         <div class="row">
                             <label>Moyen de paiement

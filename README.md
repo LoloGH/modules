@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.8.0, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.9.0, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -160,6 +160,25 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     la session avec patient, acte et montant **pré-remplis** — le caissier relit
     et valide, rien n'est enregistré sans lui. Sans session ouverte, l'écran
     invite d'abord à l'ouvrir et l'appel est refusé.
+- **Après encaissement, la visite avance chez l'hôte** — `Contracts\VisitAdvancer`
+  (`advanceAfterPayment($visitRef, SettledPayment $payment)`), lu par
+  `Finance::visitAdvancer()`, implémenté par l'hôte (par défaut
+  `Queue\NoVisitAdvancer`, qui ne fait rien).
+  - Le formulaire pré-rempli depuis la file porte `queue_ref` et `visit_ref` ;
+    l'encaissement passe alors par `Actions\CollectQueuedVisit` :
+    1. la visite doit encore attendre à cette caisse (`findVisit`), et ne jamais
+       avoir été encaissée (`finance_payments.host_visit_ref`, référence opaque
+       de la visite) — pas de double paiement ;
+    2. **dans une seule transaction** : `RecordPayment` (numéro, session, audit),
+       puis `advanceAfterPayment` chez l'hôte ;
+    3. si l'hôte lève une exception, tout est annulé (aucun encaissement
+       orphelin), l'échec est journalisé (`Log::error` + audit
+       `queued_payment_rolled_back` sur la session) et le caissier reçoit un
+       message ; seuls les messages d'`InvalidArgumentException` /
+       `DomainException` lui sont montrés tels quels.
+  - Finance est la source de vérité du paiement : l'hôte ne crée pas de
+    paiement de son côté, il ne fait qu'avancer la visite. Il ne doit rien
+    envoyer au-dehors avant la validation de la transaction (`afterCommit`).
 - **Bureau du caissier** : il liste **toutes** ses sessions ouvertes et ne
   propose à l'ouverture que les caisses actives **libres** et auxquelles il est
   affecté. Quand la limite est atteinte, le formulaire cède la place à un
