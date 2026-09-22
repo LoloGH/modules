@@ -49,6 +49,7 @@ final class Navigation
                     self::item('Actes et prestations', 'acte', 'finance.catalog.acts.index', 'finance.catalog.view', ['finance.catalog.acts.*']),
                     self::item('Centres analytiques', 'centre', 'finance.catalog.centers.index', 'finance.catalog.view'),
                     self::item('Caisses', 'reglage', 'finance.registers.index', 'finance.registers.manage'),
+                    self::item('Utilisateurs', 'utilisateur', 'finance.users.index', 'finance.roles.manage', ['finance.users.*']),
                 ],
             ],
         ];

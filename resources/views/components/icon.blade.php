@@ -37,6 +37,7 @@
         'verrou' => '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>',
         'plus' => '<path d="M12 5v14M5 12h14"/>',
         'point' => '<circle cx="12" cy="12" r="3"/>',
+        'utilisateur' => '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
     ];
 @endphp
 

@@ -19,6 +19,7 @@ use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
 use Keneya\FinanceCaisse\Http\Controllers\ReportController;
 use Keneya\FinanceCaisse\Http\Controllers\ReviewController;
 use Keneya\FinanceCaisse\Http\Controllers\TariffController;
+use Keneya\FinanceCaisse\Http\Controllers\UserPermissionController;
 
 /*
 | Les droits se contrôlent ici, route par route (middleware `can:`), et les
@@ -127,6 +128,14 @@ Route::middleware('can:finance.registers.manage')->group(function (): void {
     Route::post('caisses', [RegisterController::class, 'store'])->name('registers.store');
     Route::post('caisses/{register}/basculer', [RegisterController::class, 'toggle'])->name('registers.toggle');
     Route::post('caisses/caissiers', [CashierAccessController::class, 'store'])->name('registers.access.store');
+});
+
+// Utilisateurs : les capacités de chacun dans le module, réglées ici sans
+// toucher aux rôles de l'hôte.
+Route::middleware('can:finance.roles.manage')->group(function (): void {
+    Route::get('utilisateurs', [UserPermissionController::class, 'index'])->name('users.index');
+    Route::post('utilisateurs/capacites', [UserPermissionController::class, 'store'])->name('users.permissions.store');
+    Route::post('utilisateurs/capacites/reinitialiser', [UserPermissionController::class, 'reset'])->name('users.permissions.reset');
 });
 
 // Catalogue des actes et tarifs

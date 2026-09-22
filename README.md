@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.13.0, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.14.0, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,24 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Utilisateurs** (`utilisateurs`, `finance.roles.manage`, administrateur) :
+  les capacités de chacun dans le module, réglées dans Finance sans rien
+  changer chez l'hôte (ni rôle, ni type de personnel).
+  - Liste : les utilisateurs que l'hôte fait entrer dans le module
+    (`Finance::cashiers()`), plus ceux qui ont encore un réglage ici.
+  - Sans réglage, un utilisateur garde les droits de ses rôles chez l'hôte
+    (cochés comme point de départ). Une fois enregistrées
+    (`finance_user_permissions`, `Access\UserPermissions`), ses capacités
+    sont exactement celles cochées : le reste lui est refusé, quels que
+    soient ses rôles. « Revenir aux rôles de l'application hôte » efface le
+    réglage.
+  - Capacités réglables : toutes celles de `Rbac`, sauf l'entrée dans le
+    module (`finance.access`, décidée par l'hôte) et l'administration du
+    module (`finance.settings.manage`, `finance.roles.manage`). Modèles
+    Caissier, Comptable, Direction pour cocher d'un coup.
+  - La décision passe par un `Gate::before` posé à la résolution du Gate,
+    donc avant spatie et l'hôte. On ne règle pas ses propres capacités.
+    Tracé : `user_permissions_set`, `user_permissions_reset`.
 - **Paiements** (`paiements`, `finance.payments.view`, `Support\LedgerFilters`) :
   les encaissements, en lecture — n°, date et caisse, patient et identifiant,
   objet, moyen, référence, facture associée (lien), statut, montant, reçu.
@@ -310,7 +328,9 @@ bordures discrètes, ombres légères, badges de statut sobres.
   (couleurs, rayons, ombres, espacements) : l'identité se change à un seul
   endroit. Les icônes sont du SVG en ligne
   (`resources/views/components/icon.blade.php`), les graphiques du CSS et du SVG.
-- **Un seul script**, dans `resources/views/partials/tariff-fill.blade.php` : le
+- **Deux petits scripts** : les modèles de capacités de l'écran Utilisateurs
+  (cocher d'un coup, la page reste utilisable sans lui), et dans
+  `resources/views/partials/tariff-fill.blade.php` le
   report du tarif de l'acte choisi dans le champ « Montant » de l'encaissement.
   Une vingtaine de lignes sans bibliothèque, et la page reste entièrement
   utilisable sans lui — le tarif figure aussi dans l'intitulé de chaque option.

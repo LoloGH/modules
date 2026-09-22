@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Keneya\FinanceCaisse;
 
+use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Keneya\FinanceCaisse\Access\FinanceAccessGate;
+use Keneya\FinanceCaisse\Access\UserPermissions;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Cashiers\NoCashierDirectory;
 use Keneya\FinanceCaisse\Catalog\EloquentCatalogProvider;
@@ -48,6 +50,7 @@ class FinanceServiceProvider extends ServiceProvider
         $this->app->singleton(FinanceAccessGate::class);
         $this->app->singleton(Auditor::class);
         $this->app->singleton(NumberGenerator::class);
+        $this->app->singleton(UserPermissions::class);
 
         // Le catalogue exposé à l'hôte (`Finance::catalog()`).
         $this->app->singleton(CatalogProvider::class, EloquentCatalogProvider::class);
@@ -58,6 +61,23 @@ class FinanceServiceProvider extends ServiceProvider
         $this->app->singletonIf(CashQueueProvider::class, NoCashQueue::class);
         $this->app->singletonIf(VisitAdvancer::class, NoVisitAdvancer::class);
         $this->app->singletonIf(CashierDirectory::class, NoCashierDirectory::class);
+
+        $this->registerUserPermissions();
+    }
+
+    /**
+     * Les capacités réglées dans Finance (écran « Utilisateurs ») passent
+     * avant les rôles : ce Gate::before s'enregistre dès la résolution du
+     * Gate, donc avant ceux que spatie et l'hôte posent au démarrage. Un
+     * refus réglé ici n'est ainsi jamais couvert par un rôle qui accorde.
+     */
+    private function registerUserPermissions(): void
+    {
+        $this->callAfterResolving(Gate::class, function (Gate $gate): void {
+            $gate->before(fn ($user, string $ability): ?bool => $user === null
+                ? null
+                : $this->app->make(UserPermissions::class)->decide($user, $ability));
+        });
     }
 
     public function boot(): void

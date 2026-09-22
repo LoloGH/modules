@@ -245,6 +245,15 @@
     .checks { display: flex; flex-wrap: wrap; gap: .3125rem .875rem; }
     .checks label { display: inline-flex; align-items: center; gap: .375rem; margin: 0; font-size: .8438rem; font-weight: 500; white-space: nowrap; cursor: pointer; }
 
+    /* Capacités d'un utilisateur : une colonne par domaine. */
+    .user-perms details > summary { cursor: pointer; font-weight: 600; font-size: .875rem; color: var(--brand); margin: .5rem 0; }
+    .user-perms details[open] > summary { margin-bottom: 1rem; }
+    .perm-groups { display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); margin-bottom: 1rem; }
+    .perm-groups fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+    .perm-groups legend { font-size: .75rem; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: .375rem; }
+    .perm-groups label { display: flex; align-items: flex-start; gap: .5rem; margin: 0 0 .3125rem; font-size: .8438rem; font-weight: 500; cursor: pointer; }
+    .perm-groups label input { margin-top: .1875rem; }
+
     /* Groupe de liens présentés comme des boutons (bascule entre sessions). */
     .switch { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; margin: 0 0 1rem; font-size: .8438rem; }
     .switch .lbl { color: var(--muted); }
