@@ -251,6 +251,8 @@
     /* La caisse qu'on regarde : enfoncée, et elle ne mène nulle part. */
     .switch .btn.on { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-ring); cursor: default; }
     .switch .btn.on:hover { background: var(--brand-soft); color: var(--brand); }
+    .switch .btn .pip { width: .5rem; height: .5rem; border-radius: 50%; background: #ef4444; display: inline-block; margin-left: .125rem; box-shadow: 0 0 0 2px var(--surface); }
+    .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
     form.inline { display: flex; flex-wrap: wrap; gap: .375rem; align-items: center; }
     form.inline input { width: auto; min-width: 9rem; flex: 1; }

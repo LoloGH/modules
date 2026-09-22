@@ -68,6 +68,14 @@
         <div class="cols">
             @can('finance.payments.create')
                 <x-finance::card title="Encaisser">
+                    @if ($reopenQueue)
+                        <p class="flash err">
+                            Ce patient n'attend plus d'encaissement ici (déjà encaissé, orienté, ou lien périmé).
+                            <a class="btn sm" href="{{ route('finance.queue.index', ['file' => $reopenQueue]) }}">
+                                <x-finance::icon name="retour" /> Rouvrir depuis la file
+                            </a>
+                        </p>
+                    @endif
                     @if ($fromQueue)
                         <p class="flash ok" id="encaisser">
                             Patient appelé : <strong>{{ $fromQueue->patientName }}</strong>

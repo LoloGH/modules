@@ -174,6 +174,15 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     la session avec patient, acte et montant **pré-remplis** — le caissier relit
     et valide, rien n'est enregistré sans lui. Sans session ouverte, l'écran
     invite d'abord à l'ouvrir et l'appel est refusé.
+  - **La bonne caisse** : un patient de la file « Caisse Ticket » s'encaisse
+    dans la session de la caisse qui porte ce nom (comparaison sans casse ni
+    espaces superflus). Sans session ouverte sur cette caisse, l'écran le dit
+    et le caissier choisit ; il peut aussi toujours en choisir une autre.
+  - **Point rouge** sur l'onglet d'une caisse où des patients attendent ; la
+    file se relit seule toutes les 20 secondes (sauf pendant une saisie).
+  - **« Rouvrir depuis la file »** : un encaissement venu de la file qui
+    n'aboutit pas (patient déjà encaissé ou orienté, lien périmé) propose de
+    revenir à la file au lieu d'une simple erreur.
 - **Après encaissement, la visite avance chez l'hôte** — `Contracts\VisitAdvancer`
   (`advanceAfterPayment($visitRef, SettledPayment $payment)`), lu par
   `Finance::visitAdvancer()`, implémenté par l'hôte (par défaut

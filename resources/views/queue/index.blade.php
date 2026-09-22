@@ -19,10 +19,16 @@
                 <span class="lbl">Caisse :</span>
                 @foreach ($queues as $queue)
                     @php ($on = $queue->ref === $current->ref)
+                    @php ($count = $waiting[$queue->ref] ?? 0)
+                    {{-- Sans session dans l'URL : chaque file retrouve d'elle-même
+                         la session de sa caisse. --}}
                     <a class="btn sm {{ $on ? 'on' : 'ghost' }}"
-                       href="{{ route('finance.queue.index', ['file' => $queue->ref, 'session' => $session?->id]) }}"
+                       href="{{ route('finance.queue.index', ['file' => $queue->ref]) }}"
                        @if ($on) aria-current="page" @endif>
                         <x-finance::icon name="caisse" /> {{ $queue->name }}
+                        @if ($count > 0)
+                            <span class="pip" title="{{ $count }} patient(s) en attente"><span class="sr">{{ $count }} patient(s) en attente</span></span>
+                        @endif
                     </a>
                 @endforeach
             </nav>
@@ -38,7 +44,13 @@
             </x-finance::card>
         @else
             <x-finance::card title="{{ $current->name }}" hint="Encaissement dans la session {{ $session->number }} ({{ $session->register->name }})">
-                @if ($sessions->count() > 1)
+                @if (! $matched)
+                    <p class="flash err" style="margin-top:0">
+                        Vous n'avez pas de session ouverte sur la caisse « {{ $current->name }} ».
+                        Choisissez dans quelle caisse encaisser ces patients.
+                    </p>
+                @endif
+                @if ($sessions->count() > 1 || ! $matched)
                     <p class="muted">
                         Encaisser dans :
                         @foreach ($sessions as $other)
@@ -103,4 +115,12 @@
             @endif
         </x-finance::card>
     @endif
+    {{-- La file bouge sans que le caissier touche à rien : on la relit toutes
+         les 20 secondes, sauf pendant qu'il saisit quelque chose. --}}
+    <script>
+        setInterval(() => {
+            const busy = document.activeElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName);
+            if (!document.hidden && !busy) window.location.reload();
+        }, 20000);
+    </script>
 @endsection

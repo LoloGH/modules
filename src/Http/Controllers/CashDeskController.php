@@ -141,7 +141,12 @@ final class CashDeskController extends FinanceController
             'session' => $session,
             // Venu de la file : « Encaisser » pré-remplit patient, acte et
             // montant. Le caissier relit et valide ; rien n'est enregistré ici.
-            'fromQueue' => $session->isOpen() && $isOwner ? $this->queuedVisit($request) : null,
+            'fromQueue' => $fromQueue = ($session->isOpen() && $isOwner ? $this->queuedVisit($request) : null),
+            // La file d'où venait un encaissement qui n'a pas abouti (refusé, ou
+            // lien périmé) : l'écran propose d'y retourner.
+            'reopenQueue' => $fromQueue === null && $session->isOpen() && $isOwner
+                ? $this->reopenQueueRef($request)
+                : null,
             'totals' => $totals,
             'movements' => $movements,
             'methods' => PaymentMethod::query()->active()->get(),
@@ -174,6 +179,15 @@ final class CashDeskController extends FinanceController
         }
 
         return Finance::cashQueue()->findVisit($queue, $visit);
+    }
+
+    private function reopenQueueRef(Request $request): ?string
+    {
+        $failed = session()->has('finance_error') ? $request->old('queue_ref') : null;
+        $stale = $request->query('visite') !== null ? $request->query('file') : null;
+        $ref = $failed ?? $stale;
+
+        return is_string($ref) && $ref !== '' ? $ref : null;
     }
 
     public function close(CloseSessionRequest $request, CashSession $session, CloseCashSession $action): RedirectResponse

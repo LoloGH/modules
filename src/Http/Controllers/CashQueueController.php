@@ -21,6 +21,11 @@ use Keneya\FinanceCaisse\Support\Actor;
  * la montrer et y agir par le contrat. L'encaissement, lui, se fait dans la
  * session de caisse de Finance (sessions, écart, audit) : on n'encaisse pas
  * sans tiroir ouvert, l'écran invite d'abord à l'ouvrir.
+ *
+ * Un patient de la file « Caisse Ticket » s'encaisse dans la session de la
+ * caisse « Caisse Ticket », et ainsi de suite : la session est choisie d'elle-
+ * même quand une caisse ouverte porte le nom de la file. Sinon, ou si le
+ * caissier en décide autrement, il choisit.
  */
 final class CashQueueController extends FinanceController
 {
@@ -29,14 +34,19 @@ final class CashQueueController extends FinanceController
         $queues = collect(Finance::cashQueue()->queues());
         $current = $this->selectedQueue($request, $queues);
         $sessions = $this->openSessions($request);
-        $session = $this->selectedSession($request, $sessions);
+        [$session, $matched] = $this->sessionFor($request, $sessions, $current);
 
         return view('finance::queue.index', [
             'queues' => $queues,
             'current' => $current,
             'visits' => $current === null ? [] : Finance::cashQueue()->pendingVisits($current->ref),
+            // Le point rouge des onglets : combien attendent à chaque caisse.
+            'waiting' => $queues->mapWithKeys(fn (CashQueue $queue): array => [
+                $queue->ref => count(Finance::cashQueue()->pendingVisits($queue->ref)),
+            ])->all(),
             'sessions' => $sessions,
             'session' => $session,
+            'matched' => $matched,
         ]);
     }
 
@@ -47,7 +57,7 @@ final class CashQueueController extends FinanceController
 
         abort_if($current === null, 404, 'Aucune file de caisse.');
 
-        $session = $this->selectedSession($request, $this->openSessions($request));
+        [$session] = $this->sessionFor($request, $this->openSessions($request), $current);
         $back = ['file' => $current->ref, 'session' => $session?->id];
 
         // Appeler un patient qu'on ne pourra pas encaisser le ferait attendre
@@ -89,15 +99,41 @@ final class CashQueueController extends FinanceController
     }
 
     /**
-     * La session où encaisser : celle demandée si elle est bien à lui et
-     * ouverte, sinon la première de ses sessions ouvertes.
+     * La session où encaisser les patients de cette file, et si elle
+     * correspond à la file.
+     *
+     *  1. celle que le caissier a choisie (paramètre `session`), si elle est
+     *     bien à lui et ouverte ;
+     *  2. sinon celle de la caisse qui porte le nom de la file (« Caisse
+     *     Ticket » pour la file « Caisse Ticket ») ;
+     *  3. sinon la première de ses sessions ouvertes — l'écran lui demande
+     *     alors de choisir.
      *
      * @param  Collection<int, CashSession>  $sessions
+     * @return array{0: ?CashSession, 1: bool}
      */
-    private function selectedSession(Request $request, Collection $sessions): ?CashSession
+    private function sessionFor(Request $request, Collection $sessions, ?CashQueue $queue): array
     {
-        $id = (int) $request->input('session');
+        $chosen = $sessions->firstWhere('id', (int) $request->input('session'));
+        $matching = $queue === null ? null : $sessions->first(
+            fn (CashSession $session): bool => self::sameName($session->register->name, $queue->name)
+        );
 
-        return $sessions->firstWhere('id', $id) ?? $sessions->first();
+        if ($chosen !== null) {
+            return [$chosen, $matching !== null && $chosen->is($matching)];
+        }
+
+        if ($matching !== null) {
+            return [$matching, true];
+        }
+
+        return [$sessions->first(), false];
+    }
+
+    private static function sameName(string $a, string $b): bool
+    {
+        $normalize = static fn (string $name): string => mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $name)));
+
+        return $normalize($a) === $normalize($b);
     }
 }
