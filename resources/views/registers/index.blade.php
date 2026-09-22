@@ -61,7 +61,8 @@
 
         @if ($cashiers === [])
             <x-finance::empty title="Aucun caissier connu" icon="caisse">
-                Un caissier apparaît ici après avoir ouvert sa première session.
+                L'application hôte ne déclare aucun personnel habilité à encaisser,
+                et personne n'a encore ouvert de session.
             </x-finance::empty>
         @else
             <div class="tw">
@@ -75,6 +76,7 @@
                             <td data-l="Caissier" class="strong">
                                 {{ $cashier['name'] }}
                                 <span class="sub">
+                                    @if ($cashier['function']){{ $cashier['function'] }} · @endif
                                     {{ $cashier['override'] === null ? 'Limite par défaut' : 'Limite propre' }}
                                     · {{ $cashier['registers'] === [] ? 'Toutes les caisses' : count($cashier['registers']).' caisse(s)' }}
                                 </span>

@@ -72,8 +72,11 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
       `can:finance.registers.manage`, dans un seul formulaire par caissier.
       Chaque écriture est tracée (`cashier_limit_set`,
       `cashier_registers_set`). Un caissier n'y apparaît qu'après avoir ouvert
-      une première session, puisque c'est la seule façon pour le module de
-      le connaître.
+      une première session… sauf si l'hôte les déclare : l'annuaire
+      `Contracts\CashierDirectory` (`Finance::cashiers()`, liste de
+      `Cashiers\HostCashier` : `id` = `Actor::id()`, `name`, `function`) fait
+      apparaître d'avance le personnel habilité à encaisser, pour régler ses
+      caisses avant sa première ouverture. Par défaut `NoCashierDirectory` (vide).
   - Théorique du tiroir = fonds initial + espèces encaissées - espèces décaissées
     (Mobile Money, carte, etc. sont totalisés par moyen mais n'entrent pas dans le tiroir).
   - Écart = compté - théorique ; tout écart doit être justifié.

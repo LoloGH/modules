@@ -7,7 +7,9 @@ namespace Keneya\FinanceCaisse\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Audit\Auditor;
+use Keneya\FinanceCaisse\Cashiers\HostCashier;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Http\Requests\CashierAccessRequest;
 use Keneya\FinanceCaisse\Models\CashierRegister;
 use Keneya\FinanceCaisse\Models\CashierSetting;
@@ -67,13 +69,17 @@ final class CashierAccessController extends FinanceController
     }
 
     /**
-     * Le module ne possède pas la table des utilisateurs : un caissier n'est
-     * « connu » que parce qu'il a déjà tenu une caisse, ou qu'il a déjà un
-     * réglage enregistré.
+     * Le module ne possède pas la table des utilisateurs : un caissier est
+     * « connu » parce que l'hôte le déclare (`Finance::cashiers()`), qu'il a
+     * déjà tenu une caisse, ou qu'il a déjà un réglage enregistré.
      */
     private function knownName(string $cashierId): string
     {
-        $name = CashSession::query()->where('cashier_id', $cashierId)->value('cashier_name')
+        $declared = collect(Finance::cashiers()->cashiers())
+            ->first(static fn (HostCashier $cashier): bool => $cashier->id === $cashierId);
+
+        $name = $declared?->name
+            ?? CashSession::query()->where('cashier_id', $cashierId)->value('cashier_name')
             ?? CashierSetting::query()->where('cashier_id', $cashierId)->value('cashier_name');
 
         if ($name !== null) {
@@ -85,7 +91,7 @@ final class CashierAccessController extends FinanceController
 
         if (! $known) {
             throw new FinanceRuleViolation(
-                'Ce caissier est inconnu du module : il apparaîtra ici après avoir ouvert une première session.'
+                'Ce caissier est inconnu : il n\'est ni déclaré par l\'application hôte, ni n\'a encore ouvert de session.'
             );
         }
 

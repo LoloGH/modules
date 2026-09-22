@@ -250,7 +250,8 @@ class MultipleSessionsHttpTest extends HttpTestCase
             ->assertSee('Défaut');
     }
 
-    public function test_a_cashier_who_never_opened_a_session_is_not_listed(): void
+    /** Sans hôte pour les déclarer, un caissier n'est connu qu'à sa première session. */
+    public function test_without_a_host_a_cashier_who_never_opened_a_session_is_not_listed(): void
     {
         $this->actingAs($this->admin())
             ->get('/finance/caisses')

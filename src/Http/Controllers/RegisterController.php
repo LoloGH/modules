@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Http\Requests\RegisterRequest;
 use Keneya\FinanceCaisse\Models\CashierRegister;
 use Keneya\FinanceCaisse\Models\CashierSetting;
@@ -43,11 +44,12 @@ final class RegisterController extends FinanceController
     /**
      * Les caissiers que le module connaît, avec leur limite effective.
      *
-     * Le module ne possède pas la table des utilisateurs : un caissier
-     * n'apparaît ici qu'après avoir tenu une caisse au moins une fois, ou
-     * parce qu'il a déjà une surcharge enregistrée.
+     * D'abord le personnel que l'hôte déclare habilité à encaisser
+     * (`Finance::cashiers()`) : on règle ses caisses AVANT sa première
+     * session. S'y ajoutent ceux qui ont déjà tenu une caisse ou qui ont un
+     * réglage enregistré (un ancien caissier garde ainsi son historique).
      *
-     * @return list<array{id: string, name: string, open: int, limit: int, override: ?int, registers: list<int>}>
+     * @return list<array{id: string, name: string, function: ?string, open: int, limit: int, override: ?int, registers: list<int>}>
      */
     private function knownCashiers(): array
     {
@@ -64,17 +66,28 @@ final class RegisterController extends FinanceController
             ->groupBy('cashier_id')
             ->map(fn ($rows): array => $rows->pluck('cash_register_id')->map(static fn ($id): int => (int) $id)->all());
 
-        $ids = $fromSessions->keys()->merge($overrides->keys())->merge($assignments->keys())->unique();
+        $directory = collect(Finance::cashiers()->cashiers())->keyBy('id');
+
+        $ids = $directory->keys()
+            ->merge($fromSessions->keys())
+            ->merge($overrides->keys())
+            ->merge($assignments->keys())
+            ->map(static fn ($id): string => (string) $id)
+            ->unique();
 
         $default = CashierSetting::defaultLimit();
 
         return $ids
-            ->map(function (string $id) use ($fromSessions, $overrides, $assignments, $default): array {
+            ->map(function (string $id) use ($directory, $fromSessions, $overrides, $assignments, $default): array {
                 $override = $overrides->get($id)?->max_open_sessions;
 
                 return [
                     'id' => $id,
-                    'name' => $fromSessions->get($id)?->cashier_name ?? $overrides->get($id)?->cashier_name ?? $id,
+                    'name' => $directory->get($id)?->name
+                        ?? $fromSessions->get($id)?->cashier_name
+                        ?? $overrides->get($id)?->cashier_name
+                        ?? $id,
+                    'function' => $directory->get($id)?->function,
                     'open' => (int) ($fromSessions->get($id)?->open_count ?? 0),
                     'limit' => $override === null ? $default : max(1, $override),
                     'override' => $override,

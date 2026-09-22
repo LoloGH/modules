@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Auth\User as FrameworkUser;
 use Illuminate\Http\Request;
+use Keneya\FinanceCaisse\Contracts\CashierDirectory;
 use Keneya\FinanceCaisse\Contracts\CashQueueProvider;
 use Keneya\FinanceCaisse\Contracts\CatalogProvider;
 use Keneya\FinanceCaisse\Contracts\VisitAdvancer;
@@ -82,6 +83,14 @@ final class Finance
     public static function visitAdvancer(): VisitAdvancer
     {
         return app(VisitAdvancer::class);
+    }
+
+    /**
+     * L'annuaire des caissiers tenu par l'hôte. Sans hôte, vide.
+     */
+    public static function cashiers(): CashierDirectory
+    {
+        return app(CashierDirectory::class);
     }
 
     /**

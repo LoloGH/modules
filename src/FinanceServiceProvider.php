@@ -11,10 +11,12 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Keneya\FinanceCaisse\Access\FinanceAccessGate;
 use Keneya\FinanceCaisse\Audit\Auditor;
+use Keneya\FinanceCaisse\Cashiers\NoCashierDirectory;
 use Keneya\FinanceCaisse\Catalog\EloquentCatalogProvider;
 use Keneya\FinanceCaisse\Console\Commands\SyncCatalog;
 use Keneya\FinanceCaisse\Console\Commands\SyncPaymentMethods;
 use Keneya\FinanceCaisse\Console\Commands\SyncPermissions;
+use Keneya\FinanceCaisse\Contracts\CashierDirectory;
 use Keneya\FinanceCaisse\Contracts\CashQueueProvider;
 use Keneya\FinanceCaisse\Contracts\CatalogProvider;
 use Keneya\FinanceCaisse\Contracts\VisitAdvancer;
@@ -55,6 +57,7 @@ class FinanceServiceProvider extends ServiceProvider
         // celle qu'un hôte aurait enregistrée avant le module.
         $this->app->singletonIf(CashQueueProvider::class, NoCashQueue::class);
         $this->app->singletonIf(VisitAdvancer::class, NoVisitAdvancer::class);
+        $this->app->singletonIf(CashierDirectory::class, NoCashierDirectory::class);
     }
 
     public function boot(): void
