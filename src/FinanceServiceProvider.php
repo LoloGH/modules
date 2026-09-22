@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Keneya\FinanceCaisse\Access\FinanceAccessGate;
 use Keneya\FinanceCaisse\Audit\Auditor;
+use Keneya\FinanceCaisse\Catalog\EloquentCatalogProvider;
 use Keneya\FinanceCaisse\Console\Commands\SyncCatalog;
 use Keneya\FinanceCaisse\Console\Commands\SyncPaymentMethods;
 use Keneya\FinanceCaisse\Console\Commands\SyncPermissions;
+use Keneya\FinanceCaisse\Contracts\CatalogProvider;
 use Keneya\FinanceCaisse\Http\Middleware\EnsureHostGrantsAccess;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
 use Keneya\FinanceCaisse\Standalone\StandaloneMode;
@@ -40,6 +42,9 @@ class FinanceServiceProvider extends ServiceProvider
         $this->app->singleton(FinanceAccessGate::class);
         $this->app->singleton(Auditor::class);
         $this->app->singleton(NumberGenerator::class);
+
+        // Le catalogue exposé à l'hôte (`Finance::catalog()`).
+        $this->app->singleton(CatalogProvider::class, EloquentCatalogProvider::class);
     }
 
     public function boot(): void

@@ -27,6 +27,7 @@ class Act extends Model
     {
         return [
             'is_active' => 'boolean',
+            'is_consultation_ticket' => 'boolean',
             'dme_service_id' => 'integer',
         ];
     }

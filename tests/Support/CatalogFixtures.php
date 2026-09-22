@@ -27,13 +27,14 @@ trait CatalogFixtures
         );
     }
 
-    protected function makeAct(string $code = 'CONS-GEN', ?AnalyticCenter $center = null, bool $active = true): Act
+    protected function makeAct(string $code = 'CONS-GEN', ?AnalyticCenter $center = null, bool $active = true, ?int $hostServiceId = null): Act
     {
         return Act::firstOrCreate(
             ['code' => $code],
             [
                 'name' => "Acte {$code}",
                 'analytic_center_id' => $center?->id,
+                'dme_service_id' => $hostServiceId,
                 'is_active' => $active,
             ],
         );

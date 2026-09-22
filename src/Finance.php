@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Auth\User as FrameworkUser;
 use Illuminate\Http\Request;
+use Keneya\FinanceCaisse\Contracts\CatalogProvider;
 
 /**
  * Point d'entrée statique du module : réglages que l'hôte pose depuis son
@@ -50,6 +51,16 @@ final class Finance
         $model = config('finance.models.user') ?? config('auth.providers.users.model');
 
         return is_string($model) && $model !== '' ? $model : FrameworkUser::class;
+    }
+
+    /**
+     * Le catalogue des actes, en lecture, pour l'hôte : `Finance::catalog()
+     * ->actsForService($serviceId)`. Résolu depuis le conteneur, donc
+     * remplaçable par l'hôte ou dans un test.
+     */
+    public static function catalog(): CatalogProvider
+    {
+        return app(CatalogProvider::class);
     }
 
     /**

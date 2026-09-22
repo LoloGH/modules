@@ -68,6 +68,9 @@
                             </td>
                             <td data-l="État">
                                 <span class="badge {{ $act->is_active ? 'ok' : 'off' }}">{{ $act->is_active ? 'Actif' : 'Désactivé' }}</span>
+                                @if ($act->is_consultation_ticket)
+                                    <span class="badge info">Ticket</span>
+                                @endif
                             </td>
                             <td data-l="" class="acts">
                                 <a class="btn ghost sm" href="{{ route('finance.catalog.acts.show', $act) }}">Voir</a>

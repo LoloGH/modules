@@ -71,6 +71,7 @@ Route::middleware('can:finance.catalog.manage')->group(function (): void {
     Route::post('catalogue/centres/{center}/basculer', [AnalyticCenterController::class, 'toggle'])->name('catalog.centers.toggle');
     Route::post('catalogue/actes', [ActController::class, 'store'])->name('catalog.acts.store');
     Route::post('catalogue/actes/{act}/basculer', [ActController::class, 'toggle'])->name('catalog.acts.toggle');
+    Route::post('catalogue/actes/{act}/ticket', [ActController::class, 'ticket'])->name('catalog.acts.ticket');
 });
 
 // Fixer ou changer un prix n'est pas gérer le catalogue : droit distinct.

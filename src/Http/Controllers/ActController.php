@@ -8,8 +8,10 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Keneya\FinanceCaisse\Actions\SetConsultationTicket;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Http\Requests\ActRequest;
+use Keneya\FinanceCaisse\Http\Requests\ConsultationTicketRequest;
 use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\AnalyticCenter;
 use Keneya\FinanceCaisse\Models\Tariff;
@@ -92,5 +94,21 @@ final class ActController extends FinanceController
         });
 
         return redirect()->route('finance.catalog.acts.index')->with('finance_status', $message);
+    }
+
+    /**
+     * La case « ticket de consultation » : l'unicité (un seul acte à la fois)
+     * est tenue par l'action.
+     */
+    public function ticket(ConsultationTicketRequest $request, Act $act, SetConsultationTicket $action): RedirectResponse
+    {
+        $act = $action->handle($act, $request->boolean('is_consultation_ticket'), $this->user($request));
+
+        return redirect()->route('finance.catalog.acts.show', $act)->with(
+            'finance_status',
+            $act->is_consultation_ticket
+                ? "L'acte « {$act->name} » est le ticket de consultation."
+                : "L'acte « {$act->name} » n'est pas le ticket de consultation.",
+        );
     }
 }

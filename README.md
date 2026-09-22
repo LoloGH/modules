@@ -3,10 +3,11 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.6.0, caisse + catalogue des actes** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.7.0, caisse + catalogue des actes exposé à l'hôte** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
-actes facturables avec centres analytiques et tarifs historisés.
+actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
+via le contrat `CatalogProvider` (`Finance::catalog()`), ticket de consultation.
 Écrans : bureau du caissier, page de session, liste de contrôle, gestion des caisses,
 catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
 
@@ -109,6 +110,38 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Un centre ou un acte se **désactive**, il ne se supprime pas (`restrictOnDelete`
     partout : on ne cascade pas des données financières). Un centre qui porte encore
     des enfants ou des actes actifs ne se désactive pas.
+  - **Ticket de consultation** (`finance_acts.is_consultation_ticket`) : l'acte
+    payé à l'accueil. **Un seul acte le porte** : `SetConsultationTicket` retire la
+    marque de l'ancien dans la même transaction, sous verrou, et trace
+    `consultation_ticket_set` / `consultation_ticket_unset`. Un acte désactivé ne
+    peut pas le devenir. Case sur la fiche de l'acte, sous
+    `can:finance.catalog.manage`.
+- **Catalogue exposé à l'hôte** — Finance est la source unique des actes et des
+  prix ; l'hôte les **lit** par un contrat, jamais par les modèles :
+  - `Contracts\CatalogProvider`, résolu par `Finance::catalog()` (singleton,
+    implémentation `Catalog\EloquentCatalogProvider`, remplaçable par l'hôte) :
+    - `actsForService(?int $hostServiceId)` : actes actifs rattachés au service
+      (`dme_service_id`) puis actes génériques (sans service), chaque groupe par
+      nom ; sans service, les génériques seuls ;
+    - `findAct(int $actId)` : l'acte actif, ou null ;
+    - `activeTariffFor(int $actId, string $kind = 'standard')` : montant entier du
+      tarif actif, ou null (pas de tarif, acte inconnu ou désactivé) ;
+    - `ticketAct()` : l'acte « ticket de consultation » s'il est actif, ou null.
+  - `Catalog\CatalogAct` : objet de valeur `final readonly`, uniquement des
+    scalaires — `id`, `code`, `name`, `hostServiceId`, `analyticCenterId`,
+    `activeAmount` (tarif **standard** actif, null s'il n'est pas fixé). Le modèle
+    Eloquent ne sort jamais du module.
+  - Un acte désactivé est invisible pour l'hôte, par toutes les méthodes.
+
+  ```php
+  use Keneya\FinanceCaisse\Finance;
+
+  foreach (Finance::catalog()->actsForService($service->id) as $act) {
+      echo $act->name, ' — ', $act->activeAmount ?? 'prix non fixé';
+  }
+
+  $ticket = Finance::catalog()->ticketAct(); // ?CatalogAct
+  ```
 - **Bureau du caissier** : il liste **toutes** ses sessions ouvertes et ne
   propose à l'ouverture que les caisses actives **libres** et auxquelles il est
   affecté. Quand la limite est atteinte, le formulaire cède la place à un

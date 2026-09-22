@@ -11,6 +11,9 @@
         :title="$act->name"
         sub="{{ $act->code }} · {{ $act->center?->name ?? 'Sans centre analytique' }}{{ $act->dme_service_id ? ' · service DME n° '.$act->dme_service_id : '' }}">
         <x-slot:actions>
+            @if ($act->is_consultation_ticket)
+                <span class="badge info">Ticket de consultation</span>
+            @endif
             <span class="badge {{ $act->is_active ? 'ok' : 'off' }}">{{ $act->is_active ? 'Acte actif' : 'Acte désactivé' }}</span>
         </x-slot:actions>
     </x-finance::page>
@@ -18,6 +21,25 @@
     @if ($act->description)
         <x-finance::card>{{ $act->description }}</x-finance::card>
     @endif
+
+    @can('finance.catalog.manage')
+        <x-finance::card title="Ticket de consultation">
+            <form method="post" action="{{ route('finance.catalog.acts.ticket', $act) }}" class="inline">
+                @csrf
+                <div class="checks">
+                    <label>
+                        <input type="checkbox" name="is_consultation_ticket" value="1" @checked($act->is_consultation_ticket)>
+                        Cet acte est le ticket de consultation
+                    </label>
+                </div>
+                <button type="submit" class="ghost sm"><x-finance::icon name="check" /> Enregistrer</button>
+            </form>
+            <p class="muted">
+                L'acte payé à l'accueil avant la consultation. Un seul acte le porte :
+                le cocher ici le retire de l'acte qui l'était jusque-là.
+            </p>
+        </x-finance::card>
+    @endcan
 
     <div class="cols wide">
         <x-finance::card title="Tarifs" hint="{{ $tariffs->count() }} ligne(s)" flush>
