@@ -106,7 +106,7 @@ class MultipleOpenSessionsTest extends TestCase
 
         $this->openSession($strict, 0, $this->makeRegister('A'));
 
-        $this->assertViolation('a déjà une session', fn () => $this->openSession($strict, 0, $this->makeRegister('B')));
+        $this->assertViolation('tient déjà un tiroir ouvert', fn () => $this->openSession($strict, 0, $this->makeRegister('B')));
 
         // Son collègue, lui, reste au défaut de l'établissement.
         $other = $this->makeUser();
@@ -162,7 +162,7 @@ class MultipleOpenSessionsTest extends TestCase
         $registerB = $this->makeRegister('B');
 
         $this->openSession($generous, 0, $registerA);
-        $this->assertViolation('a déjà une session', fn () => $this->openSession($generous, 0, $registerB));
+        $this->assertViolation('tient déjà un tiroir ouvert', fn () => $this->openSession($generous, 0, $registerB));
 
         // La caisse B reste libre pour quelqu'un d'autre.
         $this->assertTrue($this->openSession($this->makeUser(), 0, $registerB)->isOpen());

@@ -6,19 +6,22 @@ namespace Keneya\FinanceCaisse\Actions;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Models\CashRegister;
 use Keneya\FinanceCaisse\Models\CashSession;
 
 /**
- * Ouvre plusieurs caisses d'un coup, avec UN seul fonds initial.
+ * Ouvre plusieurs caisses d'un coup, de deux façons :
  *
- * Le cas visé : un seul caissier encaisse tout (Ticket, Services, Pharmacie…)
- * avec un seul tiroir. Il coche ses caisses et saisit le fonds qu'il a en
- * main, une fois. Chaque caisse garde sa propre session — ses mouvements, sa
- * clôture —, mais le fonds n'est compté qu'une fois : il est porté par la
- * première caisse cochée, les autres s'ouvrent à zéro. La somme des fonds
- * initiaux est ainsi exactement le fonds réel.
+ *  - **groupées** : un seul caissier, un seul tiroir, un seul fonds. Les
+ *    caisses cochées partagent un tiroir (`drawer_key`) ; le fonds est porté
+ *    par la première, les autres s'ouvrent à zéro. Le groupe compte pour UN
+ *    tiroir dans la limite du caissier.
+ *  - **séparées** : un tiroir et un fonds par caisse. Chacune compte dans sa
+ *    limite.
+ *
+ * Dans les deux cas chaque caisse garde sa propre session et sa clôture.
  *
  * Tout ou rien : chaque ouverture passe par `OpenCashSession` et ses règles
  * (affectation, caisse libre, limite), dans une seule transaction. Si une
@@ -32,24 +35,49 @@ final class OpenCashSessions
      * @param  list<int>  $registerIds  dans l'ordre coché ; la première porte le fonds
      * @return list<CashSession>
      */
-    public function handle(array $registerIds, int $openingFloat, Authenticatable $cashier): array
+    public function grouped(array $registerIds, int $openingFloat, Authenticatable $cashier): array
     {
-        if ($registerIds === []) {
-            throw new FinanceRuleViolation('Cochez au moins une caisse à ouvrir.');
-        }
-
         if ($openingFloat < 0) {
             throw new FinanceRuleViolation('Le fonds initial ne peut pas être négatif.');
         }
 
-        return DB::transaction(function () use ($registerIds, $openingFloat, $cashier): array {
+        $drawer = count($registerIds) > 1 ? (string) Str::uuid() : null;
+        $floats = [];
+
+        foreach (array_values($registerIds) as $index => $registerId) {
+            $floats[$registerId] = $index === 0 ? $openingFloat : 0;
+        }
+
+        return $this->openAll($floats, $cashier, $drawer);
+    }
+
+    /**
+     * @param  array<int, int>  $floats  fonds initial par identifiant de caisse
+     * @return list<CashSession>
+     */
+    public function separate(array $floats, Authenticatable $cashier): array
+    {
+        return $this->openAll($floats, $cashier, null);
+    }
+
+    /**
+     * @param  array<int, int>  $floats
+     * @return list<CashSession>
+     */
+    private function openAll(array $floats, Authenticatable $cashier, ?string $drawer): array
+    {
+        if ($floats === []) {
+            throw new FinanceRuleViolation('Cochez au moins une caisse à ouvrir.');
+        }
+
+        return DB::transaction(function () use ($floats, $cashier, $drawer): array {
             $sessions = [];
 
-            foreach (array_values($registerIds) as $index => $registerId) {
+            foreach ($floats as $registerId => $float) {
                 $register = CashRegister::query()->findOrFail($registerId);
 
                 try {
-                    $sessions[] = $this->open->handle($register, $cashier, $index === 0 ? $openingFloat : 0);
+                    $sessions[] = $this->open->handle($register, $cashier, $float, $drawer);
                 } catch (FinanceRuleViolation $e) {
                     throw new FinanceRuleViolation(sprintf(
                         'Aucune session ouverte. %s : %s',

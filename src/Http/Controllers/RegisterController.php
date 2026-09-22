@@ -88,7 +88,8 @@ final class RegisterController extends FinanceController
                         ?? $overrides->get($id)?->cashier_name
                         ?? $id,
                     'function' => $directory->get($id)?->function,
-                    'open' => (int) ($fromSessions->get($id)?->open_count ?? 0),
+                    // En tiroirs : des caisses ouvertes ensemble n'en font qu'un.
+                    'open' => (int) ($fromSessions->get($id)?->open_count ?? 0) === 0 ? 0 : CashSession::openDrawersFor($id),
                     'limit' => $override === null ? $default : max(1, $override),
                     'override' => $override,
                     // Liste vide = aucune restriction, donc toutes les caisses.

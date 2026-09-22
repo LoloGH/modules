@@ -60,15 +60,16 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
       l'utilisateur tient à ce que le module ne possède pas la table des
       utilisateurs de l'hôte : il n'en connaît qu'un identifiant en chaîne.
     - `CashierSetting::limitFor($cashierId)` donne la limite effective.
-    - **Ouvrir plusieurs caisses d'un coup, un seul fonds** : quand un caissier
-      peut encore en tenir plus d'une, le bureau liste ses caisses libres
-      (toutes cochées) et demande **un seul** fonds initial
-      (`finance.cash.sessions.open-many`, `Actions\OpenCashSessions`). Chaque
-      caisse reçoit sa propre session ; le fonds est porté par la première
-      caisse cochée, les autres s'ouvrent à zéro (la somme des fonds reste le
-      fonds réel). Tout ou rien — une caisse refusée (affectation, déjà tenue,
-      limite) n'en ouvre aucune. Avec une limite à 1, le bureau indique qu'un
-      administrateur peut la relever.
+    - **Ouvrir plusieurs caisses d'un coup** (`finance.cash.sessions.open-many`,
+      `Actions\OpenCashSessions`), dès que plusieurs caisses sont libres :
+      - **groupées** : un seul fonds, un seul **tiroir** — les sessions partagent
+        un `drawer_key`, le fonds est porté par la première caisse cochée, les
+        autres s'ouvrent à zéro ;
+      - **séparées** : un fonds et un tiroir par caisse.
+      La limite d'un caissier se compte en **tiroirs** (`CashSession::openDrawersFor`) :
+      avec une limite à 1, il ouvre plusieurs caisses groupées, pas séparées.
+      Chaque caisse garde sa session et se clôture séparément. Tout ou rien — une
+      caisse refusée (affectation, déjà tenue, limite) n'en ouvre aucune.
   - **Quelles caisses un caissier peut ouvrir** : `finance_cashier_registers`
     affecte un caissier à des caisses précises. **Aucune ligne pour un
     caissier vaut « toutes les caisses »** : l'affectation est une restriction

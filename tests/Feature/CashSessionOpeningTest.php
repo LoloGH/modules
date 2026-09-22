@@ -68,7 +68,7 @@ class CashSessionOpeningTest extends TestCase
         $cashier = $this->makeUser();
         $this->openSession($cashier, 0, $this->makeRegister('A'));
 
-        $this->assertViolation('a déjà une session', fn () => $this->openSession($cashier, 0, $this->makeRegister('B')));
+        $this->assertViolation('tient déjà un tiroir ouvert', fn () => $this->openSession($cashier, 0, $this->makeRegister('B')));
     }
 
     public function test_a_new_session_can_open_once_the_previous_one_is_closed(): void

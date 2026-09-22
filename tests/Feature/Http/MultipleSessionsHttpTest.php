@@ -44,7 +44,7 @@ class MultipleSessionsHttpTest extends HttpTestCase
             ->assertSee('Mes sessions ouvertes')
             ->assertSee($ticket->number)
             ->assertSee($services->number)
-            ->assertSee('2 sur 2 autorisée(s)');
+            ->assertSee('2 caisse(s), 2 tiroir(s) sur 2 autorisé(s)');
     }
 
     public function test_the_desk_only_offers_registers_that_are_free(): void

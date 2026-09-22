@@ -63,6 +63,31 @@ class CashSession extends Model
         return $query->where('status', self::STATUS_OPEN);
     }
 
+    /**
+     * Combien de tiroirs ce caissier tient ouverts : une session seule est un
+     * tiroir, des caisses ouvertes ensemble avec un seul fonds en font un.
+     * C'est ce qui se compare à sa limite.
+     */
+    public static function openDrawersFor(string $cashierId, bool $lock = false): int
+    {
+        $query = static::query()->open()->where('cashier_id', $cashierId);
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        $sessions = $query->get(['id', 'drawer_key']);
+
+        return $sessions->whereNull('drawer_key')->count()
+            + $sessions->whereNotNull('drawer_key')->pluck('drawer_key')->unique()->count();
+    }
+
+    /** Ouverte avec d'autres caisses, sur un seul fonds. */
+    public function isGrouped(): bool
+    {
+        return $this->drawer_key !== null;
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {

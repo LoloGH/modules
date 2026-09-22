@@ -35,13 +35,17 @@ final class OpenCashSession
         private readonly Auditor $auditor,
     ) {}
 
-    public function handle(CashRegister $register, Authenticatable $cashier, int $openingFloat): CashSession
+    /**
+     * @param  ?string  $drawerKey  tiroir partagé par des caisses ouvertes
+     *                              ensemble ; null pour une caisse seule
+     */
+    public function handle(CashRegister $register, Authenticatable $cashier, int $openingFloat, ?string $drawerKey = null): CashSession
     {
         if ($openingFloat < 0) {
             throw new FinanceRuleViolation('Le fonds initial ne peut pas être négatif.');
         }
 
-        return DB::transaction(function () use ($register, $cashier, $openingFloat): CashSession {
+        return DB::transaction(function () use ($register, $cashier, $openingFloat, $drawerKey): CashSession {
             // Verrou sur la caisse : deux ouvertures simultanées se succèdent
             // au lieu de se croiser.
             $register = CashRegister::query()->whereKey($register->getKey())->lockForUpdate()->firstOrFail();
@@ -54,13 +58,14 @@ final class OpenCashSession
 
             $this->assertAssignedTo($register, $cashierId);
             $this->assertRegisterIsFree($register, $cashierId);
-            $this->assertUnderLimit($cashierId);
+            $this->assertUnderLimit($cashierId, $drawerKey);
 
             $session = CashSession::create([
                 'number' => $this->numbers->next('cash_session'),
                 'cash_register_id' => $register->id,
                 'cashier_id' => $cashierId,
                 'cashier_name' => Actor::name($cashier),
+                'drawer_key' => $drawerKey,
                 'status' => CashSession::STATUS_OPEN,
                 'opening_float' => $openingFloat,
                 'opened_at' => now(),
@@ -111,24 +116,30 @@ final class OpenCashSession
     }
 
     /**
-     * Le caissier reste sous sa limite de sessions ouvertes simultanées.
+     * Le caissier reste sous sa limite de tiroirs ouverts simultanément.
      *
-     * Le verrou porte sur ses sessions ouvertes : deux ouvertures simultanées
-     * sur deux caisses différentes se succèdent au lieu de compter toutes les
-     * deux l'état d'avant.
+     * Une caisse qui rejoint un tiroir déjà ouvert (ouverture groupée, un seul
+     * fonds) n'en ajoute pas. Le verrou porte sur ses sessions ouvertes : deux
+     * ouvertures simultanées se succèdent au lieu de compter toutes les deux
+     * l'état d'avant.
      */
-    private function assertUnderLimit(string $cashierId): void
+    private function assertUnderLimit(string $cashierId, ?string $drawerKey): void
     {
         $limit = CashierSetting::limitFor($cashierId);
 
-        $open = CashSession::query()->open()->where('cashier_id', $cashierId)->lockForUpdate()->count();
+        $open = CashSession::openDrawersFor($cashierId, lock: true);
 
-        if ($open < $limit) {
+        $joinsOpenDrawer = $drawerKey !== null && CashSession::query()->open()
+            ->where('cashier_id', $cashierId)
+            ->where('drawer_key', $drawerKey)
+            ->exists();
+
+        if ($joinsOpenDrawer || $open < $limit) {
             return;
         }
 
         throw new FinanceRuleViolation($limit === 1
-            ? 'Ce caissier a déjà une session ouverte : clôturez-la avant d\'en ouvrir une autre.'
-            : sprintf('Vous avez déjà %d session(s) ouverte(s), limite atteinte.', $open));
+            ? 'Ce caissier tient déjà un tiroir ouvert : clôturez-le avant d\'en ouvrir un autre, ou ouvrez vos caisses ensemble avec un seul fonds.'
+            : sprintf('Vous tenez déjà %d tiroir(s) ouvert(s), limite atteinte.', $open));
     }
 }
