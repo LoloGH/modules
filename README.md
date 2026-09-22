@@ -131,6 +131,13 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   part − réglé − rejeté, statut En attente / Partiellement réglée / Réglée /
   Rejetée. Écran : indicateurs, prises en charge filtrables, derniers
   règlements et rejets, assureurs.
+- **Créances** (`creances`, `finance.receivables.view`) : onglets Patients
+  (part patient + rejets − payé) et Assurances (part assurance − réglé −
+  rejeté), facture par facture — montant dû, payé, solde, **échéance**
+  (émission + `finance.receivables.patient_due_days`, défaut 0, ou
+  `insurer_due_days`, défaut 30) et statut À échoir / Échue (jours de retard) ;
+  filtres échéance, assureur, recherche ; indicateurs et ancienneté (0–30,
+  31–60, 61–90, > 90 jours). Lecture seule.
 - **Paiements** (`paiements`, `finance.payments.view`, `Support\LedgerFilters`) :
   les encaissements, en lecture — n°, date et caisse, patient et identifiant,
   objet, moyen, référence, facture associée (lien), statut, montant, reçu.

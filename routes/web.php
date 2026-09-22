@@ -14,6 +14,7 @@ use Keneya\FinanceCaisse\Http\Controllers\InvoiceController;
 use Keneya\FinanceCaisse\Http\Controllers\LedgerController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
 use Keneya\FinanceCaisse\Http\Controllers\PrintController;
+use Keneya\FinanceCaisse\Http\Controllers\ReceivableController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
 use Keneya\FinanceCaisse\Http\Controllers\ReviewController;
 use Keneya\FinanceCaisse\Http\Controllers\TariffController;
@@ -99,6 +100,10 @@ Route::middleware('can:finance.insurance.manage')->group(function (): void {
     Route::post('factures/{invoice}/assurance/reglements', [InsuranceController::class, 'settle'])->whereNumber('invoice')->name('insurance.settle');
     Route::post('factures/{invoice}/assurance/rejets', [InsuranceController::class, 'reject'])->whereNumber('invoice')->name('insurance.reject');
 });
+
+// Créances : ce que patients et assureurs doivent encore (lecture).
+Route::get('creances', [ReceivableController::class, 'index'])
+    ->middleware('can:finance.receivables.view')->name('receivables.index');
 
 // Contrôle
 Route::middleware('can:finance.sessions.validate')->group(function (): void {

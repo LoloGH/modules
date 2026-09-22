@@ -39,7 +39,7 @@ final class Navigation
                     self::item('Recettes', 'recette', 'finance.ledger.revenue', 'finance.payments.view'),
                     self::item('Dépenses', 'depense', 'finance.ledger.expenses', 'finance.payments.view'),
                     self::item('Assurances', 'assurance', 'finance.insurance.index', 'finance.insurance.view', ['finance.insurance.*', 'finance.insurers.*']),
-                    self::soon('Créances', 'creance'),
+                    self::item('Créances', 'creance', 'finance.receivables.index', 'finance.receivables.view'),
                     self::soon('Rapports', 'rapport'),
                 ],
             ],

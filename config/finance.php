@@ -80,6 +80,15 @@ return [
     ],
 
     /*
+    | Créances : délai de paiement, en jours après l'émission de la facture.
+    | Au-delà, la créance est « échue ». 0 : payable dès l'émission.
+    */
+    'receivables' => [
+        'patient_due_days' => (int) env('FINANCE_PATIENT_DUE_DAYS', 0),
+        'insurer_due_days' => (int) env('FINANCE_INSURER_DUE_DAYS', 30),
+    ],
+
+    /*
     | Catégories de dépenses proposées au décaissement (écran Dépenses).
     | Code => libellé. Facultative au guichet : un décaissement sans catégorie
     | est « non classé ». Ajouter une catégorie ne demande que cette liste ;
