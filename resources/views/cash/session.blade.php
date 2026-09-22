@@ -228,6 +228,8 @@
                             <td data-l="Moyen">{{ $item->method->name }}</td>
                             <td data-l="Montant" class="num strong">{{ $movement['is_payment'] ? '' : '−' }}{{ $money($item->amount) }}</td>
                             <td data-l="" class="acts">
+                                <a class="btn ghost sm" target="_blank" rel="noopener"
+                                   href="{{ route($movement['is_payment'] ? 'finance.cash.payments.receipt' : 'finance.cash.disbursements.receipt', $item) }}">{{ $movement['is_payment'] ? 'Reçu' : 'Bon' }}</a>
                                 @if (! $item->isCancelled() && $session->isOpen())
                                     @php($route = $movement['is_payment'] ? 'finance.cash.payments.cancel' : 'finance.cash.disbursements.cancel')
                                     @can($movement['is_payment'] ? 'finance.payments.cancel' : 'finance.disbursements.cancel')

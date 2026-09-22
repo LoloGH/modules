@@ -91,10 +91,9 @@ final class InvoiceController extends FinanceController
             $this->user($request),
         );
 
-        return redirect()->route('finance.invoices.show', $invoice)->with(
-            'finance_status',
-            sprintf('Facture %s émise : %s.', $invoice->number, Money::format($invoice->total)),
-        );
+        return redirect()->route('finance.invoices.show', $invoice)
+            ->with('finance_print', ['url' => route('finance.invoices.print', $invoice).'?auto=1', 'label' => 'Imprimer la facture'])
+            ->with('finance_status', sprintf('Facture %s émise : %s.', $invoice->number, Money::format($invoice->total)));
     }
 
     public function show(Request $request, Invoice $invoice): View

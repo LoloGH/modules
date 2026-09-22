@@ -20,7 +20,12 @@
 
         <main class="content">
             @if (session('finance_status'))
-                <div class="flash ok"><x-finance::icon name="check" /><span>{{ session('finance_status') }}</span></div>
+                <div class="flash ok">
+                    <x-finance::icon name="check" /><span>{{ session('finance_status') }}</span>
+                    @if (is_array(session('finance_print')))
+                        <a class="btn sm" style="margin-left:auto" href="{{ session('finance_print')['url'] }}" target="_blank" rel="noopener">{{ session('finance_print')['label'] }}</a>
+                    @endif
+                </div>
             @endif
             @if (session('finance_error'))
                 <div class="flash err"><x-finance::icon name="alert" /><span>{{ session('finance_error') }}</span></div>

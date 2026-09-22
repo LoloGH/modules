@@ -10,6 +10,7 @@
         sub="{{ $invoice->patient_name ?? 'Patient non nommé' }}{{ $invoice->patient_id ? ' · '.$invoice->patient_id : '' }} · Émise le {{ $invoice->created_at?->format('d/m/Y H:i') }}{{ $invoice->created_by_name ? ' par '.$invoice->created_by_name : '' }}">
         <x-slot:actions>
             <span class="badge {{ $invoice->statusTone() }}">{{ $invoice->statusLabel() }}</span>
+            <a class="btn ghost sm" href="{{ route('finance.invoices.print', $invoice) }}" target="_blank" rel="noopener"><x-finance::icon name="facture" /> Imprimer la facture</a>
         </x-slot:actions>
     </x-finance::page>
 
@@ -56,7 +57,7 @@
                 @else
                     <div class="tw">
                         <table class="stack">
-                            <thead><tr><th>N°</th><th>Date</th><th>Moyen</th><th>Caisse</th><th>Statut</th><th class="num">Montant</th></tr></thead>
+                            <thead><tr><th>N°</th><th>Date</th><th>Moyen</th><th>Caisse</th><th>Statut</th><th class="num">Montant</th><th></th></tr></thead>
                             <tbody>
                             @foreach ($invoice->payments as $payment)
                                 <tr>
@@ -68,6 +69,9 @@
                                         <span class="badge {{ $payment->isCancelled() ? 'off' : 'ok' }}">{{ $payment->isCancelled() ? 'Annulé' : 'Valide' }}</span>
                                     </td>
                                     <td data-l="Montant" class="num strong">{{ $money($payment->amount) }}</td>
+                                    <td data-l="" class="acts">
+                                        <a class="btn ghost sm" target="_blank" rel="noopener" href="{{ route('finance.cash.payments.receipt', $payment) }}">Reçu</a>
+                                    </td>
                                 </tr>
                             @endforeach
                             </tbody>

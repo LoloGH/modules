@@ -11,6 +11,7 @@ use Keneya\FinanceCaisse\Http\Controllers\CashQueueController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
 use Keneya\FinanceCaisse\Http\Controllers\InvoiceController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
+use Keneya\FinanceCaisse\Http\Controllers\PrintController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
 use Keneya\FinanceCaisse\Http\Controllers\ReviewController;
 use Keneya\FinanceCaisse\Http\Controllers\TariffController;
@@ -27,6 +28,10 @@ Route::get('/', HomeController::class)->name('home');
 Route::middleware('can:finance.sessions.view')->group(function (): void {
     Route::get('caisse', [CashDeskController::class, 'index'])->name('cash.index');
     Route::get('caisse/sessions/{session}', [CashDeskController::class, 'show'])->name('cash.sessions.show');
+
+    // Reçus imprimables : ses propres mouvements, ou tous pour le contrôle.
+    Route::get('caisse/encaissements/{payment}/recu', [PrintController::class, 'payment'])->name('cash.payments.receipt');
+    Route::get('caisse/decaissements/{disbursement}/recu', [PrintController::class, 'disbursement'])->name('cash.disbursements.receipt');
 });
 
 Route::post('caisse/sessions', [CashDeskController::class, 'open'])
@@ -68,6 +73,8 @@ Route::post('factures', [InvoiceController::class, 'store'])
     ->middleware('can:finance.invoices.create')->name('invoices.store');
 Route::get('factures/{invoice}', [InvoiceController::class, 'show'])
     ->middleware('can:finance.invoices.view')->whereNumber('invoice')->name('invoices.show');
+Route::get('factures/{invoice}/impression', [PrintController::class, 'invoice'])
+    ->middleware('can:finance.invoices.view')->whereNumber('invoice')->name('invoices.print');
 Route::post('factures/{invoice}/annulation', [InvoiceController::class, 'cancel'])
     ->middleware('can:finance.invoices.cancel')->whereNumber('invoice')->name('invoices.cancel');
 

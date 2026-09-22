@@ -47,6 +47,7 @@ final class MovementController extends FinanceController
 
             return redirect()
                 ->route('finance.queue.index', ['file' => $data['queue_ref'], 'session' => $session->id])
+                ->with('finance_print', $this->receipt(route('finance.cash.payments.receipt', $payment), 'Imprimer le reçu'))
                 ->with('finance_status', sprintf(
                     'Encaissement %s enregistré : %s. %s poursuit son parcours.',
                     $payment->number,
@@ -59,16 +60,19 @@ final class MovementController extends FinanceController
 
         // Réglée sur facture : on revient à la facture, qui montre son solde.
         if ($payment->invoice_id !== null) {
-            return redirect()->route('finance.invoices.show', $payment->invoice_id)->with('finance_status', sprintf(
-                'Encaissement %s enregistré : %s. Solde de la facture : %s.',
-                $payment->number,
-                Money::format($payment->amount),
-                Money::format($payment->invoice->fresh()->balance()),
-            ));
+            return redirect()->route('finance.invoices.show', $payment->invoice_id)
+                ->with('finance_print', $this->receipt(route('finance.cash.payments.receipt', $payment), 'Imprimer le reçu'))
+                ->with('finance_status', sprintf(
+                    'Encaissement %s enregistré : %s. Solde de la facture : %s.',
+                    $payment->number,
+                    Money::format($payment->amount),
+                    Money::format($payment->invoice->fresh()->balance()),
+                ));
         }
 
         return redirect()
             ->route('finance.cash.sessions.show', $session)
+            ->with('finance_print', $this->receipt(route('finance.cash.payments.receipt', $payment), 'Imprimer le reçu'))
             ->with('finance_status', sprintf('Encaissement %s enregistré : %s.', $payment->number, Money::format($payment->amount)));
     }
 
@@ -90,7 +94,19 @@ final class MovementController extends FinanceController
 
         return redirect()
             ->route('finance.cash.sessions.show', $session)
+            ->with('finance_print', $this->receipt(route('finance.cash.disbursements.receipt', $disbursement), 'Imprimer le bon de décaissement'))
             ->with('finance_status', sprintf('Décaissement %s enregistré : %s.', $disbursement->number, Money::format($disbursement->amount)));
+    }
+
+    /**
+     * Le document à imprimer juste après l'opération ; l'écran d'arrivée
+     * l'affiche sous forme de bouton.
+     *
+     * @return array{url: string, label: string}
+     */
+    private function receipt(string $url, string $label): array
+    {
+        return ['url' => $url.'?auto=1', 'label' => $label];
     }
 
     public function cancelPayment(CancelMovementRequest $request, Payment $payment, CancelCashMovement $action): RedirectResponse
