@@ -156,7 +156,9 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Objets de valeur `Queue\CashQueue` (`ref`, `name`) et `Queue\QueuedVisit`
     (`ref`, `token`, `status`, `patientRef`, `patientName`, `originService`,
     `destinationService`, `act` : `?CatalogAct` avec son tarif). Les `ref` sont
-    opaques : Finance les transporte sans les interpréter.
+    opaques : Finance les transporte sans les interpréter. Celle d'une visite
+    désigne un **passage à une caisse**, pas l'épisode du patient : ticket puis
+    caisse des services = deux références, deux encaissements.
   - Écran `file` (`finance.queue.index`, `can:finance.sessions.view`) : la file
     du jour d'une caisse ; « Appeler le suivant » (`finance.queue.call`,
     `can:finance.payments.create`) ; pour un patient appelé, « Encaisser » ouvre

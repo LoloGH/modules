@@ -20,7 +20,9 @@ use Keneya\FinanceCaisse\Queue\QueuedVisit;
  * Sans hôte, l'implémentation par défaut ne fournit aucune file.
  *
  * Les références (`ref`) sont des chaînes opaques choisies par l'hôte :
- * Finance les transporte sans les interpréter.
+ * Finance les transporte sans les interpréter. Celle d'une visite désigne un
+ * passage à une caisse : deux passages du même patient (ticket, puis caisse
+ * des services) doivent avoir deux références distinctes.
  */
 interface CashQueueProvider
 {

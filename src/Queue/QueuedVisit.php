@@ -13,7 +13,10 @@ use Keneya\FinanceCaisse\Catalog\CatalogAct;
  * `CashQueueProvider`. Ajouter un champ est permis ; en retirer un casse
  * l'hôte.
  *
- * - `ref` : référence opaque de la visite chez l'hôte ;
+ * - `ref` : référence opaque d'un PASSAGE à cette caisse, pas de l'épisode :
+ *   un même patient repasse par une autre caisse (ticket, puis services)
+ *   sous une autre référence. Finance s'en sert pour refuser d'encaisser deux
+ *   fois le même passage ;
  * - `patientRef` : identifiant stable et lisible du patient (son code), repris
  *   tel quel sur l'encaissement ;
  * - `act` : l'acte attendu, résolu par l'hôte dans le catalogue de Finance,
