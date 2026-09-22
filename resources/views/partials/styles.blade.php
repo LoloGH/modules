@@ -245,6 +245,15 @@
     .checks { display: flex; flex-wrap: wrap; gap: .3125rem .875rem; }
     .checks label { display: inline-flex; align-items: center; gap: .375rem; margin: 0; font-size: .8438rem; font-weight: 500; white-space: nowrap; cursor: pointer; }
 
+    /* Classement en barres : ce que chaque service rapporte. */
+    .ranks { display: grid; gap: .875rem; }
+    .rank-head { display: flex; justify-content: space-between; gap: .75rem; font-size: .875rem; }
+    .rank-head .nm { font-weight: 600; }
+    .rank-head .amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .rank .track { height: .5rem; border-radius: 1rem; background: var(--line-soft); margin: .3125rem 0 .1875rem; overflow: hidden; }
+    .rank .track .fill { height: 100%; border-radius: 1rem; background: var(--brand); }
+    .rank .sub { font-size: .75rem; color: var(--muted); }
+
     /* Modifier un centre analytique : un volet par centre. */
     .center-edit > summary { cursor: pointer; font-weight: 600; font-size: .875rem; padding: .375rem 0; }
     .center-edit + .center-edit { border-top: 1px solid var(--line-soft); }

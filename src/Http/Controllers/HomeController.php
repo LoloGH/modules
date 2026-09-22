@@ -11,6 +11,7 @@ use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Services\CashSessionCalculator;
 use Keneya\FinanceCaisse\Services\DashboardMetrics;
 use Keneya\FinanceCaisse\Support\Actor;
+use Keneya\FinanceCaisse\Support\DashboardPeriod;
 
 /**
  * Tableau de bord du module. Contrôleur et non closure : une route à
@@ -44,14 +45,16 @@ final class HomeController extends FinanceController
             }
         }
 
+        // La période regardée : celle demandée, ou le jour.
+        $period = DashboardPeriod::fromRequest($request);
+
         return view('finance::home', [
             'facility' => (string) config('finance.facility.name'),
             'canReadFigures' => $canReadFigures,
-            'metrics' => $canReadFigures ? $metrics->overview() : null,
+            'metrics' => $canReadFigures ? $metrics->overview($period) : null,
             'latest' => $canReadFigures ? $metrics->latestPayments() : null,
             'session' => $session,
             'totals' => $totals,
-            'window' => DashboardMetrics::WINDOW,
         ]);
     }
 }

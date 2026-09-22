@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.18.0, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.19.0, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,23 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Tableau de bord** (`Services\DashboardMetrics`, `Support\DashboardPeriod`) —
+  la période se choisit (aujourd'hui, 7 jours, 30 jours, ce mois) et tout
+  l'écran la suit, comparaison comprise : le jour se compare à la veille, le
+  mois au mois dernier. Une période inconnue retombe sur le jour.
+  - **Chiffres clés** : recettes, dépenses, **résultat** (recettes +
+    règlements d'assureurs − dépenses) et nombre d'encaissements, chacun
+    avec sa variation.
+  - **D'où vient l'argent** : recettes par service (le centre gravé sur
+    chaque encaissement, en barres de proportion) et actes les plus
+    encaissés.
+  - **Ce qui reste dû**, à l'instant où l'on regarde : créances des patients
+    et des assureurs, avances dues aux patients, remboursements approuvés à
+    payer. Chaque ligne n'apparaît que pour qui a le droit de la lire.
+  - **À traiter** : clôtures à valider, remises et remboursements à
+    approuver, remboursements à payer — chacun cliquable vers son écran.
+  - Une avance n'est jamais comptée comme une recette : elle reste due au
+    patient.
 - **Journal d'audit** (`journal`, `finance.audit.view`) — qui a fait quoi,
   quand, et sur quoi. Lecture seule : une ligne ne se modifie ni ne se
   supprime (`Models\AuditLog` lève une exception).

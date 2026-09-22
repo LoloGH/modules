@@ -173,16 +173,22 @@ class CoverageHttpTest extends HttpTestCase
         $this->assertSame(Invoice::query()->sole()->id, Payment::query()->sole()->invoice_id);
     }
 
-    public function test_the_dashboard_shows_the_month_coverage(): void
+    public function test_the_dashboard_shows_the_coverage_of_the_period(): void
     {
         $act = $this->makeAct('CONS');
         $this->setTariff($act, 10_000);
         app(CreateInvoice::class)->handle(null, 'Awa', [['act_id' => $act->id, 'quantity' => 1]], null, $this->makeUser(),
             ['insurer_id' => $this->insurer(Insurer::KIND_SOCIAL_AID, 100)->id]);
 
+        // Le tableau de bord suit la période regardée : la facture émise
+        // aujourd'hui se lit dans le jour comme dans le mois.
         $this->actingAs($this->accountant())->get('/finance')
-            ->assertSee('Prises en charge du mois')
+            ->assertSee('Prises en charge du jour')
             ->assertSee('Part des aides sociales')
+            ->assertSee('10 000 FCFA');
+
+        $this->get('/finance?periode=mois')
+            ->assertSee('Prises en charge du mois')
             ->assertSee('10 000 FCFA');
     }
 }
