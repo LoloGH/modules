@@ -21,7 +21,7 @@ class ReceivablesHttpTest extends HttpTestCase
 {
     use CatalogFixtures;
 
-    private function invoice(string $patient, int $amount, ?Insurer $insurer = null, int $rate = 80, int $daysAgo = 0): Invoice
+    private function invoice(string $patient, int $amount, ?Insurer $insurer = null, int $daysAgo = 0): Invoice
     {
         static $n = 0;
         $n++;
@@ -29,7 +29,7 @@ class ReceivablesHttpTest extends HttpTestCase
         $this->setTariff($act, $amount);
 
         $invoice = app(CreateInvoice::class)->handle('PAT-0'.$n, $patient, [['act_id' => $act->id, 'quantity' => 1]], null, $this->makeUser(),
-            $insurer === null ? null : ['insurer_id' => $insurer->id, 'rate' => $rate]);
+            $insurer === null ? null : ['insurer_id' => $insurer->id]);
 
         if ($daysAgo > 0) {
             $invoice->forceFill(['created_at' => Carbon::today()->subDays($daysAgo)->setTime(10, 0)])->save();
@@ -38,15 +38,15 @@ class ReceivablesHttpTest extends HttpTestCase
         return $invoice->fresh();
     }
 
-    private function insurer(): Insurer
+    private function insurer(int $rate = 80, string $code = 'INPS', string $kind = Insurer::KIND_INSURANCE): Insurer
     {
-        return Insurer::create(['code' => 'INPS', 'name' => 'INPS', 'default_rate' => 80, 'is_active' => true]);
+        return Insurer::create(['code' => $code, 'name' => $code, 'kind' => $kind, 'default_rate' => $rate, 'is_active' => true]);
     }
 
     public function test_patient_receivables_show_balance_due_date_and_status(): void
     {
         $recent = $this->invoice('Aminata Traoré', 5_000);
-        $old = $this->invoice('Moussa Diarra', 3_000, daysAgo: 45);
+        $old = $this->invoice('Moussa Diarra', 3_000, null, 45);
         $paid = $this->invoice('Awa Keita', 1_000);
         $cancelled = $this->invoice('Annulé Patient', 2_000);
         app(CancelInvoice::class)->handle($cancelled, 'Erreur', $this->makeUser());
@@ -76,7 +76,7 @@ class ReceivablesHttpTest extends HttpTestCase
     public function test_the_patient_delay_is_configurable(): void
     {
         config(['finance.receivables.patient_due_days' => 15]);
-        $this->invoice('Aminata Traoré', 5_000, daysAgo: 10);
+        $this->invoice('Aminata Traoré', 5_000, null, 10);
 
         $this->actingAs($this->cashier())->get('/finance/creances')
             ->assertSee('À échoir')
@@ -87,9 +87,10 @@ class ReceivablesHttpTest extends HttpTestCase
     public function test_insurer_receivables_follow_settlements_and_rejections(): void
     {
         $insurer = $this->insurer();
-        $pending = $this->invoice('Aminata Traoré', 10_000, $insurer, 80, daysAgo: 40);  // 8 000 dus, échue (> 30 j)
-        $partial = $this->invoice('Moussa Diarra', 10_000, $insurer, 50);                 // 5 000 dus
-        $settled = $this->invoice('Awa Keita', 10_000, $insurer, 80);
+        $half = $this->insurer(50, 'INPS-50');
+        $pending = $this->invoice('Aminata Traoré', 10_000, $insurer, daysAgo: 40);  // 8 000 dus, échue (> 30 j)
+        $partial = $this->invoice('Moussa Diarra', 10_000, $half);                    // 5 000 dus
+        $settled = $this->invoice('Awa Keita', 10_000, $insurer);
 
         app(RecordInsuranceSettlement::class)->handle($partial, 2_000, null, null, $this->makeUser());
         app(RecordInsuranceRejection::class)->handle($partial, 1_000, 'Non couvert', $this->makeUser());
@@ -108,6 +109,21 @@ class ReceivablesHttpTest extends HttpTestCase
 
         // Le rejet a rendu 1 000 au patient : il figure dans les créances patients.
         $this->get('/finance/creances')->assertSee('Moussa Diarra');
+    }
+
+    public function test_social_aid_receivables_are_labelled_and_filterable(): void
+    {
+        $this->invoice('Aminata Traoré', 10_000, $this->insurer(80));
+        $this->invoice('Patient Indigent', 4_000, $this->insurer(100, 'INDIGENTS', Insurer::KIND_SOCIAL_AID));
+
+        $this->actingAs($this->accountant())->get('/finance/creances?type=assurances')
+            ->assertSee('Assurances et aides sociales')
+            ->assertSee('Aide sociale')
+            ->assertSee('Patient Indigent');
+
+        $this->get('/finance/creances?type=assurances&nature=social_aid')
+            ->assertSee('Patient Indigent')
+            ->assertDontSee('Aminata Traoré');
     }
 
     public function test_without_the_right_it_is_forbidden(): void

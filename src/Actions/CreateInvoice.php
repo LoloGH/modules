@@ -32,7 +32,8 @@ final class CreateInvoice
 
     /**
      * @param  list<array{act_id: int, quantity: int}>  $lines
-     * @param  array{insurer_id: int, rate: int, policy_number?: ?string}|null  $coverage  prise en charge par un assureur
+     * @param  array{insurer_id: int, policy_number?: ?string}|null  $coverage  prise en charge par un organisme (assurance ou aide sociale) ;
+     *                                                                          le taux se lit, acte par acte, dans sa couverture
      */
     public function handle(?string $patientId, ?string $patientName, array $lines, ?string $note, Authenticatable $actor, ?array $coverage = null): Invoice
     {
@@ -70,13 +71,23 @@ final class CreateInvoice
                 }
 
                 $unit = (int) $act->standardTariff->amount;
+                $amount = $unit * $quantity;
+
+                // La part prise en charge de cette ligne : le taux de
+                // l'organisme pour cet acte (0 s'il ne le couvre pas), arrondi
+                // au franc ; le patient paie le reste.
+                $rate = $insurer?->rateFor($act->id) ?? 0;
+                $share = (int) round($amount * $rate / 100);
 
                 $rows[] = [
                     'act_id' => $act->id,
                     'label' => $act->name,
                     'quantity' => $quantity,
                     'unit_price' => $unit,
-                    'amount' => $unit * $quantity,
+                    'amount' => $amount,
+                    'insurer_rate' => $rate,
+                    'insurer_share' => $share,
+                    'patient_share' => $amount - $share,
                 ];
             }
 
@@ -86,9 +97,17 @@ final class CreateInvoice
                 throw new FinanceRuleViolation('Le montant de la facture doit être supérieur à zéro.');
             }
 
-            // La part assurance est arrondie au franc ; le patient paie le reste.
-            $rate = $insurer === null ? 0 : (int) $coverage['rate'];
-            $insurerShare = (int) round($total * $rate / 100);
+            $insurerShare = array_sum(array_column($rows, 'insurer_share'));
+
+            if ($insurer !== null && $insurerShare === 0) {
+                throw new FinanceRuleViolation(
+                    "Aucun acte de cette facture n'est pris en charge par « {$insurer->name} »."
+                );
+            }
+
+            // Le taux de la facture : la part prise en charge rapportée au
+            // total (les lignes peuvent avoir des taux différents).
+            $rate = $total > 0 ? (int) round($insurerShare * 100 / $total) : 0;
 
             $invoice = Invoice::create([
                 'number' => $this->numbers->next('invoice'),
@@ -134,7 +153,7 @@ final class CreateInvoice
     }
 
     /**
-     * @param  array{insurer_id: int, rate: int, policy_number?: ?string}|null  $coverage
+     * @param  array{insurer_id: int, policy_number?: ?string}|null  $coverage
      */
     private function insurer(?array $coverage): ?Insurer
     {
@@ -142,16 +161,10 @@ final class CreateInvoice
             return null;
         }
 
-        $insurer = Insurer::query()->find((int) $coverage['insurer_id']);
+        $insurer = Insurer::query()->with('acts')->find((int) $coverage['insurer_id']);
 
         if ($insurer === null || ! $insurer->is_active) {
-            throw new FinanceRuleViolation("L'assureur choisi n'est pas actif.");
-        }
-
-        $rate = (int) $coverage['rate'];
-
-        if ($rate < 1 || $rate > 100) {
-            throw new FinanceRuleViolation('Le taux de prise en charge doit être compris entre 1 et 100 %.');
+            throw new FinanceRuleViolation("L'organisme de prise en charge choisi n'est pas actif.");
         }
 
         return $insurer;

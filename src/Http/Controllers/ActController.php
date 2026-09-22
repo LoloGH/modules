@@ -14,6 +14,7 @@ use Keneya\FinanceCaisse\Http\Requests\ActRequest;
 use Keneya\FinanceCaisse\Http\Requests\ConsultationTicketRequest;
 use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\AnalyticCenter;
+use Keneya\FinanceCaisse\Models\Insurer;
 use Keneya\FinanceCaisse\Models\Tariff;
 use Keneya\FinanceCaisse\Support\Text;
 
@@ -41,6 +42,11 @@ final class ActController extends FinanceController
             // plus ancien : le prix du jour se lit sans chercher.
             'tariffs' => $act->tariffs()->orderByDesc('is_active')->orderByDesc('id')->get(),
             'defaultKind' => Tariff::KIND_STANDARD,
+            // Qui prend cet acte en charge, et à quel taux.
+            'coverages' => Insurer::query()->active()->with('acts')->get()
+                ->map(fn (Insurer $insurer): array => ['insurer' => $insurer, 'rate' => $insurer->rateFor($act->id)])
+                ->filter(fn (array $row): bool => $row['rate'] > 0)
+                ->values(),
         ]);
     }
 

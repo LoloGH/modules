@@ -20,6 +20,10 @@ final class PaymentRequest extends FinanceRequest
             'act_id' => ['nullable', 'integer', 'exists:finance_acts,id'],
             // La facture réglée, si l'encaissement vient d'une facture.
             'invoice_id' => ['nullable', 'integer', 'exists:finance_invoices,id'],
+            // Prise en charge au moment d'encaisser : l'organisme paiera sa part
+            // de l'acte, le patient la sienne.
+            'insurer_id' => ['nullable', 'integer', 'exists:finance_insurers,id', 'prohibits:invoice_id'],
+            'policy_number' => ['nullable', 'string', 'max:64'],
             'amount' => ['required', 'integer', 'min:1'],
             'reference' => ['nullable', 'string', 'max:191'],
             'patient_id' => ['nullable', 'string', 'max:64'],

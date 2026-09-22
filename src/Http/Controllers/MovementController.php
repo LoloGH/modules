@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Keneya\FinanceCaisse\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Actions\CancelCashMovement;
 use Keneya\FinanceCaisse\Actions\CollectQueuedVisit;
+use Keneya\FinanceCaisse\Actions\CreateInvoice;
 use Keneya\FinanceCaisse\Actions\RecordDisbursement;
 use Keneya\FinanceCaisse\Actions\RecordPayment;
+use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Http\Requests\CancelMovementRequest;
 use Keneya\FinanceCaisse\Http\Requests\DisbursementRequest;
 use Keneya\FinanceCaisse\Http\Requests\PaymentRequest;
@@ -23,9 +26,41 @@ use Keneya\FinanceCaisse\Support\Money;
  */
 final class MovementController extends FinanceController
 {
-    public function storePayment(PaymentRequest $request, CashSession $session, RecordPayment $action, CollectQueuedVisit $collect): RedirectResponse
+    public function storePayment(PaymentRequest $request, CashSession $session, RecordPayment $action, CollectQueuedVisit $collect, CreateInvoice $invoices): RedirectResponse
+    {
+        // Avec une prise en charge : une facture de l'acte, prise en charge,
+        // et l'encaissement de la part patient qui s'y rattache — ensemble,
+        // ou pas du tout. Sans elle, pas de transaction englobante : l'échec
+        // d'un encaissement venu de la file doit garder sa trace d'audit.
+        if (empty($request->validated('insurer_id'))) {
+            return $this->recordPayment($request, $session, $action, $collect, $invoices);
+        }
+
+        return DB::transaction(fn (): RedirectResponse => $this->recordPayment($request, $session, $action, $collect, $invoices));
+    }
+
+    private function recordPayment(PaymentRequest $request, CashSession $session, RecordPayment $action, CollectQueuedVisit $collect, CreateInvoice $invoices): RedirectResponse
     {
         $data = $request->validated();
+        $fromInvoice = isset($data['invoice_id']);
+        $covered = null;
+
+        if (! empty($data['insurer_id'])) {
+            if (empty($data['act_id'])) {
+                throw new FinanceRuleViolation("Choisissez l'acte encaissé : la prise en charge s'applique à un acte.");
+            }
+
+            $covered = $invoices->handle(
+                $data['patient_id'] ?? null,
+                $data['patient_name'] ?? null,
+                [['act_id' => (int) $data['act_id'], 'quantity' => 1]],
+                null,
+                $this->user($request),
+                ['insurer_id' => (int) $data['insurer_id'], 'policy_number' => $data['policy_number'] ?? null],
+            );
+
+            $data['invoice_id'] = $covered->id;
+        }
 
         $method = PaymentMethod::query()->findOrFail((int) $data['payment_method_id']);
         $details = [
@@ -36,6 +71,11 @@ final class MovementController extends FinanceController
             'act_id' => isset($data['act_id']) ? (int) $data['act_id'] : null,
             'invoice_id' => isset($data['invoice_id']) ? (int) $data['invoice_id'] : null,
         ];
+
+        // Venu de la file avec une prise en charge : le patient paie sa part.
+        if ($covered !== null && isset($data['visit_ref'], $data['queue_ref'])) {
+            $details['invoice_id'] = $covered->id;
+        }
 
         // Un patient appelé depuis la file : l'encaissement fait aussi avancer
         // sa visite chez l'hôte, ou rien n'est enregistré.
@@ -59,7 +99,7 @@ final class MovementController extends FinanceController
         $payment = $action->handle($session, $method, (int) $data['amount'], $this->user($request), $details);
 
         // Réglée sur facture : on revient à la facture, qui montre son solde.
-        if ($payment->invoice_id !== null) {
+        if ($fromInvoice) {
             return redirect()->route('finance.invoices.show', $payment->invoice_id)
                 ->with('finance_print', $this->receipt(route('finance.cash.payments.receipt', $payment), 'Imprimer le reçu'))
                 ->with('finance_status', sprintf(
@@ -73,7 +113,16 @@ final class MovementController extends FinanceController
         return redirect()
             ->route('finance.cash.sessions.show', $session)
             ->with('finance_print', $this->receipt(route('finance.cash.payments.receipt', $payment), 'Imprimer le reçu'))
-            ->with('finance_status', sprintf('Encaissement %s enregistré : %s.', $payment->number, Money::format($payment->amount)));
+            ->with('finance_status', $covered === null
+                ? sprintf('Encaissement %s enregistré : %s.', $payment->number, Money::format($payment->amount))
+                : sprintf(
+                    'Encaissement %s enregistré : %s (part patient). %s prend en charge %s, suivi sur la facture %s.',
+                    $payment->number,
+                    Money::format($payment->amount),
+                    $covered->insurer?->name,
+                    Money::format($covered->insurer_share),
+                    $covered->number,
+                ));
     }
 
     public function storeDisbursement(DisbursementRequest $request, CashSession $session, RecordDisbursement $action): RedirectResponse

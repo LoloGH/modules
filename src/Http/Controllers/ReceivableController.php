@@ -38,12 +38,14 @@ final class ReceivableController extends FinanceController
         $status = in_array($request->query('statut'), ['a-echoir', 'echue'], true) ? (string) $request->query('statut') : null;
         $search = Text::clean(is_string($request->query('q')) ? $request->query('q') : null);
         $insurerId = ctype_digit((string) $request->query('assureur')) ? (int) $request->query('assureur') : null;
+        $kind = array_key_exists((string) $request->query('nature'), Insurer::kindLabels()) ? (string) $request->query('nature') : null;
 
         $days = $this->dueDays($type);
         $cutoff = Carbon::today()->subDays($days);
 
         $base = ($type === self::TYPE_INSURERS ? $this->insurerDebts() : $this->patientDebts())
             ->when($type === self::TYPE_INSURERS && $insurerId, fn (Builder $q) => $q->where('insurer_id', $insurerId))
+            ->when($type === self::TYPE_INSURERS && $kind, fn (Builder $q) => $q->whereHas('insurer', fn (Builder $i) => $i->where('kind', $kind)))
             ->when($search, function (Builder $q) use ($search): void {
                 $like = '%'.$search.'%';
                 $q->where(fn (Builder $w) => $w->where('number', 'like', $like)
@@ -74,6 +76,7 @@ final class ReceivableController extends FinanceController
             'status' => $status,
             'search' => $search,
             'insurerId' => $insurerId,
+            'kind' => $kind,
             'insurers' => Insurer::query()->orderBy('name')->get(),
             'days' => $days,
             'invoices' => $filtered->with('insurer')->oldest('created_at')->oldest('id')
@@ -82,6 +85,11 @@ final class ReceivableController extends FinanceController
             'totals' => [
                 'patients' => (int) $this->patientDebts()->get()->sum(fn (Invoice $i): int => $i->balance()),
                 'insurers' => (int) $this->insurerDebts()->get()->sum(fn (Invoice $i): int => $i->insurerOutstanding()),
+                // Créances des organismes, par nature.
+                'byKind' => $this->insurerDebts()->with('insurer')->get()
+                    ->groupBy(fn (Invoice $i): string => $i->insurer?->kindLabel() ?? '—')
+                    ->map(fn ($group): int => (int) $group->sum(fn (Invoice $i): int => $i->insurerOutstanding()))
+                    ->all(),
                 'overdue' => (int) $all->filter(fn (Invoice $i): bool => $i->created_at->lt($cutoff))->sum($balance),
                 'count' => $all->count(),
             ],

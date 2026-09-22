@@ -21,9 +21,9 @@ final class InvoiceRequest extends FinanceRequest
             'patient_id' => ['nullable', 'string', 'max:64'],
             'patient_name' => ['nullable', 'string', 'max:191'],
             'note' => ['nullable', 'string', 'max:191'],
-            // Prise en charge : un assureur, un taux, et le n° de prise en charge.
+            // Prise en charge : un organisme et le n° de prise en charge ; le
+            // taux se lit, acte par acte, dans sa couverture.
             'insurer_id' => ['nullable', 'integer', 'exists:finance_insurers,id'],
-            'coverage_rate' => ['nullable', 'required_with:insurer_id', 'integer', 'min:1', 'max:100'],
             'policy_number' => ['nullable', 'string', 'max:64'],
             'lines' => ['required', 'array'],
             'lines.*.act_id' => ['nullable', 'integer', 'exists:finance_acts,id'],
@@ -43,7 +43,7 @@ final class InvoiceRequest extends FinanceRequest
     }
 
     /**
-     * @return array{insurer_id: int, rate: int, policy_number: ?string}|null
+     * @return array{insurer_id: int, policy_number: ?string}|null
      */
     public function coverage(): ?array
     {
@@ -51,7 +51,6 @@ final class InvoiceRequest extends FinanceRequest
 
         return $insurer === null || $insurer === '' ? null : [
             'insurer_id' => (int) $insurer,
-            'rate' => (int) $this->validated('coverage_rate'),
             'policy_number' => $this->validated('policy_number'),
         ];
     }

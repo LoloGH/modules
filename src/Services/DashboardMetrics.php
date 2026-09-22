@@ -10,6 +10,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
+use Keneya\FinanceCaisse\Models\Insurer;
+use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\Payment;
 
 /**
@@ -67,6 +69,30 @@ final class DashboardMetrics
             'window_total' => array_sum(array_column($series, 'amount')),
             'series' => $series,
             'split' => $this->split($today),
+            'coverage' => $this->coverage($today),
+        ];
+    }
+
+    /**
+     * Les prises en charge du mois (factures émises depuis le 1er, hors
+     * annulées) : part des assurances, des aides sociales, réglé, reste dû.
+     *
+     * @return array{insurance: int, social_aid: int, paid: int, outstanding: int}
+     */
+    private function coverage(Carbon $today): array
+    {
+        $invoices = Invoice::query()
+            ->whereNotNull('insurer_id')
+            ->where('status', '!=', Invoice::STATUS_CANCELLED)
+            ->where('created_at', '>=', $today->copy()->startOfMonth())
+            ->with('insurer')
+            ->get();
+
+        return [
+            'insurance' => (int) $invoices->filter(fn (Invoice $i): bool => $i->insurer?->kind === Insurer::KIND_INSURANCE)->sum('insurer_share'),
+            'social_aid' => (int) $invoices->filter(fn (Invoice $i): bool => $i->insurer?->kind === Insurer::KIND_SOCIAL_AID)->sum('insurer_share'),
+            'paid' => (int) $invoices->sum('insurer_paid'),
+            'outstanding' => (int) $invoices->sum(fn (Invoice $i): int => $i->insurerOutstanding()),
         ];
     }
 

@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.12.0, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.13.0, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -121,30 +121,31 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Écrans `factures` (onglets par statut, recherche, montant/payé/solde),
     `factures/nouvelle`, `factures/{id}`. Droits : `finance.invoices.view`,
     `.create` (caissier), `.cancel` (comptable).
-- **Assurances** (`assurances`, `finance.insurance.view` ; gestion
-  `finance.insurance.manage`, comptable) : assureurs (code, nom, taux par
-  défaut, actif) ; **prise en charge** à l'émission d'une facture (assureur,
-  taux, n° de prise en charge) qui calcule part assurance (arrondie au franc)
-  et part patient — le caissier n'encaisse que la part patient ; **règlements**
-  de l'assureur (hors tiroir, numéro `REG-`, jamais au-delà du reste dû) ;
-  **rejets** (motif), qui passent à la charge du patient. Créance assurance =
-  part − réglé − rejeté, statut En attente / Partiellement réglée / Réglée /
-  Rejetée. Écran : indicateurs, prises en charge filtrables, derniers
-  règlements et rejets, assureurs.
-- **Créances** (`creances`, `finance.receivables.view`) : onglets Patients
-  (part patient + rejets − payé) et Assurances (part assurance − réglé −
-  rejeté), facture par facture — montant dû, payé, solde, **échéance**
-  (émission + `finance.receivables.patient_due_days`, défaut 0, ou
-  `insurer_due_days`, défaut 30) et statut À échoir / Échue (jours de retard) ;
-  filtres échéance, assureur, recherche ; indicateurs et ancienneté (0–30,
-  31–60, 61–90, > 90 jours). Lecture seule.
-- **Rapports** (`rapports`, `finance.reports.view` : comptable, direction,
-  administrateur ; `Services\ReportBuilder`) : recettes par service, par
-  activité, par moyen ; dépenses par catégorie, par moyen ; règlements des
-  assureurs par assureur ; synthèse journalière (recettes caisse, règlements
-  assurance, dépenses, solde). Filtres période, service, activité, moyen ;
-  chiffres clés de la période ; **export CSV** (séparateur « ; », UTF-8 avec
-  BOM, montants entiers). Écritures valides uniquement, tout l'établissement.
+- **Assurances et aides sociales** (`assurances`, `finance.insurance.view` ;
+  gestion `finance.insurance.manage`, comptable) :
+  - **Organismes** : code, nom, **nature** (`insurance` Assurance, `social_aid`
+    Aide sociale), taux par défaut, actif.
+  - **Couverture par acte** (`assurances/assureurs/{id}`, `SetInsurerCoverage`,
+    table `finance_insurer_acts`) : portée « tous les actes » — au taux par
+    défaut, sauf les actes décochés (exclus) ou à taux propre — ou « actes
+    choisis » — seuls les actes cochés, à leur taux ou au défaut. La fiche acte
+    liste les organismes qui le couvrent.
+  - **Calcul ligne par ligne** : chaque ligne de facture porte son taux, sa
+    part prise en charge (arrondie au franc) et sa part patient ; un acte non
+    couvert reste au patient ; la facture additionne. Aucun acte couvert :
+    refus. Les factures émises sont figées si la couverture change.
+  - **À l'encaissement** : le bloc d'encaissement propose la prise en charge ;
+    avec l'acte choisi, le montant proposé est la part patient. Une facture
+    prise en charge est créée et l'encaissement de la part patient s'y
+    rattache, dans une seule transaction (guichet comme file de caisse).
+  - **Règlements** de l'organisme (hors tiroir, `REG-`, jamais au-delà du
+    reste dû) et **rejets** (motif), qui passent à la charge du patient.
+    Créance = part − réglé − rejeté : En attente, Partiellement réglée,
+    Réglée, Rejetée.
+  - Visible dans Assurances (parts par nature, filtre nature), Créances
+    (onglet « Assurances et aides sociales », nature), Rapports (prises en
+    charge par organisme et par acte), tableau de bord (prises en charge du
+    mois), facture écran et imprimée (taux et parts par ligne).
 - **Paiements** (`paiements`, `finance.payments.view`, `Support\LedgerFilters`) :
   les encaissements, en lecture — n°, date et caisse, patient et identifiant,
   objet, moyen, référence, facture associée (lien), statut, montant, reçu.

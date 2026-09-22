@@ -21,6 +21,7 @@ use Keneya\FinanceCaisse\Models\CashierSetting;
 use Keneya\FinanceCaisse\Models\CashRegister;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
+use Keneya\FinanceCaisse\Models\Insurer;
 use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
@@ -157,7 +158,9 @@ final class CashDeskController extends FinanceController
             'methods' => PaymentMethod::query()->active()->get(),
             // Le motif d'encaissement : le catalogue des actes, avec leur
             // centre et leur tarif standard du jour.
-            'acts' => Act::query()->active()->with(['center', 'standardTariff'])->get(),
+            'acts' => $acts = Act::query()->active()->with(['center', 'standardTariff'])->get(),
+            // Prises en charge proposables à l'encaissement, et leur taux par acte.
+            'coverage' => Insurer::coverageMap($acts->pluck('id')),
             'isOwner' => $isOwner,
             'canReview' => $canReview,
             // Tous ses tiroirs ouverts, celui-ci compris, pour basculer sans

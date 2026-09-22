@@ -23,6 +23,9 @@ class InvoiceLine extends Model
             'quantity' => 'integer',
             'unit_price' => 'integer',
             'amount' => 'integer',
+            'insurer_rate' => 'integer',
+            'insurer_share' => 'integer',
+            'patient_share' => 'integer',
         ];
     }
 

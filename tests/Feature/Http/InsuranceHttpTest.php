@@ -28,7 +28,7 @@ class InsuranceHttpTest extends HttpTestCase
         $this->setTariff($act, 10_000);
 
         return app(CreateInvoice::class)->handle('PAT-00001', 'Aminata Traoré', [['act_id' => $act->id, 'quantity' => 1]], null, $this->makeUser(),
-            ['insurer_id' => $this->insurer()->id, 'rate' => 80, 'policy_number' => 'PEC-77']);
+            ['insurer_id' => $this->insurer()->id, 'policy_number' => 'PEC-77']);
     }
 
     public function test_the_menu_leads_to_insurance_and_the_screen_shows_the_shares(): void
@@ -46,18 +46,27 @@ class InsuranceHttpTest extends HttpTestCase
             ->assertSee('2 000 FCFA')
             ->assertSee('En attente')
             ->assertSee('Créance assurance')
-            ->assertSee('Nouvel assureur');
+            ->assertSee('Assurance')
+            ->assertSee('Nouvel organisme');
     }
 
     public function test_the_control_creates_and_toggles_an_insurer(): void
     {
         $this->actingAs($this->accountant())->post(route('finance.insurers.store'), [
             'code' => 'amo', 'name' => 'Assurance maladie obligatoire', 'default_rate' => '70',
+            'kind' => 'insurance', 'coverage_scope' => 'all',
         ])->assertRedirect(route('finance.insurance.index'));
 
         $insurer = Insurer::query()->sole();
         $this->assertSame('AMO', $insurer->code);
         $this->assertSame(70, $insurer->default_rate);
+        $this->assertSame('insurance', $insurer->kind);
+
+        // Une aide sociale « actes choisis » mène à sa page de couverture.
+        $this->post(route('finance.insurers.store'), [
+            'code' => 'indigents', 'name' => 'Fonds des indigents', 'default_rate' => '100',
+            'kind' => 'social_aid', 'coverage_scope' => 'selected',
+        ])->assertRedirect(route('finance.insurers.show', Insurer::where('code', 'INDIGENTS')->sole()));
 
         $this->post(route('finance.insurers.toggle', $insurer))->assertRedirect();
         $this->assertFalse($insurer->fresh()->is_active);
@@ -71,42 +80,47 @@ class InsuranceHttpTest extends HttpTestCase
 
         $this->actingAs($this->cashier())->get(route('finance.invoices.create'))
             ->assertSee('Prise en charge')
-            ->assertSee('INPS (80 %)');
+            ->assertSee('INPS');
 
         $this->post(route('finance.invoices.store'), [
             'patient_name' => 'Awa Keita',
             'lines' => [['act_id' => $act->id, 'quantity' => '2']],
             'insurer_id' => $insurer->id,
-            'coverage_rate' => '75',
             'policy_number' => 'PEC-9',
         ]);
 
         $invoice = Invoice::query()->sole();
-        $this->assertSame(7_500, $invoice->insurer_share);
-        $this->assertSame(2_500, $invoice->patient_share);
+        $this->assertSame(8_000, $invoice->insurer_share);
+        $this->assertSame(2_000, $invoice->patient_share);
 
         $this->get(route('finance.invoices.show', $invoice))
             ->assertSee('Prise en charge')
-            ->assertSee('7 500 FCFA')
-            ->assertSee('2 500 FCFA')
+            ->assertSee('8 000 FCFA')
+            ->assertSee('2 000 FCFA')
+            ->assertSee('80 %')
             ->assertDontSee("Enregistrer un règlement de l'assureur", false);   // le caissier ne règle pas
 
         // La facture imprimée porte les deux parts.
         $this->get(route('finance.invoices.print', $invoice))
-            ->assertSee('Part assurance')
+            ->assertSee('Pris en charge')
             ->assertSee('Part patient')
             ->assertSee('PEC-9');
     }
 
-    public function test_a_rate_is_required_with_an_insurer(): void
+    public function test_an_invoice_whose_acts_are_not_covered_is_refused_with_a_message(): void
     {
         $insurer = $this->insurer();
+        $insurer->update(['coverage_scope' => Insurer::SCOPE_SELECTED]);
         $act = $this->makeAct('CONS');
         $this->setTariff($act, 5_000);
 
-        $this->actingAs($this->cashier())->post(route('finance.invoices.store'), [
-            'patient_name' => 'Awa', 'lines' => [['act_id' => $act->id, 'quantity' => '1']], 'insurer_id' => $insurer->id,
-        ])->assertSessionHasErrors('coverage_rate');
+        $this->actingAs($this->cashier())
+            ->from(route('finance.invoices.create'))
+            ->post(route('finance.invoices.store'), [
+                'patient_name' => 'Awa', 'lines' => [['act_id' => $act->id, 'quantity' => '1']], 'insurer_id' => $insurer->id,
+            ])->assertSessionHas('finance_error', "Aucun acte de cette facture n'est pris en charge par « INPS ».");
+
+        $this->assertSame(0, Invoice::count());
     }
 
     public function test_the_control_records_a_settlement_and_a_rejection_from_the_invoice(): void
@@ -150,6 +164,6 @@ class InsuranceHttpTest extends HttpTestCase
         $cashier = $this->cashier();
         $this->actingAs($cashier)->get('/finance/assurances')->assertOk()->assertDontSee('Nouvel assureur');
         $this->actingAs($cashier)->post(route('finance.insurance.settle', $invoice), ['amount' => '100'])->assertForbidden();
-        $this->actingAs($cashier)->post(route('finance.insurers.store'), ['code' => 'X', 'name' => 'X', 'default_rate' => '50'])->assertForbidden();
+        $this->actingAs($cashier)->post(route('finance.insurers.store'), ['code' => 'X', 'name' => 'X', 'default_rate' => '50', 'kind' => 'insurance', 'coverage_scope' => 'all'])->assertForbidden();
     }
 }

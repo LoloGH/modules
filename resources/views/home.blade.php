@@ -112,6 +112,18 @@
             </x-finance::card>
         </div>
 
+        @php($coverage = $metrics['coverage'])
+        @if (array_sum($coverage) > 0)
+            <x-finance::card title="Prises en charge du mois" hint="Assurances et aides sociales">
+                <dl class="facts">
+                    <div class="f"><dt>Part des assurances</dt><dd>{{ $money($coverage['insurance']) }}</dd></div>
+                    <div class="f"><dt>Part des aides sociales</dt><dd>{{ $money($coverage['social_aid']) }}</dd></div>
+                    <div class="f"><dt>Réglé par les organismes</dt><dd>{{ $money($coverage['paid']) }}</dd></div>
+                    <div class="f gap"><dt>Reste dû par les organismes</dt><dd>{{ $money($coverage['outstanding']) }}</dd></div>
+                </dl>
+            </x-finance::card>
+        @endif
+
         <div class="cols wide">
             <x-finance::card title="Dernières transactions" hint="{{ $latest->count() }} dernier(s) encaissement(s)" flush>
                 @if ($latest->isEmpty())

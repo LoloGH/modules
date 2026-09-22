@@ -32,7 +32,10 @@
         </dl>
 
         <table>
-            <thead><tr><th>Acte ou prestation</th><th class="r">Qté</th><th class="r">Prix unitaire</th><th class="r">Montant</th></tr></thead>
+            <thead><tr>
+                <th>Acte ou prestation</th><th class="r">Qté</th><th class="r">Prix unitaire</th><th class="r">Montant</th>
+                @if ($invoice->isInsured()) <th class="r">Pris en charge</th><th class="r">Part patient</th> @endif
+            </tr></thead>
             <tbody>
             @foreach ($invoice->lines as $line)
                 <tr>
@@ -40,6 +43,10 @@
                     <td class="r">{{ $line->quantity }}</td>
                     <td class="r">{{ $fmt($line->unit_price) }}</td>
                     <td class="r">{{ $fmt($line->amount) }}</td>
+                    @if ($invoice->isInsured())
+                        <td class="r">{{ $line->insurer_rate > 0 ? $fmt($line->insurer_share).' ('.$line->insurer_rate.' %)' : 'Non couvert' }}</td>
+                        <td class="r">{{ $fmt($line->patient_share) }}</td>
+                    @endif
                 </tr>
             @endforeach
             </tbody>
@@ -48,7 +55,7 @@
         <table class="totals">
             <tr class="grand"><td>Total</td><td class="r">{{ $fmt($invoice->total) }}</td></tr>
             @if ($invoice->isInsured())
-                <tr><td>Part assurance ({{ $invoice->coverage_rate }} % — {{ $invoice->insurer?->name }})</td><td class="r">{{ $fmt($invoice->insurer_share) }}</td></tr>
+                <tr><td>Part {{ strtolower($invoice->insurer?->kindLabel() ?? 'assurance') }} ({{ $invoice->insurer?->name }})</td><td class="r">{{ $fmt($invoice->insurer_share) }}</td></tr>
                 <tr><td>Part patient</td><td class="r">{{ $fmt($invoice->patient_share) }}</td></tr>
                 @if ($invoice->insurer_rejected > 0)
                     <tr><td>Rejeté par l'assureur (à la charge du patient)</td><td class="r">{{ $fmt($invoice->insurer_rejected) }}</td></tr>

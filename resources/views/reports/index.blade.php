@@ -13,7 +13,8 @@
 
     <div class="kpis">
         <x-finance::kpi label="Recettes de caisse" icon="recette" tone="green" :value="$money($summary['revenue'])" />
-        <x-finance::kpi label="Règlements des assureurs" icon="assurance" tone="violet" :value="$money($summary['insurance'])" />
+        <x-finance::kpi label="Règlements des assureurs" icon="assurance" tone="violet" :value="$money($summary['insurance'])"
+                        :foot="'Pris en charge sur la période : '.$money($summary['covered'])" />
         <x-finance::kpi label="Dépenses" icon="depense" tone="red" :value="$money($summary['expenses'])" />
         <x-finance::kpi label="Solde de la période" icon="paiement" tone="blue" :value="$money($summary['net'])" foot="Recettes + règlements − dépenses" />
     </div>

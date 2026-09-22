@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Keneya\FinanceCaisse\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\InsuranceSettlement;
+use Keneya\FinanceCaisse\Models\Invoice;
+use Keneya\FinanceCaisse\Models\InvoiceLine;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Support\LedgerFilters;
 
@@ -32,6 +35,8 @@ final class ReportBuilder
         'depenses-categorie' => 'Dépenses par catégorie',
         'depenses-moyen' => 'Dépenses par moyen de paiement',
         'reglements-assurance' => 'Règlements des assureurs, par assureur',
+        'prises-en-charge-organisme' => 'Prises en charge par organisme (assurances et aides sociales)',
+        'prises-en-charge-acte' => 'Prises en charge par acte',
         'synthese' => 'Synthèse journalière : recettes, règlements, dépenses, solde',
     ];
 
@@ -69,6 +74,8 @@ final class ReportBuilder
                 static fn (InsuranceSettlement $s): string => $s->insurer?->name ?? '—',
                 'Assureur',
             ),
+            'prises-en-charge-organisme' => $this->coverageByInsurer($filters),
+            'prises-en-charge-acte' => $this->coverageByAct($filters),
             'depenses-moyen' => $this->grouped(
                 $filters->disbursements()->where('status', Disbursement::STATUS_VALID)->with('method')->get(),
                 static fn (Disbursement $d): string => $d->method?->name ?? '—',
@@ -106,9 +113,72 @@ final class ReportBuilder
     }
 
     /**
+     * Factures prises en charge émises dans la période (hors annulées).
+     *
+     * @return Builder<Invoice>
+     */
+    private function coveredInvoices(LedgerFilters $filters)
+    {
+        return Invoice::query()
+            ->whereNotNull('insurer_id')
+            ->where('status', '!=', Invoice::STATUS_CANCELLED)
+            ->whereBetween('created_at', [$filters->from, $filters->to]);
+    }
+
+    /**
+     * @return array{columns: list<string>, rows: list<list<string|int>>, total: list<string|int>, money: list<int>}
+     */
+    private function coverageByInsurer(LedgerFilters $filters): array
+    {
+        $rows = $this->coveredInvoices($filters)->with('insurer')->get()
+            ->groupBy(fn (Invoice $i): string => ($i->insurer?->name ?? '—').' ('.($i->insurer?->kindLabel() ?? '—').')')
+            ->map(fn ($group, string $name): array => [
+                $name,
+                $group->count(),
+                (int) $group->sum('insurer_share'),
+                (int) $group->sum('insurer_paid'),
+                (int) $group->sum(fn (Invoice $i): int => $i->insurerOutstanding()),
+            ])
+            ->sortByDesc(fn (array $row): int => $row[2])
+            ->values()
+            ->all();
+
+        return [
+            'columns' => ['Organisme', 'Factures', 'Pris en charge', 'Réglé', 'Reste dû'],
+            'rows' => $rows,
+            'total' => ['Total', array_sum(array_column($rows, 1)), array_sum(array_column($rows, 2)), array_sum(array_column($rows, 3)), array_sum(array_column($rows, 4))],
+            'money' => [2, 3, 4],
+        ];
+    }
+
+    /**
+     * @return array{columns: list<string>, rows: list<list<string|int>>, total: list<string|int>, money: list<int>}
+     */
+    private function coverageByAct(LedgerFilters $filters): array
+    {
+        $rows = InvoiceLine::query()
+            ->whereIn('invoice_id', $this->coveredInvoices($filters)->select('id'))
+            ->where('insurer_share', '>', 0)
+            ->when($filters->actId, fn ($q) => $q->where('act_id', $filters->actId))
+            ->get()
+            ->groupBy('label')
+            ->map(fn ($group, string $label): array => [$label, (int) $group->sum('quantity'), (int) $group->sum('amount'), (int) $group->sum('insurer_share')])
+            ->sortByDesc(fn (array $row): int => $row[3])
+            ->values()
+            ->all();
+
+        return [
+            'columns' => ['Acte', 'Quantité', 'Montant', 'Pris en charge'],
+            'rows' => $rows,
+            'total' => ['Total', array_sum(array_column($rows, 1)), array_sum(array_column($rows, 2)), array_sum(array_column($rows, 3))],
+            'money' => [2, 3],
+        ];
+    }
+
+    /**
      * Les chiffres clés de la période, quel que soit le rapport choisi.
      *
-     * @return array{revenue: int, insurance: int, expenses: int, net: int}
+     * @return array{revenue: int, insurance: int, expenses: int, net: int, covered: int}
      */
     public function summary(LedgerFilters $filters): array
     {
@@ -116,7 +186,9 @@ final class ReportBuilder
         $insurance = (int) $this->settlements($filters)->sum('amount');
         $expenses = (int) $filters->disbursements()->where('status', Disbursement::STATUS_VALID)->sum('amount');
 
-        return ['revenue' => $revenue, 'insurance' => $insurance, 'expenses' => $expenses, 'net' => $revenue + $insurance - $expenses];
+        $covered = (int) $this->coveredInvoices($filters)->sum('insurer_share');
+
+        return ['revenue' => $revenue, 'insurance' => $insurance, 'expenses' => $expenses, 'net' => $revenue + $insurance - $expenses, 'covered' => $covered];
     }
 
     /**

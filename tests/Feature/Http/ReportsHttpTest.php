@@ -48,7 +48,7 @@ class ReportsHttpTest extends HttpTestCase
         $act = $this->makeAct('CONS');
         $this->setTariff($act, 5_000);
         $invoice = app(CreateInvoice::class)->handle(null, 'Awa Keita', [['act_id' => $act->id, 'quantity' => 1]], null, $cashier,
-            ['insurer_id' => $insurer->id, 'rate' => 80]);
+            ['insurer_id' => $insurer->id]);
         app(RecordInsuranceSettlement::class)->handle($invoice, 4_000, 'VIR-1', null, $this->makeUser());
     }
 
@@ -82,6 +82,9 @@ class ReportsHttpTest extends HttpTestCase
         $this->get('/finance/rapports?type=depenses-categorie')->assertSee('Carburant et transport')->assertSee('2 000 FCFA');
         $this->get('/finance/rapports?type=depenses-moyen')->assertSee('2 500 FCFA');
         $this->get('/finance/rapports?type=reglements-assurance')->assertSee('INPS')->assertSee('4 000 FCFA');
+        $this->get('/finance/rapports?type=prises-en-charge-organisme')
+            ->assertSee('INPS (Assurance)')->assertSee('Pris en charge')->assertSee('Reste dû');
+        $this->get('/finance/rapports?type=prises-en-charge-acte')->assertSee('Acte CONS')->assertSee('4 000 FCFA');
         $this->get('/finance/rapports?type=synthese')
             ->assertSee('Recettes caisse')
             ->assertSee('Règlements assurance')

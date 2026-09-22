@@ -35,7 +35,10 @@
             <x-finance::card title="Lignes" flush>
                 <div class="tw">
                     <table class="stack">
-                        <thead><tr><th>Acte ou prestation</th><th class="num">Quantité</th><th class="num">Prix unitaire</th><th class="num">Montant</th></tr></thead>
+                        <thead><tr>
+                            <th>Acte ou prestation</th><th class="num">Quantité</th><th class="num">Prix unitaire</th><th class="num">Montant</th>
+                            @if ($invoice->isInsured()) <th class="num">Pris en charge</th><th class="num">Part patient</th> @endif
+                        </tr></thead>
                         <tbody>
                         @foreach ($invoice->lines as $line)
                             <tr>
@@ -43,6 +46,13 @@
                                 <td data-l="Quantité" class="num">{{ $line->quantity }}</td>
                                 <td data-l="Prix unitaire" class="num">{{ $money($line->unit_price) }}</td>
                                 <td data-l="Montant" class="num strong">{{ $money($line->amount) }}</td>
+                                @if ($invoice->isInsured())
+                                    <td data-l="Pris en charge" class="num">
+                                        @if ($line->insurer_rate > 0) {{ $money($line->insurer_share) }} <span class="sub">{{ $line->insurer_rate }} %</span>
+                                        @else <span class="muted">Non couvert</span> @endif
+                                    </td>
+                                    <td data-l="Part patient" class="num">{{ $money($line->patient_share) }}</td>
+                                @endif
                             </tr>
                         @endforeach
                         </tbody>
@@ -87,9 +97,9 @@
 
         <div>
             @if ($invoice->isInsured())
-                <x-finance::card title="Prise en charge" hint="{{ $invoice->insurer?->name }}">
+                <x-finance::card title="Prise en charge" hint="{{ $invoice->insurer?->name }} · {{ $invoice->insurer?->kindLabel() }}">
                     <dl class="facts">
-                        <div class="f"><dt>Taux</dt><dd>{{ $invoice->coverage_rate }} %</dd></div>
+                        <div class="f"><dt>Taux effectif</dt><dd>{{ $invoice->coverage_rate }} %</dd></div>
                         @if ($invoice->policy_number) <div class="f"><dt>N° de prise en charge</dt><dd>{{ $invoice->policy_number }}</dd></div> @endif
                         <div class="f"><dt>Part assurance</dt><dd>{{ $money($invoice->insurer_share) }}</dd></div>
                         <div class="f"><dt>Part patient</dt><dd>{{ $money($invoice->patient_share) }}</dd></div>

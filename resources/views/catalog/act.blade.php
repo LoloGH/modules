@@ -22,6 +22,22 @@
         <x-finance::card>{{ $act->description }}</x-finance::card>
     @endif
 
+    <x-finance::card title="Prises en charge" hint="Assurances et aides sociales qui couvrent cet acte">
+        @if ($coverages->isEmpty())
+            <p class="muted" style="margin:0">Aucun organisme ne prend cet acte en charge : il est entièrement à la charge du patient.</p>
+        @else
+            <div class="checks">
+                @foreach ($coverages as $row)
+                    @can('finance.insurance.view')
+                        <a class="badge {{ $row['insurer']->kind === 'social_aid' ? 'warn' : 'info' }}" href="{{ route('finance.insurers.show', $row['insurer']) }}">{{ $row['insurer']->name }} · {{ $row['rate'] }} %</a>
+                    @else
+                        <span class="badge {{ $row['insurer']->kind === 'social_aid' ? 'warn' : 'info' }}">{{ $row['insurer']->name }} · {{ $row['rate'] }} %</span>
+                    @endcan
+                @endforeach
+            </div>
+        @endif
+    </x-finance::card>
+
     @can('finance.catalog.manage')
         <x-finance::card title="Ticket de consultation">
             <form method="post" action="{{ route('finance.catalog.acts.ticket', $act) }}" class="inline">

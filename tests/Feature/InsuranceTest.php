@@ -33,7 +33,11 @@ class InsuranceTest extends TestCase
         return Insurer::create(['code' => 'ASS-'.$n, 'name' => 'Assureur '.$n, 'default_rate' => $rate, 'is_active' => $active]);
     }
 
-    private function invoice(int $amount, ?Insurer $insurer = null, int $rate = 80): Invoice
+    /**
+     * Une facture d'un acte, prise en charge par l'organisme (taux : sa
+     * couverture ; « tous les actes » au taux par défaut).
+     */
+    private function invoice(int $amount, ?Insurer $insurer = null): Invoice
     {
         static $n = 0;
         $n++;
@@ -41,12 +45,12 @@ class InsuranceTest extends TestCase
         $this->setTariff($act, $amount);
 
         return app(CreateInvoice::class)->handle('PAT-00001', 'Aminata Traoré', [['act_id' => $act->id, 'quantity' => 1]], null, $this->makeUser(),
-            $insurer === null ? null : ['insurer_id' => $insurer->id, 'rate' => $rate, 'policy_number' => 'PEC-77']);
+            $insurer === null ? null : ['insurer_id' => $insurer->id, 'policy_number' => 'PEC-77']);
     }
 
     public function test_a_covered_invoice_splits_insurer_and_patient_shares(): void
     {
-        $invoice = $this->invoice(10_000, $this->insurer(), 80);
+        $invoice = $this->invoice(10_000, $this->insurer(80));
 
         $this->assertSame(8_000, $invoice->insurer_share);
         $this->assertSame(2_000, $invoice->patient_share);
@@ -60,7 +64,7 @@ class InsuranceTest extends TestCase
 
     public function test_the_insurer_share_is_rounded_to_the_franc(): void
     {
-        $invoice = $this->invoice(2_345, $this->insurer(), 70); // 1 641,5
+        $invoice = $this->invoice(2_345, $this->insurer(70)); // 1 641,5
 
         $this->assertSame(1_642, $invoice->insurer_share);
         $this->assertSame(703, $invoice->patient_share);
@@ -69,7 +73,7 @@ class InsuranceTest extends TestCase
 
     public function test_a_full_coverage_leaves_nothing_for_the_patient(): void
     {
-        $invoice = $this->invoice(5_000, $this->insurer(), 100);
+        $invoice = $this->invoice(5_000, $this->insurer(100));
 
         $this->assertSame(0, $invoice->balance());
         $this->assertSame(Invoice::STATUS_PAID, $invoice->status);
@@ -86,21 +90,25 @@ class InsuranceTest extends TestCase
         $this->assertSame(3_000, $invoice->balance());
     }
 
-    public function test_an_inactive_insurer_or_a_wrong_rate_is_refused(): void
+    public function test_an_inactive_insurer_or_one_covering_none_of_the_acts_is_refused(): void
     {
         $act = $this->makeAct('X');
         $this->setTariff($act, 1_000);
         $action = app(CreateInvoice::class);
         $lines = [['act_id' => $act->id, 'quantity' => 1]];
 
-        $this->assertViolation("n'est pas actif", fn () => $action->handle(null, 'A', $lines, null, $this->makeUser(), ['insurer_id' => $this->insurer(80, false)->id, 'rate' => 80]));
-        $this->assertViolation('entre 1 et 100', fn () => $action->handle(null, 'A', $lines, null, $this->makeUser(), ['insurer_id' => $this->insurer()->id, 'rate' => 0]));
+        $this->assertViolation("n'est pas actif", fn () => $action->handle(null, 'A', $lines, null, $this->makeUser(), ['insurer_id' => $this->insurer(80, false)->id]));
+
+        $selective = $this->insurer();
+        $selective->update(['coverage_scope' => Insurer::SCOPE_SELECTED]);
+        $this->assertViolation("n'est pris en charge par", fn () => $action->handle(null, 'A', $lines, null, $this->makeUser(), ['insurer_id' => $selective->id]));
+
         $this->assertSame(0, Invoice::count());
     }
 
     public function test_the_patient_pays_only_his_share(): void
     {
-        $invoice = $this->invoice(10_000, $this->insurer(), 80);
+        $invoice = $this->invoice(10_000, $this->insurer(80));
         $cashier = $this->makeUser();
         $session = $this->openSession($cashier);
 
@@ -115,7 +123,7 @@ class InsuranceTest extends TestCase
 
     public function test_settlements_move_the_claim_to_partial_then_settled(): void
     {
-        $invoice = $this->invoice(10_000, $this->insurer(), 80);
+        $invoice = $this->invoice(10_000, $this->insurer(80));
         $settle = app(RecordInsuranceSettlement::class);
 
         $first = $settle->handle($invoice, 5_000, 'VIR-1', '2026-09-20', $this->makeUser());
@@ -135,7 +143,7 @@ class InsuranceTest extends TestCase
 
     public function test_a_rejection_moves_the_amount_to_the_patient(): void
     {
-        $invoice = $this->invoice(10_000, $this->insurer(), 80);
+        $invoice = $this->invoice(10_000, $this->insurer(80));
         $cashier = $this->makeUser();
         $session = $this->openSession($cashier);
 
@@ -165,14 +173,14 @@ class InsuranceTest extends TestCase
         $plain = $this->invoice(1_000);
         $this->assertViolation('aucun assureur', fn () => app(RecordInsuranceSettlement::class)->handle($plain, 100, null, null, $this->makeUser()));
 
-        $covered = $this->invoice(1_000, $this->insurer(), 50);
+        $covered = $this->invoice(1_000, $this->insurer(50));
         app(CancelInvoice::class)->handle($covered, 'Erreur', $this->makeUser());
         $this->assertViolation('Annulée', fn () => app(RecordInsuranceRejection::class)->handle($covered, 100, 'X', $this->makeUser()));
     }
 
     public function test_an_invoice_settled_by_the_insurer_cannot_be_cancelled(): void
     {
-        $invoice = $this->invoice(10_000, $this->insurer(), 80);
+        $invoice = $this->invoice(10_000, $this->insurer(80));
         app(RecordInsuranceSettlement::class)->handle($invoice, 1_000, null, null, $this->makeUser());
 
         $this->assertViolation("réglée en partie par l'assureur", fn () => app(CancelInvoice::class)->handle($invoice, 'Erreur', $this->makeUser()));

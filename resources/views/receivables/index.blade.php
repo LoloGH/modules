@@ -7,7 +7,8 @@
 
     <div class="kpis">
         <x-finance::kpi label="Créances patients" icon="creance" tone="red" :value="$money($totals['patients'])" />
-        <x-finance::kpi label="Créances assurances" icon="assurance" tone="violet" :value="$money($totals['insurers'])" />
+        <x-finance::kpi label="Créances assurances et aides" icon="assurance" tone="violet" :value="$money($totals['insurers'])"
+                        :foot="collect($totals['byKind'])->map(fn ($v, $k) => $k.' '.$money($v))->implode(' · ') ?: null" />
         <x-finance::kpi label="Total à recouvrer" icon="creance" tone="blue" :value="$money($totals['patients'] + $totals['insurers'])" />
         <x-finance::kpi label="Échu ({{ $type === 'assurances' ? 'assurances' : 'patients' }})" icon="alert" tone="amber" :value="$money($totals['overdue'])"
                         :foot="$days === 0 ? 'Payable dès l\'émission' : 'Délai : '.$days.' jour(s)'" />
@@ -15,7 +16,7 @@
 
     <nav class="tabs">
         <a href="{{ route('finance.receivables.index') }}" class="{{ $type === 'patients' ? 'on' : '' }}">Patients</a>
-        <a href="{{ route('finance.receivables.index', ['type' => 'assurances']) }}" class="{{ $type === 'assurances' ? 'on' : '' }}">Assurances</a>
+        <a href="{{ route('finance.receivables.index', ['type' => 'assurances']) }}" class="{{ $type === 'assurances' ? 'on' : '' }}">Assurances et aides sociales</a>
     </nav>
 
     <div class="cols wide">
@@ -25,7 +26,15 @@
                     <input type="hidden" name="type" value="{{ $type }}">
                     <div class="row">
                         @if ($type === 'assurances')
-                            <label>Assureur
+                            <label>Nature
+                                <select name="nature">
+                                    <option value="">Toutes</option>
+                                    @foreach (\Keneya\FinanceCaisse\Models\Insurer::kindLabels() as $code => $label)
+                                        <option value="{{ $code }}" @selected($kind === $code)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Organisme
                                 <select name="assureur">
                                     <option value="">Tous</option>
                                     @foreach ($insurers as $insurer)
@@ -62,7 +71,7 @@
                         <thead>
                         <tr>
                             <th>Facture</th>
-                            @if ($type === 'assurances') <th>Assureur</th> @endif
+                            @if ($type === 'assurances') <th>Organisme</th> @endif
                             <th>Patient</th><th>Échéance</th>
                             <th class="num">Montant dû</th><th class="num">Payé</th><th class="num">Solde</th><th>Statut</th>
                         </tr>
@@ -77,8 +86,8 @@
                                     <span class="sub">Émise le {{ $invoice->created_at?->format('d/m/Y') }}</span>
                                 </td>
                                 @if ($type === 'assurances')
-                                    <td data-l="Assureur">{{ $invoice->insurer?->name }}
-                                        @if ($invoice->policy_number) <span class="sub">PEC {{ $invoice->policy_number }}</span> @endif</td>
+                                    <td data-l="Organisme">{{ $invoice->insurer?->name }}
+                                        <span class="sub">{{ $invoice->insurer?->kindLabel() }}@if ($invoice->policy_number) · PEC {{ $invoice->policy_number }}@endif</span></td>
                                 @endif
                                 <td data-l="Patient" class="strong">{{ $invoice->patient_name ?? '—' }}
                                     @if ($invoice->patient_id) <span class="sub mono">{{ $invoice->patient_id }}</span> @endif</td>

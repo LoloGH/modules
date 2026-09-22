@@ -82,6 +82,7 @@ final class InvoiceController extends FinanceController
                 ->values(),
             'rows' => max(5, count((array) old('lines', []))),
             'insurers' => Insurer::query()->active()->get(),
+            'coverage' => Insurer::coverageMap(Act::query()->active()->pluck('id')),
         ]);
     }
 

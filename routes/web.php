@@ -92,12 +92,15 @@ Route::middleware('can:finance.payments.view')->group(function (): void {
 
 // Assurances : prises en charge et assureurs ; règlements et rejets par le
 // contrôle.
-Route::get('assurances', [InsuranceController::class, 'index'])
-    ->middleware('can:finance.insurance.view')->name('insurance.index');
+Route::middleware('can:finance.insurance.view')->group(function (): void {
+    Route::get('assurances', [InsuranceController::class, 'index'])->name('insurance.index');
+    Route::get('assurances/assureurs/{insurer}', [InsuranceController::class, 'showInsurer'])->name('insurers.show');
+});
 
 Route::middleware('can:finance.insurance.manage')->group(function (): void {
     Route::post('assurances/assureurs', [InsuranceController::class, 'storeInsurer'])->name('insurers.store');
     Route::post('assurances/assureurs/{insurer}/basculer', [InsuranceController::class, 'toggleInsurer'])->name('insurers.toggle');
+    Route::post('assurances/assureurs/{insurer}/couverture', [InsuranceController::class, 'updateCoverage'])->name('insurers.coverage');
     Route::post('factures/{invoice}/assurance/reglements', [InsuranceController::class, 'settle'])->whereNumber('invoice')->name('insurance.settle');
     Route::post('factures/{invoice}/assurance/rejets', [InsuranceController::class, 'reject'])->whereNumber('invoice')->name('insurance.reject');
 });

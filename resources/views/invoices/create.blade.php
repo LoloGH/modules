@@ -7,7 +7,7 @@
 
     <x-finance::page title="Nouvelle facture" sub="Les actes sont facturés à leur tarif standard du jour." />
 
-    <form method="post" action="{{ route('finance.invoices.store') }}" data-invoice-form>
+    <form method="post" action="{{ route('finance.invoices.store') }}" data-invoice-form data-coverage='@json($coverage)'>
         @csrf
         <div class="cols wide">
             <x-finance::card title="Lignes de la facture" flush>
@@ -68,21 +68,20 @@
                 @if ($insurers->isNotEmpty())
                     <fieldset style="border:0;padding:0;margin:.75rem 0 0">
                         <legend class="lbl" style="margin-bottom:.375rem">Prise en charge (facultatif)</legend>
-                        <label>Assureur
+                        <label>Organisme
                             <select name="insurer_id" data-insurer>
                                 <option value="">— Aucune : le patient paie tout</option>
-                                @foreach ($insurers as $insurer)
-                                    <option value="{{ $insurer->id }}" data-rate="{{ $insurer->default_rate }}" @selected((string) old('insurer_id') === (string) $insurer->id)>{{ $insurer->name }} ({{ $insurer->default_rate }} %)</option>
+                                @foreach ($insurers->groupBy(fn ($i) => $i->kindLabel()) as $kind => $group)
+                                    <optgroup label="{{ $kind }}">
+                                        @foreach ($group as $insurer)
+                                            <option value="{{ $insurer->id }}" @selected((string) old('insurer_id') === (string) $insurer->id)>{{ $insurer->name }}</option>
+                                        @endforeach
+                                    </optgroup>
                                 @endforeach
                             </select>
                         </label>
-                        <div class="row">
-                            <label>Taux pris en charge (%)
-                                <input name="coverage_rate" inputmode="numeric" value="{{ old('coverage_rate') }}" data-rate-input>
-                            </label>
-                            <label>N° de prise en charge <input name="policy_number" value="{{ old('policy_number') }}"></label>
-                        </div>
-                        <p class="help" data-split></p>
+                        <label>N° de prise en charge <input name="policy_number" value="{{ old('policy_number') }}"></label>
+                        <p class="help" data-split>Le taux s'applique acte par acte, selon la couverture de l'organisme.</p>
                     </fieldset>
                 @endif
                 <div class="actions">
@@ -108,29 +107,29 @@
                 });
                 form.querySelector('[data-invoice-total]').textContent = fmt(total);
 
-                // Prise en charge : la part assurance et ce que paiera le patient.
+                // Prise en charge : acte par acte, le taux de l'organisme.
                 const split = form.querySelector('[data-split]');
                 const insurer = form.querySelector('[data-insurer]');
-                const rateInput = form.querySelector('[data-rate-input]');
-                if (split && insurer && rateInput) {
-                    const rate = parseInt(rateInput.value, 10) || 0;
-                    if (insurer.value && rate > 0) {
-                        const share = Math.round(total * Math.min(rate, 100) / 100);
-                        split.textContent = 'Part assurance : ' + fmt(share) + ' — part patient : ' + fmt(total - share);
+                const map = JSON.parse(form.dataset.coverage || '{}');
+                if (split && insurer) {
+                    const rates = insurer.value && map[insurer.value] ? map[insurer.value].rates : null;
+                    if (rates) {
+                        let share = 0;
+                        form.querySelectorAll('tbody tr').forEach((row) => {
+                            const select = row.querySelector('select');
+                            const option = select.selectedOptions[0];
+                            const qty = parseInt(row.querySelector('input').value, 10) || 0;
+                            const amount = option && option.dataset.amount ? parseInt(option.dataset.amount, 10) * qty : 0;
+                            share += Math.round(amount * (rates[select.value] || 0) / 100);
+                        });
+                        split.textContent = share > 0
+                            ? map[insurer.value].name + ' prend en charge ' + fmt(share) + ' — part patient : ' + fmt(total - share)
+                            : map[insurer.value].name + ' ne couvre aucun des actes choisis.';
                     } else {
-                        split.textContent = '';
+                        split.textContent = "Le taux s'applique acte par acte, selon la couverture de l'organisme.";
                     }
                 }
             };
-            const insurerSelect = form.querySelector('[data-insurer]');
-            if (insurerSelect) {
-                insurerSelect.addEventListener('change', () => {
-                    const option = insurerSelect.selectedOptions[0];
-                    const rateInput = form.querySelector('[data-rate-input]');
-                    rateInput.value = option && option.dataset.rate ? option.dataset.rate : '';
-                    sync();
-                });
-            }
             form.addEventListener('input', sync);
             form.addEventListener('change', sync);
             sync();
