@@ -25,6 +25,11 @@ final class Finance
     private static ?Closure $accessResolver = null;
 
     /**
+     * @var (Closure(): array<string, ?string>)|null
+     */
+    private static ?Closure $facilityResolver = null;
+
+    /**
      * L'hôte décide lui-même de l'accès au module. Dès qu'un résolveur est
      * enregistré, sa réponse est définitive : ni la capacité ni l'attribut
      * ne sont consultés.
@@ -94,10 +99,45 @@ final class Finance
     }
 
     /**
+     * L'hôte fournit l'identité de l'établissement imprimée sur les factures
+     * et les reçus (nom, adresse, téléphone, e-mail), par exemple depuis son
+     * propre réglage. Lue au moment d'imprimer ; ce qu'elle ne donne pas
+     * vient de `finance.facility`.
+     *
+     * @param  (Closure(): array<string, ?string>)|null  $resolver
+     */
+    public static function facilityUsing(?Closure $resolver): void
+    {
+        self::$facilityResolver = $resolver;
+    }
+
+    /**
+     * L'établissement tel qu'il s'imprime : la configuration, complétée par
+     * l'hôte. Une valeur vide n'est pas imprimée.
+     *
+     * @return array<string, string>
+     */
+    public static function facility(): array
+    {
+        $facility = array_map('strval', (array) config('finance.facility', []));
+
+        if (self::$facilityResolver !== null) {
+            foreach ((array) (self::$facilityResolver)() as $key => $value) {
+                if ($value !== null) {
+                    $facility[$key] = (string) $value;
+                }
+            }
+        }
+
+        return $facility;
+    }
+
+    /**
      * Remet à zéro l'état statique (tests).
      */
     public static function flushState(): void
     {
         self::$accessResolver = null;
+        self::$facilityResolver = null;
     }
 }

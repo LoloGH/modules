@@ -7,6 +7,7 @@ namespace Keneya\FinanceCaisse\Http\Controllers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\Invoice;
@@ -62,6 +63,6 @@ final class PrintController extends FinanceController
      */
     private function facility(): array
     {
-        return ['facility' => array_map('strval', (array) config('finance.facility'))];
+        return ['facility' => Finance::facility()];
     }
 }

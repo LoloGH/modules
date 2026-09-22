@@ -7,6 +7,7 @@ namespace Keneya\FinanceCaisse\Tests\Feature\Http;
 use Keneya\FinanceCaisse\Actions\CancelCashMovement;
 use Keneya\FinanceCaisse\Actions\CancelInvoice;
 use Keneya\FinanceCaisse\Actions\CreateInvoice;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\Payment;
@@ -83,6 +84,18 @@ class PrintHttpTest extends HttpTestCase
         $this->actingAs($this->accountant())->get(route('finance.invoices.print', $invoice))
             ->assertOk()
             ->assertSee('ANNULÉE');
+    }
+
+    public function test_the_host_can_provide_the_facility_printed_on_documents(): void
+    {
+        Finance::facilityUsing(fn () => ['name' => 'Hôpital de Kayes', 'phone' => '']);
+        $invoice = $this->invoice();
+
+        $this->actingAs($this->cashier())->get(route('finance.invoices.print', $invoice))
+            ->assertSee('Hôpital de Kayes')
+            ->assertDontSee('Hôpital Fousseyni Daou')
+            ->assertSee('Kayes, Mali')
+            ->assertDontSee('Tél.');
     }
 
     // ------------------------------------------------------------ Reçus
