@@ -68,7 +68,7 @@ final class InvoiceController extends FinanceController
                 'total' => (int) (clone $live)->sum('total'),
                 'paid' => (int) (clone $live)->sum('paid'),
                 // Ce que doivent les patients : leur part, plus les rejets.
-                'due' => (int) (clone $live)->sum('patient_share') + (int) (clone $live)->sum('insurer_rejected'),
+                'due' => (int) (clone $live)->sum('patient_share') + (int) (clone $live)->sum('insurer_rejected') - (int) (clone $live)->sum('discount'),
             ],
         ]);
     }

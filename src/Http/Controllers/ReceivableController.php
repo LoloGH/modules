@@ -106,7 +106,7 @@ final class ReceivableController extends FinanceController
     {
         return Invoice::query()
             ->whereNotIn('status', [Invoice::STATUS_CANCELLED, Invoice::STATUS_REFUNDED])
-            ->whereRaw('patient_share + insurer_rejected > paid');
+            ->whereRaw('patient_share + insurer_rejected - discount > paid');
     }
 
     /**

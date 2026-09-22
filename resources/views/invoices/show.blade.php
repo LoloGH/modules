@@ -103,6 +103,9 @@
                         @if ($invoice->policy_number) <div class="f"><dt>N° de prise en charge</dt><dd>{{ $invoice->policy_number }}</dd></div> @endif
                         <div class="f"><dt>Part assurance</dt><dd>{{ $money($invoice->insurer_share) }}</dd></div>
                         <div class="f"><dt>Part patient</dt><dd>{{ $money($invoice->patient_share) }}</dd></div>
+                        @if ($invoice->discount > 0)
+                            <div class="f"><dt>Remises accordées</dt><dd>−{{ $money($invoice->discount) }}</dd></div>
+                        @endif
                         <div class="f"><dt>Réglé par l'assureur</dt><dd>{{ $money($invoice->insurer_paid) }}</dd></div>
                         <div class="f"><dt>Rejeté (à la charge du patient)</dt><dd>{{ $money($invoice->insurer_rejected) }}</dd></div>
                         <div class="f gap"><dt>Reste dû par l'assureur</dt><dd>{{ $money($invoice->insurerOutstanding()) }}</dd></div>

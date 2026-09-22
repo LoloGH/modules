@@ -8,6 +8,7 @@ use Keneya\FinanceCaisse\Http\Controllers\AnalyticCenterController;
 use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
 use Keneya\FinanceCaisse\Http\Controllers\CashierAccessController;
 use Keneya\FinanceCaisse\Http\Controllers\CashQueueController;
+use Keneya\FinanceCaisse\Http\Controllers\CreditController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
 use Keneya\FinanceCaisse\Http\Controllers\InsuranceController;
 use Keneya\FinanceCaisse\Http\Controllers\InvoiceController;
@@ -114,6 +115,25 @@ Route::middleware('can:finance.insurance.manage')->group(function (): void {
     Route::post('factures/{invoice}/assurance/reglements', [InsuranceController::class, 'settle'])->whereNumber('invoice')->name('insurance.settle');
     Route::post('factures/{invoice}/assurance/rejets', [InsuranceController::class, 'reject'])->whereNumber('invoice')->name('insurance.reject');
 });
+
+// Remises et remboursements : demandés par qui encaisse, tranchés par qui
+// contrôle. Payer un remboursement se fait à la caisse.
+Route::middleware('can:finance.credits.view')->group(function (): void {
+    Route::get('remises-et-remboursements', [CreditController::class, 'index'])->name('credits.index');
+});
+
+Route::post('remises', [CreditController::class, 'storeDiscount'])
+    ->middleware('can:finance.discounts.request')->name('credits.discounts.store');
+Route::post('remises/{discount}/decision', [CreditController::class, 'decideDiscount'])
+    ->middleware('can:finance.discounts.approve')->name('credits.discounts.decide');
+
+Route::post('remboursements', [CreditController::class, 'storeRefund'])
+    ->middleware('can:finance.refunds.request')->name('credits.refunds.store');
+Route::post('remboursements/{refund}/decision', [CreditController::class, 'decideRefund'])
+    ->middleware('can:finance.refunds.approve')->name('credits.refunds.decide');
+
+Route::post('caisse/sessions/{session}/remboursements/{refund}', [MovementController::class, 'payRefund'])
+    ->middleware('can:finance.disbursements.create')->name('cash.refunds.pay');
 
 // Comptes patients : avances versées, ce qu'elles ont payé, solde.
 Route::middleware('can:finance.accounts.view')->group(function (): void {

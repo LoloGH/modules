@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.16.0, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.17.0, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,27 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Remises et remboursements** (`remises-et-remboursements`,
+  `finance.credits.view`) — deux gestes qui coûtent de l'argent, et que
+  **celui qui les demande n'approuve jamais**.
+  - **Remise** (`finance_discounts`, `AVO-`, `Actions\RequestDiscount` puis
+    `DecideDiscount`) : ce qu'on renonce à réclamer sur une facture.
+    Demandée (`finance.discounts.request`) avec un motif, jamais au-delà du
+    reste dû — les demandes en attente retiennent leur montant. Approuvée
+    (`finance.discounts.approve`), elle alimente la colonne `discount` de la
+    facture : `patientDue()` en tient compte, donc les créances, les
+    encaissements et le statut de la facture aussi. Refusée, elle ne change
+    rien et son motif reste écrit.
+  - **Remboursement** (`finance_refunds`, `RBT-`, `RequestRefund`,
+    `DecideRefund`, `PayRefund`) : de l'argent rendu. Trois origines — un
+    encaissement, une facture, ou le solde du compte du patient — et jamais
+    plus que ce que l'établissement a reçu, demandes en cours comprises.
+  - **Payé à la caisse** : un remboursement approuvé apparaît dans la session
+    du caissier et se paie par un **décaissement ordinaire** (catégorie
+    « Remboursements aux patients »), avec ses règles habituelles — session
+    ouverte, espèces disponibles. Le décaissement reste attaché au
+    remboursement. Une facture dont tout ce qui a été réglé est rendu passe
+    à « Remboursée » ; un remboursement sur compte en fait baisser le solde.
 - **Avances et compte patient** (`comptes`, `finance.accounts.view` ;
   enregistrement `finance.deposits.create`) — de l'argent reçu d'avance, qui
   n'est pas une recette.

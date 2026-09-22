@@ -26,6 +26,7 @@ use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\PatientDeposit;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
+use Keneya\FinanceCaisse\Models\Refund;
 use Keneya\FinanceCaisse\Queue\QueuedVisit;
 use Keneya\FinanceCaisse\Services\CashSessionCalculator;
 use Keneya\FinanceCaisse\Support\Actor;
@@ -166,6 +167,11 @@ final class CashDeskController extends FinanceController
             'acts' => $acts = Act::query()->active()->with(['center', 'standardTariff'])->get(),
             // Prises en charge proposables à l'encaissement, et leur taux par acte.
             'coverage' => Insurer::coverageMap($acts->pluck('id')),
+            // Les remboursements approuvés attendent la caisse : c'est ici
+            // qu'ils sortent du tiroir.
+            'refunds' => $session->isOpen() && $isOwner
+                ? Refund::query()->toPay()->latest('id')->get()
+                : collect(),
             'isOwner' => $isOwner,
             'canReview' => $canReview,
             // Tous ses tiroirs ouverts, celui-ci compris, pour basculer sans

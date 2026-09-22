@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 return [
 
-    'version' => '0.16.0',
+    'version' => '0.17.0',
 
     /*
     | Établissement exploitant l'application. Mêmes variables d'environnement
@@ -101,6 +101,7 @@ return [
         'maintenance' => 'Entretien et réparations',
         'personnel' => 'Primes et indemnités du personnel',
         'services' => 'Services extérieurs (eau, électricité, téléphone)',
+        'remboursement' => 'Remboursements aux patients',
         'divers' => 'Divers',
     ],
 

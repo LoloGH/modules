@@ -12,6 +12,9 @@
     <div class="kpis">
         <x-finance::kpi label="Avances versées" icon="recette" tone="green" :value="$money($summary['deposited'])" />
         <x-finance::kpi label="Déjà utilisé" icon="paiement" tone="blue" :value="$money($summary['used'])" />
+        @if ($summary['refunded'] > 0)
+            <x-finance::kpi label="Remboursé" icon="depense" tone="red" :value="$money($summary['refunded'])" foot="Rendu au patient" />
+        @endif
         <x-finance::kpi label="Solde du compte" icon="caisse" tone="violet" :value="$money($summary['balance'])" foot="Disponible pour un encaissement" />
         <x-finance::kpi label="Reste dû sur factures" icon="creance" tone="amber" :value="$money($outstanding)" />
     </div>

@@ -51,6 +51,7 @@ class Invoice extends Model
         return [
             'total' => 'integer',
             'paid' => 'integer',
+            'discount' => 'integer',
             'insurer_share' => 'integer',
             'patient_share' => 'integer',
             'insurer_paid' => 'integer',
@@ -92,6 +93,16 @@ class Invoice extends Model
         return $this->belongsTo(Insurer::class, 'insurer_id');
     }
 
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(Discount::class, 'invoice_id');
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class, 'invoice_id');
+    }
+
     public function settlements(): HasMany
     {
         return $this->hasMany(InsuranceSettlement::class, 'invoice_id');
@@ -107,10 +118,13 @@ class Invoice extends Model
         return $this->insurer_id !== null;
     }
 
-    /** Ce que doit le patient : sa part, plus ce que l'assureur a rejeté. */
+    /**
+     * Ce que doit le patient : sa part, plus ce que l'assureur a rejeté,
+     * moins les remises accordées.
+     */
     public function patientDue(): int
     {
-        return (int) $this->patient_share + (int) $this->insurer_rejected;
+        return max(0, (int) $this->patient_share + (int) $this->insurer_rejected - (int) $this->discount);
     }
 
     /** Ce que l'assureur doit encore : sa part, moins réglé et rejeté. */

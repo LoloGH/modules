@@ -115,6 +115,7 @@ final class Rbac
                 'finance.invoices.cancel' => 'Annuler une facture',
             ],
             'Remises et remboursements' => [
+                'finance.credits.view' => 'Consulter les remises et remboursements',
                 'finance.discounts.request' => 'Demander une remise',
                 'finance.discounts.approve' => 'Approuver une remise',
                 'finance.refunds.request' => 'Demander un remboursement',
@@ -185,6 +186,7 @@ final class Rbac
             // demande remises et remboursements, il ne les approuve pas.
             self::ROLE_CASHIER => [
                 'finance.access',
+                'finance.credits.view',
                 'finance.catalog.view',
                 'finance.sessions.view', 'finance.sessions.open', 'finance.sessions.close',
                 'finance.payments.view', 'finance.payments.create',
@@ -205,6 +207,7 @@ final class Rbac
             // l'administrateur.
             self::ROLE_ACCOUNTANT => [
                 'finance.access',
+                'finance.credits.view',
                 'finance.catalog.view',
                 'finance.tariffs.manage',
                 'finance.sessions.view', 'finance.sessions.validate',

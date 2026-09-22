@@ -258,6 +258,50 @@
         </div>
     @endif
 
+    @if ($session->isOpen() && $isOwner && $refunds->isNotEmpty())
+        @can('finance.disbursements.create')
+            <x-finance::card title="Remboursements à payer"
+                             hint="{{ $refunds->count() }} approuvé(s)" flush>
+                <div class="tw">
+                    <table class="stack wide">
+                        <thead>
+                        <tr><th>N°</th><th>Patient</th><th>Motif</th><th class="num">Montant</th><th>Payer par</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($refunds as $refund)
+                            <tr>
+                                <td data-l="N°" class="mono">{{ $refund->number }}</td>
+                                <td data-l="Patient">
+                                    {{ $refund->patient_name ?? 'Patient' }}
+                                    <span class="sub mono">{{ $refund->patient_id }}</span>
+                                </td>
+                                <td data-l="Motif">
+                                    {{ $refund->reason }}
+                                    <span class="sub">{{ $refund->sourceLabel() }} · approuvé par {{ $refund->decided_by_name }}</span>
+                                </td>
+                                <td data-l="Montant" class="num strong">−{{ $money($refund->amount) }}</td>
+                                <td data-l="Payer par" colspan="2">
+                                    <form class="inline" method="post" action="{{ route('finance.cash.refunds.pay', [$session, $refund]) }}">
+                                        @csrf
+                                        <label class="sr" for="moyen-{{ $refund->id }}">Moyen de paiement</label>
+                                        <select id="moyen-{{ $refund->id }}" name="payment_method_id" required>
+                                            @foreach ($methods as $method)
+                                                @continue(in_array($method->kind, ['patient_account', 'insurance'], true))
+                                                <option value="{{ $method->id }}">{{ $method->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="ghost sm">Payer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </x-finance::card>
+        @endcan
+    @endif
+
     @if ($session->isOpen() && $isOwner)
         @can('finance.deposits.create')
             <x-finance::card title="Avance sur compte patient"

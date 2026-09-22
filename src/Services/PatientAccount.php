@@ -10,11 +10,12 @@ use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\PatientDeposit;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
+use Keneya\FinanceCaisse\Models\Refund;
 use Keneya\FinanceCaisse\Support\Text;
 
 /**
  * Le compte financier d'un patient : ce qu'il a versé d'avance, ce que ces
- * avances ont payé, et ce qu'il lui reste.
+ * avances ont payé, ce qui lui a été rendu, et ce qu'il lui reste.
  *
  * Aucune table de solde : le solde est toujours recalculé des écritures, qui
  * seules font foi. Verser = une avance (`finance_patient_deposits`) ; puiser =
@@ -31,14 +32,49 @@ final class PatientAccount
     }
 
     /**
-     * @return array{deposited: int, used: int, balance: int}
+     * Ce qui peut encore être engagé sur le compte : le solde, moins les
+     * remboursements demandés ou approuvés qui n'ont pas encore été payés.
+     * Sans cela, deux demandes successives rendraient deux fois la même
+     * somme.
+     */
+    public function available(string $patientId): int
+    {
+        $reserved = (int) Refund::query()
+            ->where('source', Refund::SOURCE_ACCOUNT)
+            ->where('patient_id', $patientId)
+            ->whereIn('status', [Refund::STATUS_REQUESTED, Refund::STATUS_APPROVED])
+            ->sum('amount');
+
+        return $this->balance($patientId) - $reserved;
+    }
+
+    /**
+     * @return array{deposited: int, used: int, refunded: int, balance: int}
      */
     public function summary(string $patientId): array
     {
         $deposited = (int) PatientDeposit::query()->valid()->where('patient_id', $patientId)->sum('amount');
         $used = (int) $this->usedQuery()->where('patient_id', $patientId)->sum('amount');
+        $refunded = $this->refunded($patientId);
 
-        return ['deposited' => $deposited, 'used' => $used, 'balance' => $deposited - $used];
+        return [
+            'deposited' => $deposited,
+            'used' => $used,
+            'refunded' => $refunded,
+            'balance' => $deposited - $used - $refunded,
+        ];
+    }
+
+    /**
+     * Les avances rendues au patient : payées, elles ont quitté le tiroir.
+     */
+    private function refunded(string $patientId): int
+    {
+        return (int) Refund::query()
+            ->where('source', Refund::SOURCE_ACCOUNT)
+            ->where('patient_id', $patientId)
+            ->where('status', Refund::STATUS_PAID)
+            ->sum('amount');
     }
 
     /**
@@ -85,7 +121,7 @@ final class PatientAccount
      * Tous les comptes ouverts : un patient a un compte dès qu'il a versé une
      * avance. Le nom affiché est le dernier connu.
      *
-     * @return list<array{patient_id: string, patient_name: ?string, deposited: int, used: int, balance: int}>
+     * @return list<array{patient_id: string, patient_name: ?string, deposited: int, used: int, refunded: int, balance: int}>
      */
     public function all(?string $search = null): array
     {
@@ -102,16 +138,26 @@ final class PatientAccount
             ->groupBy('patient_id')
             ->map(static fn (Collection $rows): int => (int) $rows->sum('amount'));
 
-        $accounts = $deposits->map(function (Collection $rows, string $patientId) use ($used): array {
+        $refunded = Refund::query()
+            ->where('source', Refund::SOURCE_ACCOUNT)
+            ->where('status', Refund::STATUS_PAID)
+            ->whereIn('patient_id', $deposits->keys()->all())
+            ->get(['patient_id', 'amount'])
+            ->groupBy('patient_id')
+            ->map(static fn (Collection $rows): int => (int) $rows->sum('amount'));
+
+        $accounts = $deposits->map(function (Collection $rows, string $patientId) use ($used, $refunded): array {
             $deposited = (int) $rows->sum('amount');
             $spent = (int) ($used[$patientId] ?? 0);
+            $rendered = (int) ($refunded[$patientId] ?? 0);
 
             return [
                 'patient_id' => $patientId,
                 'patient_name' => $rows->sortByDesc('id')->first()?->patient_name,
                 'deposited' => $deposited,
                 'used' => $spent,
-                'balance' => $deposited - $spent,
+                'refunded' => $rendered,
+                'balance' => $deposited - $spent - $rendered,
             ];
         })->values()->all();
 
