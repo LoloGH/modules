@@ -27,7 +27,7 @@ final class PrintController extends FinanceController
 {
     public function invoice(Invoice $invoice): View
     {
-        $invoice->load(['lines', 'payments' => fn ($query) => $query->where('status', Payment::STATUS_VALID)->with('method')]);
+        $invoice->load(['lines', 'insurer', 'payments' => fn ($query) => $query->where('status', Payment::STATUS_VALID)->with('method')]);
 
         return view('finance::print.invoice', ['invoice' => $invoice] + $this->facility());
     }

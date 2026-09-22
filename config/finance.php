@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 return [
 
-    'version' => '0.10.0',
+    'version' => '0.11.0',
 
     /*
     | Établissement exploitant l'application. Mêmes variables d'environnement
@@ -56,6 +56,7 @@ return [
             'credit_note' => 'AVO',
             'refund' => 'RBT',
             'deposit' => 'AVA',
+            'insurance_settlement' => 'REG',
         ],
     ],
 

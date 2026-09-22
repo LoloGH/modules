@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Models\Act;
+use Keneya\FinanceCaisse\Models\Insurer;
 use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
 use Keneya\FinanceCaisse\Support\Actor;
@@ -31,8 +32,9 @@ final class CreateInvoice
 
     /**
      * @param  list<array{act_id: int, quantity: int}>  $lines
+     * @param  array{insurer_id: int, rate: int, policy_number?: ?string}|null  $coverage  prise en charge par un assureur
      */
-    public function handle(?string $patientId, ?string $patientName, array $lines, ?string $note, Authenticatable $actor): Invoice
+    public function handle(?string $patientId, ?string $patientName, array $lines, ?string $note, Authenticatable $actor, ?array $coverage = null): Invoice
     {
         $patientId = Text::clean($patientId);
         $patientName = Text::clean($patientName);
@@ -45,7 +47,9 @@ final class CreateInvoice
             throw new FinanceRuleViolation('Une facture doit avoir au moins une ligne.');
         }
 
-        return DB::transaction(function () use ($patientId, $patientName, $lines, $note, $actor): Invoice {
+        $insurer = $this->insurer($coverage);
+
+        return DB::transaction(function () use ($patientId, $patientName, $lines, $note, $actor, $coverage, $insurer): Invoice {
             $rows = [];
 
             foreach ($lines as $line) {
@@ -82,12 +86,22 @@ final class CreateInvoice
                 throw new FinanceRuleViolation('Le montant de la facture doit être supérieur à zéro.');
             }
 
+            // La part assurance est arrondie au franc ; le patient paie le reste.
+            $rate = $insurer === null ? 0 : (int) $coverage['rate'];
+            $insurerShare = (int) round($total * $rate / 100);
+
             $invoice = Invoice::create([
                 'number' => $this->numbers->next('invoice'),
                 'patient_id' => $patientId,
                 'patient_name' => $patientName,
+                'insurer_id' => $insurer?->id,
+                'coverage_rate' => $rate,
+                'policy_number' => $insurer === null ? null : Text::clean($coverage['policy_number'] ?? null),
                 'status' => Invoice::STATUS_UNPAID,
+                'claim_status' => $insurer === null ? null : Invoice::CLAIM_PENDING,
                 'total' => $total,
+                'insurer_share' => $insurerShare,
+                'patient_share' => $total - $insurerShare,
                 'paid' => 0,
                 'note' => Text::clean($note),
                 'created_by_id' => Actor::id($actor),
@@ -96,16 +110,50 @@ final class CreateInvoice
 
             $invoice->lines()->createMany($rows);
 
+            // Pris en charge à 100 % : le patient ne doit rien.
+            $invoice->recalculate();
+
             $this->auditor->record(
                 'invoice_created',
                 $invoice,
                 sprintf('Facture %s émise pour %s : %s', $invoice->number, $patientName ?? $patientId, Money::format($total)),
                 [],
-                ['total' => $total, 'patient_id' => $patientId, 'lines' => count($rows)],
+                array_filter([
+                    'total' => $total,
+                    'patient_id' => $patientId,
+                    'lines' => count($rows),
+                    'insurer' => $insurer?->code,
+                    'coverage_rate' => $insurer === null ? null : $rate,
+                    'insurer_share' => $insurer === null ? null : $insurerShare,
+                ], static fn ($value): bool => $value !== null),
                 $actor,
             );
 
             return $invoice;
         });
+    }
+
+    /**
+     * @param  array{insurer_id: int, rate: int, policy_number?: ?string}|null  $coverage
+     */
+    private function insurer(?array $coverage): ?Insurer
+    {
+        if ($coverage === null) {
+            return null;
+        }
+
+        $insurer = Insurer::query()->find((int) $coverage['insurer_id']);
+
+        if ($insurer === null || ! $insurer->is_active) {
+            throw new FinanceRuleViolation("L'assureur choisi n'est pas actif.");
+        }
+
+        $rate = (int) $coverage['rate'];
+
+        if ($rate < 1 || $rate > 100) {
+            throw new FinanceRuleViolation('Le taux de prise en charge doit être compris entre 1 et 100 %.');
+        }
+
+        return $insurer;
     }
 }

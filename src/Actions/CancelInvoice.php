@@ -37,6 +37,12 @@ final class CancelInvoice
                 throw new FinanceRuleViolation("La facture {$invoice->number} est déjà {$invoice->statusLabel()}.");
             }
 
+            if ($invoice->settlements()->exists()) {
+                throw new FinanceRuleViolation(
+                    "La facture {$invoice->number} a déjà été réglée en partie par l'assureur : elle ne s'annule plus."
+                );
+            }
+
             if ($invoice->payments()->where('status', Payment::STATUS_VALID)->exists()) {
                 throw new FinanceRuleViolation(
                     "La facture {$invoice->number} a des encaissements : annulez-les d'abord, ou remboursez le patient."

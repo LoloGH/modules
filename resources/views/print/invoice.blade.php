@@ -23,6 +23,9 @@
         <dl class="rows" style="max-width:60%;margin-bottom:1.25rem">
             <div><dt>Patient</dt><dd>{{ $invoice->patient_name ?? '—' }}</dd></div>
             <div><dt>Identifiant</dt><dd>{{ $invoice->patient_id ?? '—' }}</dd></div>
+            @if ($invoice->isInsured())
+                <div><dt>Assureur</dt><dd>{{ $invoice->insurer?->name }}{{ $invoice->policy_number ? ' — PEC '.$invoice->policy_number : '' }}</dd></div>
+            @endif
             @if ($invoice->created_by_name)
                 <div><dt>Établie par</dt><dd>{{ $invoice->created_by_name }}</dd></div>
             @endif
@@ -44,8 +47,15 @@
 
         <table class="totals">
             <tr class="grand"><td>Total</td><td class="r">{{ $fmt($invoice->total) }}</td></tr>
+            @if ($invoice->isInsured())
+                <tr><td>Part assurance ({{ $invoice->coverage_rate }} % — {{ $invoice->insurer?->name }})</td><td class="r">{{ $fmt($invoice->insurer_share) }}</td></tr>
+                <tr><td>Part patient</td><td class="r">{{ $fmt($invoice->patient_share) }}</td></tr>
+                @if ($invoice->insurer_rejected > 0)
+                    <tr><td>Rejeté par l'assureur (à la charge du patient)</td><td class="r">{{ $fmt($invoice->insurer_rejected) }}</td></tr>
+                @endif
+            @endif
             <tr><td>Déjà payé</td><td class="r">{{ $fmt($invoice->paid) }}</td></tr>
-            <tr><td><strong>Reste à payer</strong></td><td class="r"><strong>{{ $fmt($invoice->balance()) }}</strong></td></tr>
+            <tr><td><strong>Reste à payer{{ $invoice->isInsured() ? ' par le patient' : '' }}</strong></td><td class="r"><strong>{{ $fmt($invoice->balance()) }}</strong></td></tr>
         </table>
 
         @if ($invoice->payments->isNotEmpty())

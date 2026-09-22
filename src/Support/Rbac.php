@@ -124,6 +124,10 @@ final class Rbac
                 'finance.deposits.create' => 'Enregistrer une avance',
                 'finance.accounts.view' => 'Consulter le compte financier d\'un patient',
             ],
+            'Assurances' => [
+                'finance.insurance.view' => 'Consulter les assurances et prises en charge',
+                'finance.insurance.manage' => 'Gérer les assureurs, règlements et rejets',
+            ],
             'Créances' => [
                 'finance.receivables.view' => 'Consulter les créances',
             ],
@@ -186,6 +190,7 @@ final class Rbac
                 'finance.payments.view', 'finance.payments.create',
                 'finance.disbursements.create',
                 'finance.invoices.view', 'finance.invoices.create',
+                'finance.insurance.view',
                 'finance.discounts.request',
                 'finance.refunds.request',
                 'finance.deposits.create',
@@ -207,6 +212,7 @@ final class Rbac
                 'finance.disbursements.create',
                 'finance.payments.cancel', 'finance.disbursements.cancel',
                 'finance.invoices.view', 'finance.invoices.validate', 'finance.invoices.cancel',
+                'finance.insurance.view', 'finance.insurance.manage',
                 'finance.discounts.approve',
                 'finance.refunds.approve',
                 'finance.accounts.view',

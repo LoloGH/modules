@@ -9,6 +9,7 @@ use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
 use Keneya\FinanceCaisse\Http\Controllers\CashierAccessController;
 use Keneya\FinanceCaisse\Http\Controllers\CashQueueController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
+use Keneya\FinanceCaisse\Http\Controllers\InsuranceController;
 use Keneya\FinanceCaisse\Http\Controllers\InvoiceController;
 use Keneya\FinanceCaisse\Http\Controllers\LedgerController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
@@ -85,6 +86,18 @@ Route::middleware('can:finance.payments.view')->group(function (): void {
     Route::get('paiements', [LedgerController::class, 'payments'])->name('ledger.payments');
     Route::get('recettes', [LedgerController::class, 'revenue'])->name('ledger.revenue');
     Route::get('depenses', [LedgerController::class, 'expenses'])->name('ledger.expenses');
+});
+
+// Assurances : prises en charge et assureurs ; règlements et rejets par le
+// contrôle.
+Route::get('assurances', [InsuranceController::class, 'index'])
+    ->middleware('can:finance.insurance.view')->name('insurance.index');
+
+Route::middleware('can:finance.insurance.manage')->group(function (): void {
+    Route::post('assurances/assureurs', [InsuranceController::class, 'storeInsurer'])->name('insurers.store');
+    Route::post('assurances/assureurs/{insurer}/basculer', [InsuranceController::class, 'toggleInsurer'])->name('insurers.toggle');
+    Route::post('factures/{invoice}/assurance/reglements', [InsuranceController::class, 'settle'])->whereNumber('invoice')->name('insurance.settle');
+    Route::post('factures/{invoice}/assurance/rejets', [InsuranceController::class, 'reject'])->whereNumber('invoice')->name('insurance.reject');
 });
 
 // Contrôle

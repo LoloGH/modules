@@ -21,6 +21,10 @@ final class InvoiceRequest extends FinanceRequest
             'patient_id' => ['nullable', 'string', 'max:64'],
             'patient_name' => ['nullable', 'string', 'max:191'],
             'note' => ['nullable', 'string', 'max:191'],
+            // Prise en charge : un assureur, un taux, et le n° de prise en charge.
+            'insurer_id' => ['nullable', 'integer', 'exists:finance_insurers,id'],
+            'coverage_rate' => ['nullable', 'required_with:insurer_id', 'integer', 'min:1', 'max:100'],
+            'policy_number' => ['nullable', 'string', 'max:64'],
             'lines' => ['required', 'array'],
             'lines.*.act_id' => ['nullable', 'integer', 'exists:finance_acts,id'],
             'lines.*.quantity' => ['nullable', 'integer', 'min:1', 'max:'.CreateInvoice::MAX_QUANTITY],
@@ -35,6 +39,20 @@ final class InvoiceRequest extends FinanceRequest
         return parent::messages() + [
             'lines.*.quantity.min' => 'La quantité doit être au moins 1.',
             'lines.*.quantity.max' => 'La quantité ne doit pas dépasser '.CreateInvoice::MAX_QUANTITY.'.',
+        ];
+    }
+
+    /**
+     * @return array{insurer_id: int, rate: int, policy_number: ?string}|null
+     */
+    public function coverage(): ?array
+    {
+        $insurer = $this->validated('insurer_id');
+
+        return $insurer === null || $insurer === '' ? null : [
+            'insurer_id' => (int) $insurer,
+            'rate' => (int) $this->validated('coverage_rate'),
+            'policy_number' => $this->validated('policy_number'),
         ];
     }
 

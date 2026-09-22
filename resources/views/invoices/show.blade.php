@@ -16,8 +16,12 @@
 
     <div class="kpis">
         <x-finance::kpi label="Montant" icon="facture" tone="blue" :value="$money($invoice->total)" />
-        <x-finance::kpi label="Payé" icon="recette" tone="green" :value="$money($invoice->paid)" />
-        <x-finance::kpi label="Solde" icon="creance" tone="red" :value="$money($invoice->balance())" />
+        <x-finance::kpi label="Payé par le patient" icon="recette" tone="green" :value="$money($invoice->paid)" />
+        <x-finance::kpi label="Solde patient" icon="creance" tone="red" :value="$money($invoice->balance())" />
+        @if ($invoice->isInsured())
+            <x-finance::kpi label="Dû par l'assureur" icon="assurance" tone="violet" :value="$money($invoice->insurerOutstanding())"
+                            :foot="$invoice->claimLabel()" />
+        @endif
     </div>
 
     @if ($invoice->status === \Keneya\FinanceCaisse\Models\Invoice::STATUS_CANCELLED)
@@ -82,6 +86,51 @@
         </div>
 
         <div>
+            @if ($invoice->isInsured())
+                <x-finance::card title="Prise en charge" hint="{{ $invoice->insurer?->name }}">
+                    <dl class="facts">
+                        <div class="f"><dt>Taux</dt><dd>{{ $invoice->coverage_rate }} %</dd></div>
+                        @if ($invoice->policy_number) <div class="f"><dt>N° de prise en charge</dt><dd>{{ $invoice->policy_number }}</dd></div> @endif
+                        <div class="f"><dt>Part assurance</dt><dd>{{ $money($invoice->insurer_share) }}</dd></div>
+                        <div class="f"><dt>Part patient</dt><dd>{{ $money($invoice->patient_share) }}</dd></div>
+                        <div class="f"><dt>Réglé par l'assureur</dt><dd>{{ $money($invoice->insurer_paid) }}</dd></div>
+                        <div class="f"><dt>Rejeté (à la charge du patient)</dt><dd>{{ $money($invoice->insurer_rejected) }}</dd></div>
+                        <div class="f gap"><dt>Reste dû par l'assureur</dt><dd>{{ $money($invoice->insurerOutstanding()) }}</dd></div>
+                    </dl>
+                    <p style="margin:.5rem 0 0"><span class="badge {{ $invoice->claimTone() }}">{{ $invoice->claimLabel() }}</span></p>
+
+                    @foreach ($invoice->settlements as $settlement)
+                        <p class="muted" style="margin:.5rem 0 0">Règlement {{ $settlement->number }} du {{ $settlement->received_on?->format('d/m/Y') }} : {{ $money($settlement->amount) }}@if ($settlement->reference) ({{ $settlement->reference }})@endif</p>
+                    @endforeach
+                    @foreach ($invoice->rejections as $rejection)
+                        <p class="muted" style="margin:.5rem 0 0">Rejet de {{ $money($rejection->amount) }} : {{ $rejection->reason }}</p>
+                    @endforeach
+
+                    @if ($invoice->insurerOutstanding() > 0)
+                        @can('finance.insurance.manage')
+                            <form method="post" action="{{ route('finance.insurance.settle', $invoice) }}" style="margin-top:1rem">
+                                @csrf
+                                <p class="strong" style="margin:0 0 .375rem">Enregistrer un règlement de l'assureur</p>
+                                <div class="row">
+                                    <label>Montant <input name="amount" class="money" inputmode="numeric" value="{{ $invoice->insurerOutstanding() }}" required></label>
+                                    <label>Reçu le <input type="date" name="received_on" value="{{ now()->toDateString() }}"></label>
+                                </div>
+                                <label>Référence <input name="reference" placeholder="Virement, chèque…"></label>
+                                <div class="actions"><button type="submit" class="sm">Enregistrer le règlement</button></div>
+                            </form>
+                            <form method="post" action="{{ route('finance.insurance.reject', $invoice) }}" style="margin-top:1rem">
+                                @csrf
+                                <p class="strong" style="margin:0 0 .375rem">Enregistrer un rejet</p>
+                                <label>Montant rejeté <input name="amount" class="money" inputmode="numeric" required></label>
+                                <label>Motif <input name="reason" required placeholder="ex. Acte non couvert"></label>
+                                <p class="help">Le montant rejeté passe à la charge du patient.</p>
+                                <div class="actions"><button type="submit" class="ghost sm">Enregistrer le rejet</button></div>
+                            </form>
+                        @endcan
+                    @endif
+                </x-finance::card>
+            @endif
+
             @if ($invoice->canBePaid())
                 @can('finance.payments.create')
                     <x-finance::card title="Encaisser">

@@ -13,8 +13,8 @@
 
     <div class="kpis">
         <x-finance::kpi label="Montant facturé" icon="facture" tone="blue" :value="$money($stats['total'])" foot="Hors factures annulées ou remboursées" />
-        <x-finance::kpi label="Montant payé" icon="recette" tone="green" :value="$money($stats['paid'])" />
-        <x-finance::kpi label="Solde à encaisser" icon="creance" tone="red" :value="$money(max(0, $stats['total'] - $stats['paid']))" />
+        <x-finance::kpi label="Payé par les patients" icon="recette" tone="green" :value="$money($stats['paid'])" />
+        <x-finance::kpi label="Solde à encaisser" icon="creance" tone="red" :value="$money(max(0, $stats['due'] - $stats['paid']))" foot="Part des patients ; la part des assureurs se suit dans Assurances" />
     </div>
 
     <nav class="tabs">
@@ -60,6 +60,7 @@
                             <td data-l="Patient" class="strong">
                                 {{ $invoice->patient_name ?? '—' }}
                                 @if ($invoice->patient_id) <span class="sub mono">{{ $invoice->patient_id }}</span> @endif
+                                @if ($invoice->insurer_id) <span class="sub">Assurance {{ $invoice->coverage_rate }} %</span> @endif
                             </td>
                             <td data-l="Date">{{ $invoice->created_at?->format('d/m/Y') }}</td>
                             <td data-l="Montant" class="num strong">{{ $money($invoice->total) }}</td>

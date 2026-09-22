@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.10.0, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.11.0, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -121,6 +121,16 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Écrans `factures` (onglets par statut, recherche, montant/payé/solde),
     `factures/nouvelle`, `factures/{id}`. Droits : `finance.invoices.view`,
     `.create` (caissier), `.cancel` (comptable).
+- **Assurances** (`assurances`, `finance.insurance.view` ; gestion
+  `finance.insurance.manage`, comptable) : assureurs (code, nom, taux par
+  défaut, actif) ; **prise en charge** à l'émission d'une facture (assureur,
+  taux, n° de prise en charge) qui calcule part assurance (arrondie au franc)
+  et part patient — le caissier n'encaisse que la part patient ; **règlements**
+  de l'assureur (hors tiroir, numéro `REG-`, jamais au-delà du reste dû) ;
+  **rejets** (motif), qui passent à la charge du patient. Créance assurance =
+  part − réglé − rejeté, statut En attente / Partiellement réglée / Réglée /
+  Rejetée. Écran : indicateurs, prises en charge filtrables, derniers
+  règlements et rejets, assureurs.
 - **Paiements** (`paiements`, `finance.payments.view`, `Support\LedgerFilters`) :
   les encaissements, en lecture — n°, date et caisse, patient et identifiant,
   objet, moyen, référence, facture associée (lien), statut, montant, reçu.

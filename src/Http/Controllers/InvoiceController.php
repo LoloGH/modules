@@ -14,6 +14,7 @@ use Keneya\FinanceCaisse\Http\Requests\CancelMovementRequest;
 use Keneya\FinanceCaisse\Http\Requests\InvoiceRequest;
 use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\CashSession;
+use Keneya\FinanceCaisse\Models\Insurer;
 use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Support\Actor;
 use Keneya\FinanceCaisse\Support\Money;
@@ -66,6 +67,8 @@ final class InvoiceController extends FinanceController
             'stats' => [
                 'total' => (int) (clone $live)->sum('total'),
                 'paid' => (int) (clone $live)->sum('paid'),
+                // Ce que doivent les patients : leur part, plus les rejets.
+                'due' => (int) (clone $live)->sum('patient_share') + (int) (clone $live)->sum('insurer_rejected'),
             ],
         ]);
     }
@@ -78,6 +81,7 @@ final class InvoiceController extends FinanceController
                 ->filter(fn (Act $act): bool => $act->standardTariff !== null)
                 ->values(),
             'rows' => max(5, count((array) old('lines', []))),
+            'insurers' => Insurer::query()->active()->get(),
         ]);
     }
 
@@ -89,6 +93,7 @@ final class InvoiceController extends FinanceController
             $request->invoiceLines(),
             $request->validated('note'),
             $this->user($request),
+            $request->coverage(),
         );
 
         return redirect()->route('finance.invoices.show', $invoice)
@@ -98,7 +103,7 @@ final class InvoiceController extends FinanceController
 
     public function show(Request $request, Invoice $invoice): View
     {
-        $invoice->load(['lines', 'payments.method', 'payments.session.register']);
+        $invoice->load(['lines', 'payments.method', 'payments.session.register', 'insurer', 'settlements', 'rejections']);
 
         return view('finance::invoices.show', [
             'invoice' => $invoice,
