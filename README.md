@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.17.0, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.18.0, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,20 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Journal d'audit** (`journal`, `finance.audit.view`) — qui a fait quoi,
+  quand, et sur quoi. Lecture seule : une ligne ne se modifie ni ne se
+  supprime (`Models\AuditLog` lève une exception).
+  - Les codes d'événement sont lus en français et groupés
+    (`Support\AuditEvents`) ; un code inconnu — écrit par une version plus
+    récente ou par l'hôte — s'affiche tel quel plutôt que de disparaître du
+    filtre.
+  - Filtres : période, événement, auteur, recherche (description, numéro de
+    pièce, objet). Chaque ligne montre l'avant et l'après en clair, l'auteur
+    et l'adresse IP. Export CSV de ce qui est affiché.
+  - La **validation d'une clôture** porte ses chiffres dans le journal
+    (théorique, compté, écart, motif, caissier) : la ligne se lit sans
+    rouvrir la session. Depuis une session de caisse, un lien ouvre le
+    journal filtré sur elle.
 - **Remises et remboursements** (`remises-et-remboursements`,
   `finance.credits.view`) — deux gestes qui coûtent de l'argent, et que
   **celui qui les demande n'approuve jamais**.

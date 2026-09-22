@@ -342,6 +342,14 @@
         @endcan
     @endif
 
+    @can('finance.audit.view')
+        <p class="muted">
+            <a class="btn ghost sm" href="{{ route('finance.audit.index', ['q' => $session->number, 'du' => $session->created_at?->toDateString()]) }}">
+                <x-finance::icon name="document" /> Journal d'audit de cette session
+            </a>
+        </p>
+    @endcan
+
     <x-finance::card title="Opérations" hint="{{ $movements->count() }} au total" flush>
         @if ($movements->isEmpty())
             <div class="bd">

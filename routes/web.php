@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Route;
 use Keneya\FinanceCaisse\Http\Controllers\ActController;
 use Keneya\FinanceCaisse\Http\Controllers\AnalyticCenterController;
+use Keneya\FinanceCaisse\Http\Controllers\AuditController;
 use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
 use Keneya\FinanceCaisse\Http\Controllers\CashierAccessController;
 use Keneya\FinanceCaisse\Http\Controllers\CashQueueController;
@@ -149,6 +150,12 @@ Route::get('creances', [ReceivableController::class, 'index'])
 Route::middleware('can:finance.reports.view')->group(function (): void {
     Route::get('rapports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('rapports/export', [ReportController::class, 'export'])->name('reports.export');
+});
+
+// Journal d'audit : lecture seule, et exportable.
+Route::middleware('can:finance.audit.view')->group(function (): void {
+    Route::get('journal', [AuditController::class, 'index'])->name('audit.index');
+    Route::get('journal/export', [AuditController::class, 'export'])->name('audit.export');
 });
 
 // Contrôle

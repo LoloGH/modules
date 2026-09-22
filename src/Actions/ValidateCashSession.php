@@ -11,6 +11,7 @@ use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Support\Actor;
+use Keneya\FinanceCaisse\Support\Money;
 use Keneya\FinanceCaisse\Support\Text;
 
 /**
@@ -50,12 +51,29 @@ final class ValidateCashSession
                 'validation_note' => $note,
             ]);
 
+            // La validation porte sur des chiffres : on les écrit dans le
+            // journal, pour que la ligne se lise sans rouvrir la session.
             $this->auditor->record(
                 'session_validated',
                 $session,
-                sprintf('Session %s validée', $session->number),
+                sprintf(
+                    'Session %s validée : théorique %s, compté %s, écart %s (clôturée par %s)',
+                    $session->number,
+                    Money::format((int) $session->expected_cash),
+                    Money::format((int) $session->counted_cash),
+                    Money::format((int) $session->variance),
+                    $session->cashier_name ?? $session->cashier_id,
+                ),
                 ['status' => CashSession::STATUS_CLOSED],
-                ['status' => CashSession::STATUS_VALIDATED, 'note' => $note],
+                [
+                    'status' => CashSession::STATUS_VALIDATED,
+                    'expected_cash' => (int) $session->expected_cash,
+                    'counted_cash' => (int) $session->counted_cash,
+                    'variance' => (int) $session->variance,
+                    'variance_reason' => $session->variance_reason,
+                    'cashier' => $session->cashier_name ?? $session->cashier_id,
+                    'note' => $note,
+                ],
                 $validator,
             );
 
