@@ -79,10 +79,13 @@ Route::get('factures/{invoice}/impression', [PrintController::class, 'invoice'])
 Route::post('factures/{invoice}/annulation', [InvoiceController::class, 'cancel'])
     ->middleware('can:finance.invoices.cancel')->whereNumber('invoice')->name('invoices.cancel');
 
-// Paiements : les encaissements, en lecture. Un caissier n'y voit que ses
-// propres sessions (voir LedgerController).
-Route::get('paiements', [LedgerController::class, 'payments'])
-    ->middleware('can:finance.payments.view')->name('ledger.payments');
+// Paiements, recettes, dépenses : les écritures de caisse, en lecture. Un
+// caissier n'y voit que ses propres sessions (voir LedgerController).
+Route::middleware('can:finance.payments.view')->group(function (): void {
+    Route::get('paiements', [LedgerController::class, 'payments'])->name('ledger.payments');
+    Route::get('recettes', [LedgerController::class, 'revenue'])->name('ledger.revenue');
+    Route::get('depenses', [LedgerController::class, 'expenses'])->name('ledger.expenses');
+});
 
 // Contrôle
 Route::middleware('can:finance.sessions.validate')->group(function (): void {

@@ -79,6 +79,22 @@ return [
     ],
 
     /*
+    | Catégories de dépenses proposées au décaissement (écran Dépenses).
+    | Code => libellé. Facultative au guichet : un décaissement sans catégorie
+    | est « non classé ». Ajouter une catégorie ne demande que cette liste ;
+    | en retirer une laisse ses anciens décaissements lisibles par leur code.
+    */
+    'expense_categories' => [
+        'fournitures' => 'Fournitures et consommables',
+        'medicaments' => 'Médicaments et produits médicaux',
+        'carburant' => 'Carburant et transport',
+        'maintenance' => 'Entretien et réparations',
+        'personnel' => 'Primes et indemnités du personnel',
+        'services' => 'Services extérieurs (eau, électricité, téléphone)',
+        'divers' => 'Divers',
+    ],
+
+    /*
     | Montage dans l'application hôte : préfixe d'URL et de nom de route
     | propres au module, pour ne jamais entrer en collision avec l'hôte
     | (qui a déjà sa propre route /caisse).

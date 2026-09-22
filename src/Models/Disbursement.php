@@ -48,6 +48,20 @@ class Disbursement extends Model
         return $query->where('status', self::STATUS_VALID);
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public static function categories(): array
+    {
+        return array_map('strval', (array) config('finance.expense_categories', []));
+    }
+
+    /** « Non classée » sans catégorie ; le code brut si elle a été retirée de la liste. */
+    public function categoryLabel(): string
+    {
+        return $this->category === null ? 'Non classée' : (self::categories()[$this->category] ?? (string) $this->category);
+    }
+
     public function isCancelled(): bool
     {
         return $this->status === self::STATUS_CANCELLED;

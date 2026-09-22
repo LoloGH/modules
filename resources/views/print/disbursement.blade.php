@@ -22,6 +22,7 @@
 
         <dl class="rows">
             <div><dt>Motif</dt><dd>{{ $disbursement->reason }}</dd></div>
+            <div><dt>Catégorie</dt><dd>{{ $disbursement->categoryLabel() }}</dd></div>
             @if ($disbursement->beneficiary) <div><dt>Bénéficiaire</dt><dd>{{ $disbursement->beneficiary }}</dd></div> @endif
             <div><dt>Moyen</dt><dd>{{ $disbursement->method?->name }}</dd></div>
             @if ($disbursement->reference) <div><dt>Référence</dt><dd>{{ $disbursement->reference }}</dd></div> @endif

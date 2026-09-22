@@ -128,6 +128,15 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   recherche (n°, patient, référence, facture). Indicateurs : total encaissé,
   nombre, annulés, répartition par moyen. Un caissier ne voit que ses
   sessions ; le contrôle (`finance.sessions.validate`) voit tout.
+- **Recettes** (`recettes`) : les encaissements valides — date, source (acte
+  ou libellé, patient), service (centre analytique) et activité (acte), moyen,
+  référence, montant ; filtres période, moyen, service, activité, recherche ;
+  répartition par service. **Dépenses** (`depenses`) : les décaissements —
+  date, catégorie, motif, bénéficiaire, moyen, référence, statut, montant, bon
+  imprimable ; filtres période, moyen, catégorie (dont « non classées »),
+  statut, recherche ; répartition par catégorie. Les catégories se règlent dans
+  `finance.expense_categories` et se choisissent (facultatif) au décaissement.
+  Mêmes droits et même périmètre que Paiements.
 - **Catalogue des actes** (`src/Models/AnalyticCenter.php`, `Act.php`, `Tariff.php`,
   `src/Actions/SetTariff.php`) : le référentiel de ce qui se facture, indépendant
   des factures pour que les prix évoluent sans réécrire l'historique.

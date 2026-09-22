@@ -7,6 +7,9 @@ namespace Keneya\FinanceCaisse\Http\Controllers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Keneya\FinanceCaisse\Models\Act;
+use Keneya\FinanceCaisse\Models\AnalyticCenter;
+use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Support\Actor;
@@ -44,6 +47,73 @@ final class LedgerController extends FinanceController
             'byMethod' => (clone $valid)->selectRaw('payment_method_id, SUM(amount) as total')
                 ->groupBy('payment_method_id')->pluck('total', 'payment_method_id')
                 ->map(fn ($total) => (int) $total)->sortDesc(),
+            'methods' => PaymentMethod::query()->orderBy('name')->get(),
+            'scoped' => $filters->cashierScope !== null,
+        ]);
+    }
+
+    /**
+     * Recettes : les encaissements VALIDES, vus par ce qu'ils rapportent —
+     * source (acte ou libellé), service (centre analytique), moyen.
+     */
+    public function revenue(Request $request): View
+    {
+        $filters = $this->filters($request);
+        $base = $filters->payments()->where('status', Payment::STATUS_VALID);
+
+        $byCenter = (clone $base)->with('act.center')->get()
+            ->groupBy(fn (Payment $p): string => $p->act?->center?->name ?? ($p->act === null ? 'Hors catalogue' : 'Sans centre analytique'))
+            ->map(fn ($group): int => (int) $group->sum('amount'))
+            ->sortDesc();
+
+        return view('finance::ledger.revenue', [
+            'filters' => $filters,
+            'items' => (clone $base)->with(['method', 'act.center', 'session.register'])
+                ->latest('created_at')->latest('id')
+                ->paginate(self::PER_PAGE)->withQueryString(),
+            'total' => (int) (clone $base)->sum('amount'),
+            'count' => (clone $base)->count(),
+            'byCenter' => $byCenter,
+            'methods' => PaymentMethod::query()->orderBy('name')->get(),
+            'centers' => AnalyticCenter::query()->orderBy('name')->get(),
+            'acts' => Act::query()->orderBy('name')->get(),
+            'scoped' => $filters->cashierScope !== null,
+        ]);
+    }
+
+    /**
+     * Dépenses : les décaissements, avec leur catégorie, leur bénéficiaire et
+     * leur statut.
+     */
+    public function expenses(Request $request): View
+    {
+        $filters = $this->filters($request);
+        $categories = Disbursement::categories();
+
+        $category = $request->query('categorie');
+        $category = is_string($category) && ($category === 'aucune' || isset($categories[$category])) ? $category : null;
+
+        $base = $filters->disbursements()
+            ->when($category === 'aucune', fn ($q) => $q->whereNull('category'))
+            ->when($category !== null && $category !== 'aucune', fn ($q) => $q->where('category', $category));
+        $valid = (clone $base)->where('status', Disbursement::STATUS_VALID);
+
+        return view('finance::ledger.expenses', [
+            'filters' => $filters,
+            'category' => $category,
+            'categories' => $categories,
+            'items' => (clone $base)->with(['method', 'session.register'])
+                ->latest('created_at')->latest('id')
+                ->paginate(self::PER_PAGE)->withQueryString(),
+            'stats' => [
+                'total' => (int) (clone $valid)->sum('amount'),
+                'count' => (clone $valid)->count(),
+                'cancelled' => (clone $base)->where('status', Disbursement::STATUS_CANCELLED)->count(),
+            ],
+            'byCategory' => (clone $valid)->get(['category', 'amount'])
+                ->groupBy(fn (Disbursement $d): string => $d->categoryLabel())
+                ->map(fn ($group): int => (int) $group->sum('amount'))
+                ->sortDesc(),
             'methods' => PaymentMethod::query()->orderBy('name')->get(),
             'scoped' => $filters->cashierScope !== null,
         ]);

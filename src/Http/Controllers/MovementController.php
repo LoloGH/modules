@@ -89,6 +89,7 @@ final class MovementController extends FinanceController
             [
                 'beneficiary' => $data['beneficiary'] ?? null,
                 'reference' => $data['reference'] ?? null,
+                'category' => $data['category'] ?? null,
             ],
         );
 

@@ -174,7 +174,17 @@
                             <label>Motif <input name="reason" required placeholder="ex. Achat de fournitures"></label>
                             <label>Bénéficiaire <input name="beneficiary"></label>
                         </div>
-                        <label>Référence <input name="reference"></label>
+                        <div class="row">
+                            <label>Catégorie
+                                <select name="category">
+                                    <option value="">— Non classée</option>
+                                    @foreach (\Keneya\FinanceCaisse\Models\Disbursement::categories() as $code => $label)
+                                        <option value="{{ $code }}" @selected(old('category') === $code)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Référence <input name="reference"></label>
+                        </div>
                         <div class="actions">
                             <button type="submit" class="ghost"><x-finance::icon name="depense" /> Enregistrer le décaissement</button>
                         </div>

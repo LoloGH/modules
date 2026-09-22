@@ -35,7 +35,7 @@ final class RecordDisbursement
     ) {}
 
     /**
-     * @param  array{beneficiary?: ?string, reference?: ?string}  $details
+     * @param  array{beneficiary?: ?string, reference?: ?string, category?: ?string}  $details
      */
     public function handle(
         CashSession $session,
@@ -94,6 +94,7 @@ final class RecordDisbursement
                 'payment_method_id' => $method->id,
                 'amount' => $amount,
                 'reason' => $reason,
+                'category' => Text::clean($details['category'] ?? null),
                 'beneficiary' => Text::clean($details['beneficiary'] ?? null),
                 'reference' => $reference,
                 'status' => Disbursement::STATUS_VALID,
