@@ -60,6 +60,12 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
       l'utilisateur tient à ce que le module ne possède pas la table des
       utilisateurs de l'hôte : il n'en connaît qu'un identifiant en chaîne.
     - `CashierSetting::limitFor($cashierId)` donne la limite effective.
+    - **Ouvrir plusieurs caisses d'un coup** : quand un caissier peut encore
+      en tenir plus d'une, le bureau liste ses caisses libres (toutes cochées),
+      un fonds initial par caisse et le **total** calculé en direct
+      (`finance.cash.sessions.open-many`, `Actions\OpenCashSessions`). Chaque
+      caisse reçoit sa propre session ; l'ouverture est tout ou rien — une
+      caisse refusée (affectation, déjà tenue, limite) n'en ouvre aucune.
   - **Quelles caisses un caissier peut ouvrir** : `finance_cashier_registers`
     affecte un caissier à des caisses précises. **Aucune ligne pour un
     caissier vaut « toutes les caisses »** : l'affectation est une restriction

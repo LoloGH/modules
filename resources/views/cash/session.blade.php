@@ -79,7 +79,6 @@
                         @csrf
                         @if ($fromQueue)
                             {{-- La visite réglée : l'encaissement la fera avancer chez l'hôte. --}}
-                            <input type="hidden" name="patient_id" value="{{ old('patient_id', $fromQueue->patientRef) }}">
                             <input type="hidden" name="queue_ref" value="{{ request()->query('file') }}">
                             <input type="hidden" name="visit_ref" value="{{ $fromQueue->ref }}">
                         @endif
@@ -115,9 +114,16 @@
                             <span class="help">Consultation, analyse, imagerie… Sert à savoir ce que rapporte chaque service.</span>
                         </label>
                         <div class="row">
+                            {{-- L'identifiant du patient accompagne toujours son nom : deux
+                                 homonymes ne se confondent pas sur un encaissement. Venu de
+                                 la file, il est celui du dossier et ne se retape pas. --}}
+                            <label>Identifiant du patient
+                                <input name="patient_id" value="{{ old('patient_id', $fromQueue?->patientRef) }}"
+                                       placeholder="ex. PAT-00001" @if ($fromQueue) readonly @endif>
+                            </label>
                             <label>Nom du patient <input name="patient_name" value="{{ old('patient_name', $fromQueue?->patientName) }}"></label>
-                            <label>Référence <input name="reference" value="{{ old('reference') }}" placeholder="Mobile Money, chèque…"></label>
                         </div>
+                        <label>Référence <input name="reference" value="{{ old('reference') }}" placeholder="Mobile Money, chèque…"></label>
                         <label>Libellé
                             <input name="description" value="{{ old('description') }}" placeholder="Repris de l'acte si laissé vide">
                         </label>
@@ -188,7 +194,9 @@
                                 @if ($movement['is_payment'])
                                     {{ $item->act?->name ?? $item->description ?? 'Encaissement' }}
                                     @if ($item->act?->center) <span class="badge muted">{{ $item->act->center->name }}</span> @endif
-                                    @if ($item->patient_name) <span class="sub">{{ $item->patient_name }}</span> @endif
+                                    @if ($item->patient_name || $item->patient_id)
+                                        <span class="sub">{{ $item->patient_name }}@if ($item->patient_name && $item->patient_id) · @endif<span class="mono">{{ $item->patient_id }}</span></span>
+                                    @endif
                                     @if ($item->description && $item->description !== $item->act?->name)
                                         <span class="sub">{{ $item->description }}</span>
                                     @endif

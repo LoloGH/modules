@@ -10,9 +10,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Keneya\FinanceCaisse\Actions\CloseCashSession;
 use Keneya\FinanceCaisse\Actions\OpenCashSession;
+use Keneya\FinanceCaisse\Actions\OpenCashSessions;
 use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Http\Requests\CloseSessionRequest;
 use Keneya\FinanceCaisse\Http\Requests\OpenSessionRequest;
+use Keneya\FinanceCaisse\Http\Requests\OpenSessionsRequest;
 use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\CashierRegister;
 use Keneya\FinanceCaisse\Models\CashierSetting;
@@ -59,6 +61,9 @@ final class CashDeskController extends FinanceController
             'openSessions' => $open,
             'limit' => $limit,
             'canOpenMore' => $open->count() < $limit,
+            // Combien de caisses il peut encore ouvrir : au-delà d'une, le
+            // bureau propose de les ouvrir toutes en une fois.
+            'remaining' => max(0, $limit - $open->count()),
             // On ne propose que les caisses libres ET auxquelles il est
             // affecté : une caisse déjà tenue ne s'ouvre pas deux fois, pas
             // même par son propre caissier.
@@ -82,6 +87,24 @@ final class CashDeskController extends FinanceController
         return redirect()
             ->route('finance.cash.sessions.show', $session)
             ->with('finance_status', "Session {$session->number} ouverte sur {$register->name}.");
+    }
+
+    /**
+     * Plusieurs caisses d'un coup : une session par caisse cochée, chacune avec
+     * son fonds initial. Tout ou rien (voir `OpenCashSessions`).
+     */
+    public function openMany(OpenSessionsRequest $request, OpenCashSessions $action): RedirectResponse
+    {
+        $sessions = $action->handle($request->floatsByRegister(), $this->user($request));
+
+        $total = array_sum(array_map(static fn (CashSession $session): int => (int) $session->opening_float, $sessions));
+
+        return redirect()->route('finance.cash.index')->with('finance_status', sprintf(
+            '%d session(s) ouverte(s) : %s. Fonds initial total : %s.',
+            count($sessions),
+            collect($sessions)->map(fn (CashSession $session): string => $session->register->name)->implode(', '),
+            Money::format($total),
+        ));
     }
 
     public function show(Request $request, CashSession $session, CashSessionCalculator $calculator): View

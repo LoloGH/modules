@@ -31,6 +31,10 @@ Route::middleware('can:finance.sessions.view')->group(function (): void {
 Route::post('caisse/sessions', [CashDeskController::class, 'open'])
     ->middleware('can:finance.sessions.open')->name('cash.sessions.open');
 
+// Plusieurs caisses d'un coup, chacune avec son fonds initial.
+Route::post('caisse/sessions/multiples', [CashDeskController::class, 'openMany'])
+    ->middleware('can:finance.sessions.open')->name('cash.sessions.open-many');
+
 // File d'attente des caisses, fournie par l'hôte : on la consulte avec le
 // droit de voir ses sessions, on appelle le suivant avec celui d'encaisser.
 Route::get('file', [CashQueueController::class, 'index'])
