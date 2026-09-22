@@ -12,14 +12,17 @@ use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\Invoice;
+use Keneya\FinanceCaisse\Models\PatientDeposit;
 use Keneya\FinanceCaisse\Models\Payment;
+use Keneya\FinanceCaisse\Services\PatientAccount;
 use Keneya\FinanceCaisse\Support\Actor;
 use Keneya\FinanceCaisse\Support\Money;
 use Keneya\FinanceCaisse\Support\Text;
 
 /**
- * Annule un encaissement ou un décaissement : il n'est jamais effacé, il
- * reste visible avec son auteur et son motif, et sort des totaux.
+ * Annule un encaissement, un décaissement ou une avance : rien n'est jamais
+ * effacé, tout reste visible avec son auteur et son motif, et sort des
+ * totaux.
  *
  * Seule une session OUVERTE permet d'annuler : après la clôture, le montant
  * compté et l'écart sont figés, et une correction passe par un remboursement
@@ -29,7 +32,10 @@ final class CancelCashMovement
 {
     use GuardsCashSession;
 
-    public function __construct(private readonly Auditor $auditor) {}
+    public function __construct(
+        private readonly Auditor $auditor,
+        private readonly PatientAccount $accounts,
+    ) {}
 
     public function payment(Payment $payment, string $reason, Authenticatable $actor): Payment
     {
@@ -42,12 +48,31 @@ final class CancelCashMovement
     }
 
     /**
-     * @template T of Payment|Disbursement
+     * Annuler une avance : l'argent ressort du tiroir. Ce qu'elle a déjà payé
+     * ne se défait pas ici — une avance déjà dépensée ne s'annule pas, sans
+     * quoi le compte du patient deviendrait négatif.
+     */
+    public function deposit(PatientDeposit $deposit, string $reason, Authenticatable $actor): PatientDeposit
+    {
+        $summary = $this->accounts->summary((string) $deposit->patient_id);
+
+        if (! $deposit->isCancelled() && $summary['balance'] < (int) $deposit->amount) {
+            throw new FinanceRuleViolation(sprintf(
+                'Cette avance a déjà servi : le compte ne contient plus que %s. Remboursez le solde plutôt que d\'annuler.',
+                Money::format($summary['balance']),
+            ));
+        }
+
+        return $this->cancel($deposit, 'deposit_cancelled', 'Avance', $reason, $actor);
+    }
+
+    /**
+     * @template T of Payment|Disbursement|PatientDeposit
      *
      * @param  T  $movement
      * @return T
      */
-    private function cancel(Payment|Disbursement $movement, string $event, string $label, string $reason, Authenticatable $actor): Payment|Disbursement
+    private function cancel(Payment|Disbursement|PatientDeposit $movement, string $event, string $label, string $reason, Authenticatable $actor): Payment|Disbursement|PatientDeposit
     {
         $reason = Text::clean($reason);
 

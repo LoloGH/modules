@@ -23,6 +23,7 @@ use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\Insurer;
 use Keneya\FinanceCaisse\Models\Invoice;
+use Keneya\FinanceCaisse\Models\PatientDeposit;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Queue\QueuedVisit;
@@ -133,10 +134,14 @@ final class CashDeskController extends FinanceController
             : ($session->totals ?? $calculator->totals($session));
 
         $movements = $session->payments()->with(['method', 'act'])->get()
-            ->map(fn (Payment $payment): array => ['is_payment' => true, 'model' => $payment])
+            ->map(fn (Payment $payment): array => ['kind' => 'payment', 'model' => $payment])
             ->concat(
                 $session->disbursements()->with('method')->get()
-                    ->map(fn (Disbursement $disbursement): array => ['is_payment' => false, 'model' => $disbursement])
+                    ->map(fn (Disbursement $disbursement): array => ['kind' => 'disbursement', 'model' => $disbursement])
+            )
+            ->concat(
+                PatientDeposit::query()->where('cash_session_id', $session->getKey())->with('method')->get()
+                    ->map(fn (PatientDeposit $deposit): array => ['kind' => 'deposit', 'model' => $deposit])
             )
             ->sortByDesc(fn (array $movement): array => [$movement['model']->created_at->getTimestamp(), $movement['model']->id])
             ->values();

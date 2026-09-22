@@ -39,6 +39,7 @@ final class Navigation
                     self::item('Recettes', 'recette', 'finance.ledger.revenue', 'finance.payments.view'),
                     self::item('Dépenses', 'depense', 'finance.ledger.expenses', 'finance.payments.view'),
                     self::item('Assurances', 'assurance', 'finance.insurance.index', 'finance.insurance.view', ['finance.insurance.*', 'finance.insurers.*']),
+                    self::item('Comptes patients', 'utilisateur', 'finance.accounts.index', 'finance.accounts.view', ['finance.accounts.*']),
                     self::item('Créances', 'creance', 'finance.receivables.index', 'finance.receivables.view'),
                     self::item('Rapports', 'rapport', 'finance.reports.index', 'finance.reports.view'),
                 ],

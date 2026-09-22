@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.15.0, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.16.0, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,28 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Avances et compte patient** (`comptes`, `finance.accounts.view` ;
+  enregistrement `finance.deposits.create`) — de l'argent reçu d'avance, qui
+  n'est pas une recette.
+  - **L'avance** (`finance_patient_deposits`, `AVA-`, `Actions\RecordDeposit`)
+    se verse à la caisse, pour un patient désigné. Elle **entre dans le
+    tiroir** comme un encaissement (`CashSessionCalculator`), mais ne figure
+    ni dans les recettes ni dans les rapports : elle reste due au patient.
+    Reçu imprimable, qui rappelle le solde.
+  - **Puiser dans le compte** : un encaissement réglé par le moyen « Compte
+    patient » prélève le solde. Il ne peut pas dépasser ce qui reste, ni se
+    faire sans patient désigné, et n'ajoute rien au tiroir — l'argent y est
+    depuis l'avance.
+  - **Aucune table de solde** (`Services\PatientAccount`) : le solde est
+    toujours recalculé des écritures — avances valides moins encaissements
+    valides réglés sur le compte. Annuler une avance ou un encaissement le
+    remet d'aplomb sans écriture de correction.
+  - **Annuler une avance** n'est possible que si elle n'a pas servi : au-delà,
+    c'est un remboursement (tranche suivante), sans quoi le compte
+    deviendrait négatif.
+  - **L'écran** liste les comptes (recherche par nom ou identifiant) et
+    ouvre le relevé d'un patient : avances, utilisations, annulations, ses
+    factures et ce qu'il doit encore.
 - **Rattachement analytique fin** — chaque écriture porte SON centre
   analytique, gravé au moment où elle est écrite (`analytic_center_id` sur
   `finance_payments`, `finance_invoice_lines` et `finance_disbursements`).

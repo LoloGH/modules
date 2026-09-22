@@ -13,6 +13,7 @@ use Keneya\FinanceCaisse\Http\Controllers\InsuranceController;
 use Keneya\FinanceCaisse\Http\Controllers\InvoiceController;
 use Keneya\FinanceCaisse\Http\Controllers\LedgerController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
+use Keneya\FinanceCaisse\Http\Controllers\PatientAccountController;
 use Keneya\FinanceCaisse\Http\Controllers\PrintController;
 use Keneya\FinanceCaisse\Http\Controllers\ReceivableController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
@@ -37,6 +38,7 @@ Route::middleware('can:finance.sessions.view')->group(function (): void {
     // Reçus imprimables : ses propres mouvements, ou tous pour le contrôle.
     Route::get('caisse/encaissements/{payment}/recu', [PrintController::class, 'payment'])->name('cash.payments.receipt');
     Route::get('caisse/decaissements/{disbursement}/recu', [PrintController::class, 'disbursement'])->name('cash.disbursements.receipt');
+    Route::get('caisse/avances/{deposit}/recu', [PrintController::class, 'deposit'])->name('cash.deposits.receipt');
 });
 
 Route::post('caisse/sessions', [CashDeskController::class, 'open'])
@@ -62,6 +64,13 @@ Route::post('caisse/sessions/{session}/encaissements', [MovementController::clas
 
 Route::post('caisse/sessions/{session}/decaissements', [MovementController::class, 'storeDisbursement'])
     ->middleware('can:finance.disbursements.create')->name('cash.disbursements.store');
+
+// Avances : de l'argent reçu d'avance, qui alimente le compte du patient.
+Route::post('caisse/sessions/{session}/avances', [MovementController::class, 'storeDeposit'])
+    ->middleware('can:finance.deposits.create')->name('cash.deposits.store');
+
+Route::post('caisse/avances/{deposit}/annulation', [MovementController::class, 'cancelDeposit'])
+    ->middleware('can:finance.payments.cancel')->name('cash.deposits.cancel');
 
 Route::post('caisse/encaissements/{payment}/annulation', [MovementController::class, 'cancelPayment'])
     ->middleware('can:finance.payments.cancel')->name('cash.payments.cancel');
@@ -104,6 +113,12 @@ Route::middleware('can:finance.insurance.manage')->group(function (): void {
     Route::post('assurances/assureurs/{insurer}/couverture', [InsuranceController::class, 'updateCoverage'])->name('insurers.coverage');
     Route::post('factures/{invoice}/assurance/reglements', [InsuranceController::class, 'settle'])->whereNumber('invoice')->name('insurance.settle');
     Route::post('factures/{invoice}/assurance/rejets', [InsuranceController::class, 'reject'])->whereNumber('invoice')->name('insurance.reject');
+});
+
+// Comptes patients : avances versées, ce qu'elles ont payé, solde.
+Route::middleware('can:finance.accounts.view')->group(function (): void {
+    Route::get('comptes', [PatientAccountController::class, 'index'])->name('accounts.index');
+    Route::get('comptes/{patient}', [PatientAccountController::class, 'show'])->name('accounts.show');
 });
 
 // Créances : ce que patients et assureurs doivent encore (lecture).

@@ -258,11 +258,52 @@
         </div>
     @endif
 
+    @if ($session->isOpen() && $isOwner)
+        @can('finance.deposits.create')
+            <x-finance::card title="Avance sur compte patient"
+                             hint="De l'argent reçu d'avance : ce n'est pas encore une recette">
+                <form method="post" action="{{ route('finance.cash.deposits.store', $session) }}">
+                    @csrf
+                    <div class="row">
+                        <label>Identifiant du patient <input name="patient_id" value="{{ old('patient_id') }}" placeholder="PAT-000123" required></label>
+                        <label>Nom du patient <input name="patient_name" value="{{ old('patient_name') }}"></label>
+                    </div>
+                    <div class="row">
+                        <label>Moyen de paiement
+                            <select name="payment_method_id" required>
+                                @foreach ($methods as $method)
+                                    @continue(in_array($method->kind, ['patient_account', 'insurance'], true))
+                                    <option value="{{ $method->id }}">{{ $method->name }}@if ($method->requires_reference) (référence obligatoire)@endif</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>Montant
+                            <input name="amount" class="money" inputmode="numeric" placeholder="0" required>
+                            <span class="help">En FCFA, sans décimale.</span>
+                        </label>
+                    </div>
+                    <div class="row">
+                        <label>Motif <input name="note" value="{{ old('note') }}" placeholder="ex. Avance sur hospitalisation"></label>
+                        <label>Référence <input name="reference" value="{{ old('reference') }}"></label>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="ghost"><x-finance::icon name="recette" /> Enregistrer l'avance</button>
+                    </div>
+                </form>
+                <p class="muted">
+                    L'avance entre dans le tiroir et reste acquise au patient. Elle réglera
+                    ses prochains actes, encaissés au moyen « Compte patient ».
+                </p>
+            </x-finance::card>
+        @endcan
+    @endif
+
     <x-finance::card title="Opérations" hint="{{ $movements->count() }} au total" flush>
         @if ($movements->isEmpty())
             <div class="bd">
                 <x-finance::empty title="Aucune opération dans cette session" icon="paiement">
-                    Les encaissements et décaissements apparaîtront ici, annulations comprises.
+                    Les encaissements, avances et décaissements apparaîtront ici,
+                    annulations comprises.
                 </x-finance::empty>
             </div>
         @else
@@ -277,12 +318,16 @@
                         <tr class="{{ $item->isCancelled() ? 'cancelled' : '' }}">
                             <td data-l="N°" class="mono">{{ $item->number }}</td>
                             <td data-l="Type">
-                                <span class="badge {{ $movement['is_payment'] ? 'ok' : 'muted' }}">
-                                    {{ $movement['is_payment'] ? 'Encaissement' : 'Décaissement' }}
+                                @php($kind = $movement['kind'])
+                                <span class="badge {{ ['payment' => 'ok', 'deposit' => 'info', 'disbursement' => 'muted'][$kind] }}">
+                                    {{ ['payment' => 'Encaissement', 'deposit' => 'Avance', 'disbursement' => 'Décaissement'][$kind] }}
                                 </span>
                             </td>
                             <td data-l="Détail">
-                                @if ($movement['is_payment'])
+                                @if ($kind === 'deposit')
+                                    {{ $item->note ?? 'Avance sur compte patient' }}
+                                    <span class="sub">{{ $item->patient_name }}@if ($item->patient_name && $item->patient_id) · @endif<span class="mono">{{ $item->patient_id }}</span></span>
+                                @elseif ($kind === 'payment')
                                     {{ $item->act?->name ?? $item->description ?? 'Encaissement' }}
                                     @if ($item->act?->center) <span class="badge muted">{{ $item->act->center->name }}</span> @endif
                                     @if ($item->patient_name || $item->patient_id)
@@ -300,13 +345,14 @@
                                 @endif
                             </td>
                             <td data-l="Moyen">{{ $item->method->name }}</td>
-                            <td data-l="Montant" class="num strong">{{ $movement['is_payment'] ? '' : '−' }}{{ $money($item->amount) }}</td>
+                            <td data-l="Montant" class="num strong">{{ $kind === 'disbursement' ? '−' : '' }}{{ $money($item->amount) }}</td>
                             <td data-l="" class="acts">
+                                @php($receipts = ['payment' => 'finance.cash.payments.receipt', 'deposit' => 'finance.cash.deposits.receipt', 'disbursement' => 'finance.cash.disbursements.receipt'])
                                 <a class="btn ghost sm" target="_blank" rel="noopener"
-                                   href="{{ route($movement['is_payment'] ? 'finance.cash.payments.receipt' : 'finance.cash.disbursements.receipt', $item) }}">{{ $movement['is_payment'] ? 'Reçu' : 'Bon' }}</a>
+                                   href="{{ route($receipts[$kind], $item) }}">{{ $kind === 'disbursement' ? 'Bon' : 'Reçu' }}</a>
                                 @if (! $item->isCancelled() && $session->isOpen())
-                                    @php($route = $movement['is_payment'] ? 'finance.cash.payments.cancel' : 'finance.cash.disbursements.cancel')
-                                    @can($movement['is_payment'] ? 'finance.payments.cancel' : 'finance.disbursements.cancel')
+                                    @php($route = ['payment' => 'finance.cash.payments.cancel', 'deposit' => 'finance.cash.deposits.cancel', 'disbursement' => 'finance.cash.disbursements.cancel'][$kind])
+                                    @can($kind === 'disbursement' ? 'finance.disbursements.cancel' : 'finance.payments.cancel')
                                         <form class="inline" method="post" action="{{ route($route, $item) }}">@csrf
                                             <input name="reason" placeholder="Motif de l'annulation" required>
                                             <button class="danger sm" type="submit">Annuler</button>

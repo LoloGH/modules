@@ -15,6 +15,7 @@ use Keneya\FinanceCaisse\Models\Invoice;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
+use Keneya\FinanceCaisse\Services\PatientAccount;
 use Keneya\FinanceCaisse\Support\Money;
 use Keneya\FinanceCaisse\Support\Text;
 
@@ -28,6 +29,7 @@ final class RecordPayment
     public function __construct(
         private readonly NumberGenerator $numbers,
         private readonly Auditor $auditor,
+        private readonly PatientAccount $accounts,
     ) {}
 
     /**
@@ -62,6 +64,12 @@ final class RecordPayment
             }
 
             $patientId = $details['patient_id'] ?? null;
+
+            // Réglé sur le compte du patient : l'argent est déjà dans le
+            // tiroir depuis son avance. On ne puise que ce qui y reste.
+            if ($method->kind === PaymentMethod::KIND_PATIENT_ACCOUNT) {
+                $patientId = $this->assertAccountCovers($patientId, $details['invoice_id'] ?? null, $amount);
+            }
 
             $act = $this->act($details['act_id'] ?? null);
 
@@ -156,6 +164,36 @@ final class RecordPayment
      * il reste lisible sur les encaissements passés, mais on n'en crée pas de
      * nouveaux.
      */
+    /**
+     * Le compte du patient couvre-t-il cet encaissement ?
+     *
+     * Sans identifiant de patient, aucun compte ne se désigne : un
+     * encaissement anonyme ne peut pas puiser dans les avances de quelqu'un.
+     */
+    private function assertAccountCovers(mixed $patientId, ?int $invoiceId, int $amount): string
+    {
+        $patientId = Text::clean($patientId === null ? null : (string) $patientId)
+            ?? Invoice::query()->whereKey($invoiceId)->value('patient_id');
+
+        if ($patientId === null) {
+            throw new FinanceRuleViolation(
+                'Un encaissement réglé sur le compte patient doit désigner le patient.'
+            );
+        }
+
+        $balance = $this->accounts->balance((string) $patientId);
+
+        if ($amount > $balance) {
+            throw new FinanceRuleViolation(sprintf(
+                'Le compte de ce patient ne contient que %s : %s ne peut pas y être prélevé.',
+                Money::format($balance),
+                Money::format($amount),
+            ));
+        }
+
+        return (string) $patientId;
+    }
+
     private function act(?int $actId): ?Act
     {
         if ($actId === null) {

@@ -14,7 +14,8 @@ use Keneya\FinanceCaisse\Models\PaymentMethod;
  * Totaux d'une session.
  *
  * Le montant théorique du tiroir ne compte que les ESPÈCES :
- * fonds initial + encaissements en espèces - décaissements en espèces.
+ * fonds initial + encaissements et avances en espèces - décaissements en
+ * espèces. Une avance n'est pas une recette, mais l'argent est bien là.
  * Le Mobile Money, la carte, etc. sont totalisés par moyen mais n'entrent
  * pas dans le tiroir. Les opérations annulées sont exclues.
  */
@@ -28,6 +29,7 @@ final class CashSessionCalculator
      *     expected_cash: int,
      *     payments_count: int,
      *     disbursements_count: int,
+     *     deposits_count: int,
      *     by_method: array<string, array{name: string, kind: string, in: int, out: int}>
      * }
      */
@@ -38,11 +40,24 @@ final class CashSessionCalculator
         $cashOut = 0;
         $paymentsCount = 0;
         $disbursementsCount = 0;
+        $depositsCount = 0;
 
         foreach ($this->grouped('finance_payments', $session) as $row) {
             $byMethod[$row->code] ??= ['name' => $row->name, 'kind' => $row->kind, 'in' => 0, 'out' => 0];
             $byMethod[$row->code]['in'] += (int) $row->total;
             $paymentsCount += (int) $row->n;
+
+            if ($row->kind === PaymentMethod::KIND_CASH) {
+                $cashIn += (int) $row->total;
+            }
+        }
+
+        // Une avance entre dans le tiroir comme un encaissement : c'est de
+        // l'argent reçu, même si ce n'est pas encore une recette.
+        foreach ($this->grouped('finance_patient_deposits', $session) as $row) {
+            $byMethod[$row->code] ??= ['name' => $row->name, 'kind' => $row->kind, 'in' => 0, 'out' => 0];
+            $byMethod[$row->code]['in'] += (int) $row->total;
+            $depositsCount += (int) $row->n;
 
             if ($row->kind === PaymentMethod::KIND_CASH) {
                 $cashIn += (int) $row->total;
@@ -70,6 +85,7 @@ final class CashSessionCalculator
             'expected_cash' => $openingFloat + $cashIn - $cashOut,
             'payments_count' => $paymentsCount,
             'disbursements_count' => $disbursementsCount,
+            'deposits_count' => $depositsCount,
             'by_method' => $byMethod,
         ];
     }

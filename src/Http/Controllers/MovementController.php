@@ -9,14 +9,17 @@ use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Actions\CancelCashMovement;
 use Keneya\FinanceCaisse\Actions\CollectQueuedVisit;
 use Keneya\FinanceCaisse\Actions\CreateInvoice;
+use Keneya\FinanceCaisse\Actions\RecordDeposit;
 use Keneya\FinanceCaisse\Actions\RecordDisbursement;
 use Keneya\FinanceCaisse\Actions\RecordPayment;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Http\Requests\CancelMovementRequest;
+use Keneya\FinanceCaisse\Http\Requests\DepositRequest;
 use Keneya\FinanceCaisse\Http\Requests\DisbursementRequest;
 use Keneya\FinanceCaisse\Http\Requests\PaymentRequest;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
+use Keneya\FinanceCaisse\Models\PatientDeposit;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Support\Money;
@@ -147,6 +150,42 @@ final class MovementController extends FinanceController
             ->route('finance.cash.sessions.show', $session)
             ->with('finance_print', $this->receipt(route('finance.cash.disbursements.receipt', $disbursement), 'Imprimer le bon de décaissement'))
             ->with('finance_status', sprintf('Décaissement %s enregistré : %s.', $disbursement->number, Money::format($disbursement->amount)));
+    }
+
+    /**
+     * Une avance : de l'argent reçu d'avance, qui entre dans le tiroir sans
+     * être une recette.
+     */
+    public function storeDeposit(DepositRequest $request, CashSession $session, RecordDeposit $action): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $deposit = $action->handle(
+            $session,
+            PaymentMethod::query()->findOrFail((int) $data['payment_method_id']),
+            (int) $data['amount'],
+            (string) $data['patient_id'],
+            $this->user($request),
+            [
+                'patient_name' => $data['patient_name'] ?? null,
+                'reference' => $data['reference'] ?? null,
+                'note' => $data['note'] ?? null,
+            ],
+        );
+
+        return redirect()
+            ->route('finance.cash.sessions.show', $session)
+            ->with('finance_print', $this->receipt(route('finance.cash.deposits.receipt', $deposit), 'Imprimer le reçu d\'avance'))
+            ->with('finance_status', sprintf('Avance %s enregistrée : %s.', $deposit->number, Money::format($deposit->amount)));
+    }
+
+    public function cancelDeposit(CancelMovementRequest $request, PatientDeposit $deposit, CancelCashMovement $action): RedirectResponse
+    {
+        $cancelled = $action->deposit($deposit, (string) $request->validated('reason'), $this->user($request));
+
+        return redirect()
+            ->route('finance.cash.sessions.show', $cancelled->cash_session_id)
+            ->with('finance_status', "Avance {$cancelled->number} annulée.");
     }
 
     /**

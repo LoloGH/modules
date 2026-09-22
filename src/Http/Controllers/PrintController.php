@@ -11,7 +11,9 @@ use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Models\Disbursement;
 use Keneya\FinanceCaisse\Models\Invoice;
+use Keneya\FinanceCaisse\Models\PatientDeposit;
 use Keneya\FinanceCaisse\Models\Payment;
+use Keneya\FinanceCaisse\Services\PatientAccount;
 use Keneya\FinanceCaisse\Support\Actor;
 
 /**
@@ -46,6 +48,17 @@ final class PrintController extends FinanceController
         $this->assertCanSee($request, $disbursement->session);
 
         return view('finance::print.disbursement', ['disbursement' => $disbursement] + $this->facility());
+    }
+
+    public function deposit(Request $request, PatientDeposit $deposit, PatientAccount $accounts): View
+    {
+        $deposit->load(['session.register', 'method']);
+        $this->assertCanSee($request, $deposit->session);
+
+        return view('finance::print.deposit', [
+            'deposit' => $deposit,
+            'balance' => $accounts->balance((string) $deposit->patient_id),
+        ] + $this->facility());
     }
 
     private function assertCanSee(Request $request, CashSession $session): void
