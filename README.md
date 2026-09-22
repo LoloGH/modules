@@ -121,6 +121,13 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Écrans `factures` (onglets par statut, recherche, montant/payé/solde),
     `factures/nouvelle`, `factures/{id}`. Droits : `finance.invoices.view`,
     `.create` (caissier), `.cancel` (comptable).
+- **Paiements** (`paiements`, `finance.payments.view`, `Support\LedgerFilters`) :
+  les encaissements, en lecture — n°, date et caisse, patient et identifiant,
+  objet, moyen, référence, facture associée (lien), statut, montant, reçu.
+  Filtres période (défaut : du 1er du mois à aujourd'hui), moyen, statut,
+  recherche (n°, patient, référence, facture). Indicateurs : total encaissé,
+  nombre, annulés, répartition par moyen. Un caissier ne voit que ses
+  sessions ; le contrôle (`finance.sessions.validate`) voit tout.
 - **Catalogue des actes** (`src/Models/AnalyticCenter.php`, `Act.php`, `Tariff.php`,
   `src/Actions/SetTariff.php`) : le référentiel de ce qui se facture, indépendant
   des factures pour que les prix évoluent sans réécrire l'historique.

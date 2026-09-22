@@ -10,6 +10,7 @@ use Keneya\FinanceCaisse\Http\Controllers\CashierAccessController;
 use Keneya\FinanceCaisse\Http\Controllers\CashQueueController;
 use Keneya\FinanceCaisse\Http\Controllers\HomeController;
 use Keneya\FinanceCaisse\Http\Controllers\InvoiceController;
+use Keneya\FinanceCaisse\Http\Controllers\LedgerController;
 use Keneya\FinanceCaisse\Http\Controllers\MovementController;
 use Keneya\FinanceCaisse\Http\Controllers\PrintController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
@@ -77,6 +78,11 @@ Route::get('factures/{invoice}/impression', [PrintController::class, 'invoice'])
     ->middleware('can:finance.invoices.view')->whereNumber('invoice')->name('invoices.print');
 Route::post('factures/{invoice}/annulation', [InvoiceController::class, 'cancel'])
     ->middleware('can:finance.invoices.cancel')->whereNumber('invoice')->name('invoices.cancel');
+
+// Paiements : les encaissements, en lecture. Un caissier n'y voit que ses
+// propres sessions (voir LedgerController).
+Route::get('paiements', [LedgerController::class, 'payments'])
+    ->middleware('can:finance.payments.view')->name('ledger.payments');
 
 // Contrôle
 Route::middleware('can:finance.sessions.validate')->group(function (): void {

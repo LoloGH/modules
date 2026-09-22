@@ -35,7 +35,7 @@ final class Navigation
                     self::item('File de caisse', 'horloge', 'finance.queue.index', 'finance.sessions.view', ['finance.queue.*']),
                     self::item('Sessions à valider', 'controle', 'finance.review.index', 'finance.sessions.validate'),
                     self::item('Factures', 'facture', 'finance.invoices.index', 'finance.invoices.view', ['finance.invoices.*']),
-                    self::soon('Paiements', 'paiement'),
+                    self::item('Paiements', 'paiement', 'finance.ledger.payments', 'finance.payments.view'),
                     self::soon('Recettes', 'recette'),
                     self::soon('Dépenses', 'depense'),
                     self::soon('Assurances', 'assurance'),
