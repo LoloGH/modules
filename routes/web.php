@@ -9,6 +9,7 @@ use Keneya\Pharmacie\Http\Controllers\LocationController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
 use Keneya\Pharmacie\Http\Controllers\QueueController;
 use Keneya\Pharmacie\Http\Controllers\StockController;
+use Keneya\Pharmacie\Http\Controllers\SupplyController;
 
 /*
 | Les droits se contrôlent ici, route par route (middleware `can:`), et les
@@ -32,6 +33,26 @@ Route::middleware('can:pharmacie.products.view')->group(function (): void {
     Route::get('catalogue/produits', [ProductController::class, 'index'])->name('catalog.products.index');
     Route::get('catalogue/produits/{product}', [ProductController::class, 'show'])->name('catalog.products.show');
     Route::get('catalogue/categories', [CategoryController::class, 'index'])->name('catalog.categories.index');
+});
+
+// Approvisionnement : fournisseurs, commandes, receptions. La reception
+// est le seul chemin par lequel un lot nait.
+Route::middleware('can:pharmacie.stock.view')->group(function (): void {
+    Route::get('fournisseurs', [SupplyController::class, 'suppliers'])->name('supply.suppliers.index');
+    Route::get('fournisseurs/{supplier}', [SupplyController::class, 'supplier'])->name('supply.suppliers.show');
+    Route::get('commandes', [SupplyController::class, 'orders'])->name('supply.orders.index');
+    Route::get('commandes/{order}', [SupplyController::class, 'order'])->name('supply.orders.show');
+    Route::get('receptions', [SupplyController::class, 'receptions'])->name('supply.receptions.index');
+    Route::get('receptions/{reception}', [SupplyController::class, 'reception'])->name('supply.receptions.show');
+});
+
+Route::middleware('can:pharmacie.stock.receive')->group(function (): void {
+    Route::post('fournisseurs', [SupplyController::class, 'storeSupplier'])->name('supply.suppliers.store');
+    Route::post('fournisseurs/{supplier}/basculer', [SupplyController::class, 'toggleSupplier'])->name('supply.suppliers.toggle');
+    Route::post('commandes', [SupplyController::class, 'storeOrder'])->name('supply.orders.store');
+    Route::post('commandes/{order}/envoi', [SupplyController::class, 'sendOrder'])->name('supply.orders.send');
+    Route::post('commandes/{order}/annulation', [SupplyController::class, 'cancelOrder'])->name('supply.orders.cancel');
+    Route::post('receptions', [SupplyController::class, 'storeReception'])->name('supply.receptions.store');
 });
 
 // Stock : lots, emplacements, peremptions et grand livre des mouvements.

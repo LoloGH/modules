@@ -53,6 +53,7 @@ return [
         'padding' => 6,
         'prefixes' => [
             'dispensation' => 'DIS',
+            'order' => 'CMD',
             'reception' => 'REC',
             'inventory' => 'INV',
             'loss' => 'PER',

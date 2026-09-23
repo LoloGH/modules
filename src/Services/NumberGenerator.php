@@ -10,7 +10,7 @@ use InvalidArgumentException;
 /**
  * Attribue les identifiants métier : <PREFIXE>-<ANNEE>-<SEQUENCE>.
  *
- * Le préfixe vient de `finance.identifiers.prefixes`. La séquence repart à 1
+ * Le préfixe vient de `pharmacie.identifiers.prefixes`. La séquence repart à 1
  * chaque année et est attribuée sous verrou de ligne : deux appels
  * simultanés ne peuvent pas obtenir le même numéro.
  *
@@ -21,7 +21,7 @@ final class NumberGenerator
 {
     public function next(string $key): string
     {
-        $prefix = config("finance.identifiers.prefixes.{$key}");
+        $prefix = config("pharmacie.identifiers.prefixes.{$key}");
 
         if (! is_string($prefix) || $prefix === '') {
             throw new InvalidArgumentException("Aucun préfixe d'identifiant déclaré pour « {$key} ».");
