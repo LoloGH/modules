@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.19.0, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.20.0, paramètres financiers, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,20 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Paramètres financiers** (`parametres`, `finance.settings.manage`,
+  administrateur ; `finance_settings`, `Services\FinanceSettings`) — ce que
+  l'établissement règle depuis l'application plutôt que dans le fichier.
+  - Le module continue de lire `config('finance.…')` : les réglages se
+    posent par-dessus au démarrage. **Une ligne par paramètre changé** ;
+    ramener une valeur au défaut du fichier efface la ligne. Sans table
+    migrée, ou sans base joignable, le fichier fait foi comme avant.
+  - Réglables, et rien d'autre : identité imprimée (nom — l'hôte peut
+    l'imposer —, adresse, téléphone, e-mail), sessions ouvertes par caissier,
+    symbole monétaire, délais de créance (patients, assureurs), préfixes de
+    numérotation des huit pièces, catégories de dépenses.
+  - Un préfixe ne vaut que pour les pièces à venir ; une catégorie de dépense
+    déjà portée par un décaissement ne se retire pas. Chaque changement est
+    inscrit au journal d'audit (`settings_updated`).
 - **Tableau de bord** (`Services\DashboardMetrics`, `Support\DashboardPeriod`) —
   la période se choisit (aujourd'hui, 7 jours, 30 jours, ce mois) et tout
   l'écran la suit, comparaison comprise : le jour se compare à la veille, le

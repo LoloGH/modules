@@ -21,6 +21,7 @@ use Keneya\FinanceCaisse\Http\Controllers\ReceivableController;
 use Keneya\FinanceCaisse\Http\Controllers\RegisterController;
 use Keneya\FinanceCaisse\Http\Controllers\ReportController;
 use Keneya\FinanceCaisse\Http\Controllers\ReviewController;
+use Keneya\FinanceCaisse\Http\Controllers\SettingsController;
 use Keneya\FinanceCaisse\Http\Controllers\TariffController;
 use Keneya\FinanceCaisse\Http\Controllers\UserPermissionController;
 
@@ -150,6 +151,12 @@ Route::get('creances', [ReceivableController::class, 'index'])
 Route::middleware('can:finance.reports.view')->group(function (): void {
     Route::get('rapports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('rapports/export', [ReportController::class, 'export'])->name('reports.export');
+});
+
+// Paramètres financiers de l'établissement.
+Route::middleware('can:finance.settings.manage')->group(function (): void {
+    Route::get('parametres', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('parametres', [SettingsController::class, 'update'])->name('settings.update');
 });
 
 // Journal d'audit : lecture seule, et exportable.

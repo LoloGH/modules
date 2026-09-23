@@ -25,6 +25,7 @@ use Keneya\FinanceCaisse\Contracts\VisitAdvancer;
 use Keneya\FinanceCaisse\Http\Middleware\EnsureHostGrantsAccess;
 use Keneya\FinanceCaisse\Queue\NoCashQueue;
 use Keneya\FinanceCaisse\Queue\NoVisitAdvancer;
+use Keneya\FinanceCaisse\Services\FinanceSettings;
 use Keneya\FinanceCaisse\Services\NumberGenerator;
 use Keneya\FinanceCaisse\Standalone\StandaloneMode;
 use Keneya\FinanceCaisse\Support\Money;
@@ -50,6 +51,7 @@ class FinanceServiceProvider extends ServiceProvider
         $this->app->singleton(FinanceAccessGate::class);
         $this->app->singleton(Auditor::class);
         $this->app->singleton(NumberGenerator::class);
+        $this->app->singleton(FinanceSettings::class);
         $this->app->singleton(UserPermissions::class);
 
         // Le catalogue exposé à l'hôte (`Finance::catalog()`).
@@ -82,12 +84,23 @@ class FinanceServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->applyEstablishmentSettings();
         $this->registerMiddlewareAliases();
         $this->registerResources();
         $this->registerRoutes();
         $this->registerPublishing();
         $this->registerCommands();
         $this->warnAboutStandaloneInProduction();
+    }
+
+    /**
+     * Les paramètres réglés par l'établissement se posent par-dessus le
+     * fichier de configuration : tout le module continue de lire
+     * `config('finance.…')` sans savoir d'où vient la valeur.
+     */
+    private function applyEstablishmentSettings(): void
+    {
+        $this->app->make(FinanceSettings::class)->apply();
     }
 
     private function registerMiddlewareAliases(): void

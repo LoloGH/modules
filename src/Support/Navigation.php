@@ -53,6 +53,7 @@ final class Navigation
                     self::item('Centres analytiques', 'centre', 'finance.catalog.centers.index', 'finance.catalog.view'),
                     self::item('Caisses', 'reglage', 'finance.registers.index', 'finance.registers.manage'),
                     self::item('Utilisateurs', 'utilisateur', 'finance.users.index', 'finance.roles.manage', ['finance.users.*']),
+                    self::item('Paramètres financiers', 'reglage', 'finance.settings.index', 'finance.settings.manage', ['finance.settings.*']),
                 ],
             ],
         ];
