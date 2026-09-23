@@ -58,6 +58,11 @@ Route::middleware('can:pharmacie.dispensing.create')->group(function (): void {
     Route::post('dispensations', [DispensingController::class, 'store'])->name('dispensing.store');
 });
 
+// Ce qui doit etre paye part a la caisse : la pharmacie ne tient pas de
+// tiroir.
+Route::post('dispensations/{dispensation}/facturation', [DispensingController::class, 'bill'])
+    ->middleware('can:pharmacie.dispensing.create')->whereNumber('dispensation')->name('dispensing.bill');
+
 Route::post('dispensations/{dispensation}/annulation', [DispensingController::class, 'cancel'])
     ->middleware('can:pharmacie.dispensing.cancel')->whereNumber('dispensation')->name('dispensing.cancel');
 

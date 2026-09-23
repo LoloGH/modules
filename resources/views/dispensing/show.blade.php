@@ -66,6 +66,44 @@
         </x-pharmacie::card>
     </div>
 
+    @can('pharmacie.dispensing.create')
+        <x-pharmacie::card title="Ce qui doit être payé" hint="La pharmacie ne tient pas de tiroir : la caisse encaisse">
+            <dl class="facts">
+                <div class="f"><dt>Montant</dt><dd>{{ $money($dispensation->total) }}</dd></div>
+                <div class="f"><dt>État</dt><dd><span class="badge {{ $dispensation->paymentTone() }}">{{ $dispensation->paymentLabel() }}</span></dd></div>
+                @if ($dispensation->billing_reference)
+                    <div class="f"><dt>Pièce de la caisse</dt><dd class="mono">{{ $dispensation->billing_reference }}</dd></div>
+                @endif
+                @if ($dispensation->billing_note)
+                    <div class="f"><dt>Motif</dt><dd>{{ $dispensation->billing_note }}</dd></div>
+                @endif
+            </dl>
+
+            @if ($dispensation->awaitsBilling())
+                <form method="post" action="{{ route('pharmacie.dispensing.bill', $dispensation) }}">
+                    @csrf
+                    <div class="row">
+                        <label>À quel titre
+                            <select name="kind" required>
+                                @foreach ($billingKinds as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>Précision <input name="note" placeholder="ex. patient indigent, organisme payeur"></label>
+                    </div>
+                    <div class="actions">
+                        <button type="submit"><x-pharmacie::icon name="fleche" /> Envoyer à la caisse</button>
+                    </div>
+                </form>
+                <p class="muted">
+                    Une gratuité se justifie, et rien ne part deux fois : une dispensation
+                    déjà envoyée ne se facture pas une seconde fois.
+                </p>
+            @endif
+        </x-pharmacie::card>
+    @endcan
+
     <x-pharmacie::card title="Ce qui a été délivré" hint="{{ $dispensation->items->count() }} ligne(s)" flush>
         <div class="tw">
             <table class="stack wide">

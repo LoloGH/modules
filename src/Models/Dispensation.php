@@ -26,6 +26,16 @@ class Dispensation extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    // Ce qu'il advient de l'argent : la pharmacie dit ce qui est du, la
+    // caisse encaisse.
+    public const PAYMENT_DUE = 'a_payer';
+
+    public const PAYMENT_SENT = 'envoye';
+
+    public const PAYMENT_SETTLED = 'regle';
+
+    public const PAYMENT_FREE = 'gratuit';
+
     public const SOURCE_COUNTER = 'counter';
 
     public const SOURCE_QUEUE = 'queue';
@@ -90,6 +100,42 @@ class Dispensation extends Model
     public function isCancelled(): bool
     {
         return $this->status === self::STATUS_CANCELLED;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function paymentLabels(): array
+    {
+        return [
+            self::PAYMENT_DUE => 'À envoyer à la caisse',
+            self::PAYMENT_SENT => 'Envoyé à la caisse',
+            self::PAYMENT_SETTLED => 'Réglé',
+            self::PAYMENT_FREE => 'Gratuit',
+        ];
+    }
+
+    public function paymentLabel(): string
+    {
+        return self::paymentLabels()[$this->payment_status] ?? (string) $this->payment_status;
+    }
+
+    public function paymentTone(): string
+    {
+        return match ($this->payment_status) {
+            self::PAYMENT_SETTLED => 'ok',
+            self::PAYMENT_SENT => 'info',
+            self::PAYMENT_FREE => 'muted',
+            default => 'warn',
+        };
+    }
+
+    /** Ce qui attend encore d'etre envoye a la caisse. */
+    public function awaitsBilling(): bool
+    {
+        return ! $this->isCancelled()
+            && $this->payment_status === self::PAYMENT_DUE
+            && (int) $this->total > 0;
     }
 
     public function isPartial(): bool

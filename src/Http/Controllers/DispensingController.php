@@ -8,6 +8,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Keneya\Pharmacie\Actions\DispenseProducts;
+use Keneya\Pharmacie\Actions\SendToCashier;
 use Keneya\Pharmacie\Models\Dispensation;
 use Keneya\Pharmacie\Models\Location;
 use Keneya\Pharmacie\Models\Product;
@@ -165,6 +166,7 @@ final class DispensingController extends PharmacieController
         return view('pharmacie::dispensing.show', [
             'dispensation' => $dispensation->load(['items.product', 'items.batches.batch', 'location']),
             'facility' => Pharmacie::facility(),
+            'billingKinds' => SendToCashier::kindLabels(),
         ]);
     }
 
@@ -178,6 +180,27 @@ final class DispensingController extends PharmacieController
             'dispensation' => $dispensation->load(['items.batches.batch', 'location']),
             'facility' => Pharmacie::facility(),
         ]);
+    }
+
+    /**
+     * Envoyer a la caisse ce qui doit etre paye — ou ecrire que rien ne sera
+     * demande, et a quel titre.
+     */
+    public function bill(Request $request, Dispensation $dispensation, SendToCashier $action): RedirectResponse
+    {
+        $data = $request->validate([
+            'kind' => ['required', 'string'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $billed = $action->handle($dispensation, (string) $data['kind'], $this->user($request), $data['note'] ?? null);
+
+        return redirect()->route('pharmacie.dispensing.show', $billed)->with(
+            'pharmacie_status',
+            $billed->payment_status === Dispensation::PAYMENT_FREE
+                ? sprintf('Dispensation %s : gratuite, rien ne sera demande.', $billed->number)
+                : sprintf('Dispensation %s envoyee a la caisse.', $billed->number),
+        );
     }
 
     public function cancel(Request $request, Dispensation $dispensation, DispenseProducts $action): RedirectResponse
