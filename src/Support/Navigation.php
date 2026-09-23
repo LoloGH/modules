@@ -31,8 +31,9 @@ final class Navigation
                 'items' => [
                     self::item('Tableau de bord', 'dashboard', 'pharmacie.home'),
                     self::item('File d\'attente', 'horloge', 'pharmacie.queue.index', 'pharmacie.queue.view', ['pharmacie.queue.*']),
-                    self::soon('Dispensation', 'dispensation'),
-                    self::soon('Ordonnances', 'ordonnance'),
+                    self::item('Comptoir', 'dispensation', 'pharmacie.dispensing.create', 'pharmacie.dispensing.create'),
+                    self::item('Dispensations', 'ordonnance', 'pharmacie.dispensing.index', 'pharmacie.dispensing.view', ['pharmacie.dispensing.*']),
+                    self::soon('Ordonnances du DME', 'ordonnance'),
                 ],
             ],
             [

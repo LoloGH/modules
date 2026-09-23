@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use Keneya\Pharmacie\Http\Controllers\CategoryController;
+use Keneya\Pharmacie\Http\Controllers\DispensingController;
 use Keneya\Pharmacie\Http\Controllers\HomeController;
 use Keneya\Pharmacie\Http\Controllers\LocationController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
@@ -34,6 +35,24 @@ Route::middleware('can:pharmacie.products.view')->group(function (): void {
     Route::get('catalogue/produits/{product}', [ProductController::class, 'show'])->name('catalog.products.show');
     Route::get('catalogue/categories', [CategoryController::class, 'index'])->name('catalog.categories.index');
 });
+
+// Dispensation : le comptoir. Lire ce qui a ete delivre, delivrer, annuler :
+// trois droits distincts.
+Route::middleware('can:pharmacie.dispensing.view')->group(function (): void {
+    Route::get('dispensations', [DispensingController::class, 'index'])->name('dispensing.index');
+    Route::get('dispensations/{dispensation}', [DispensingController::class, 'show'])
+        ->whereNumber('dispensation')->name('dispensing.show');
+    Route::get('dispensations/{dispensation}/bon', [DispensingController::class, 'print'])
+        ->whereNumber('dispensation')->name('dispensing.print');
+});
+
+Route::middleware('can:pharmacie.dispensing.create')->group(function (): void {
+    Route::get('comptoir', [DispensingController::class, 'create'])->name('dispensing.create');
+    Route::post('dispensations', [DispensingController::class, 'store'])->name('dispensing.store');
+});
+
+Route::post('dispensations/{dispensation}/annulation', [DispensingController::class, 'cancel'])
+    ->middleware('can:pharmacie.dispensing.cancel')->whereNumber('dispensation')->name('dispensing.cancel');
 
 // Approvisionnement : fournisseurs, commandes, receptions. La reception
 // est le seul chemin par lequel un lot nait.
