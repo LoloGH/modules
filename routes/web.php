@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use Keneya\FinanceCaisse\Http\Controllers\ActController;
+use Keneya\FinanceCaisse\Http\Controllers\AlertController;
 use Keneya\FinanceCaisse\Http\Controllers\AnalyticCenterController;
 use Keneya\FinanceCaisse\Http\Controllers\AuditController;
 use Keneya\FinanceCaisse\Http\Controllers\CashDeskController;
@@ -152,6 +153,9 @@ Route::middleware('can:finance.reports.view')->group(function (): void {
     Route::get('rapports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('rapports/export', [ReportController::class, 'export'])->name('reports.export');
 });
+
+// Alertes : chacune est déjà filtrée par le droit d'agir dessus.
+Route::get('alertes', [AlertController::class, 'index'])->name('alerts.index');
 
 // Paramètres financiers de l'établissement.
 Route::middleware('can:finance.settings.manage')->group(function (): void {

@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.20.0, paramètres financiers, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.21.0, alertes, paramètres financiers, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,24 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Alertes** (`alertes`, `Services\AlertCenter`, `Support\Alert`) — ce qui
+  attend un geste, avec l'écran où le faire.
+  - **Aucune table de notifications, aucun envoi** : ni courriel, ni SMS, ni
+    dépendance nouvelle. Chaque alerte est un état de la base, relu à
+    l'affichage : elle disparaît d'elle-même quand la situation est réglée,
+    et ne peut donc jamais mentir.
+  - **Adressées** : une alerte n'est calculée que pour qui a le droit d'agir
+    dessus — le caissier ne reçoit pas les clôtures à valider, le contrôle ne
+    reçoit pas le plafond du tiroir d'un autre. Un lien d'alerte ne mène
+    jamais à un 403.
+  - Ce qui est signalé : clôtures à valider (en rouge si elles portent un
+    écart), remises et remboursements à approuver, remboursements à payer,
+    créances échues des patients et des assureurs (délais de l'écran
+    Paramètres), sa propre session ouverte depuis trop longtemps, et son
+    tiroir au-dessus du plafond d'espèces.
+  - **La cloche de l'en-tête** porte le compte, sur toutes les pages, et mène
+    à la liste. Seuils réglables : `alerts.cash_ceiling` (0 : aucun plafond)
+    et `alerts.session_max_hours` (0 : jamais signalée).
 - **Paramètres financiers** (`parametres`, `finance.settings.manage`,
   administrateur ; `finance_settings`, `Services\FinanceSettings`) — ce que
   l'établissement règle depuis l'application plutôt que dans le fichier.

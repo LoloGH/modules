@@ -31,6 +31,7 @@ final class Navigation
                 'section' => '',
                 'items' => [
                     self::item('Tableau de bord', 'dashboard', 'finance.home'),
+                    self::item('Alertes', 'bell', 'finance.alerts.index'),
                     self::item('Caisse', 'caisse', 'finance.cash.index', 'finance.sessions.view', ['finance.cash.*']),
                     self::item('File de caisse', 'horloge', 'finance.queue.index', 'finance.sessions.view', ['finance.queue.*']),
                     self::item('Sessions à valider', 'controle', 'finance.review.index', 'finance.sessions.validate'),

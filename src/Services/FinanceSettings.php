@@ -55,6 +55,22 @@ final class FinanceSettings
                 ],
                 'currency.symbol' => ['label' => 'Symbole monétaire', 'type' => self::TYPE_TEXT, 'help' => 'Affiché après chaque montant.'],
             ],
+            'Alertes' => [
+                'alerts.cash_ceiling' => [
+                    'label' => 'Plafond d\'espèces dans un tiroir',
+                    'type' => self::TYPE_INT,
+                    'min' => 0,
+                    'max' => 100_000_000,
+                    'help' => 'Au-delà, le caissier est invité à faire un dépôt. 0 : aucun plafond.',
+                ],
+                'alerts.session_max_hours' => [
+                    'label' => 'Session ouverte signalée après (heures)',
+                    'type' => self::TYPE_INT,
+                    'min' => 0,
+                    'max' => 168,
+                    'help' => 'Une caisse oubliée ouverte empêche le contrôle de la valider. 0 : jamais signalée.',
+                ],
+            ],
             'Créances' => [
                 'receivables.patient_due_days' => [
                     'label' => 'Délai de paiement des patients (jours)',
@@ -226,7 +242,9 @@ final class FinanceSettings
      */
     private function integer(array $meta, mixed $raw): int
     {
-        $value = (int) $raw;
+        // « 75 000 » se saisit comme un montant : les espaces, y compris
+        // insécables, ne doivent pas le tronquer.
+        $value = (int) preg_replace('/[\s\x{00A0}\x{202F}]+/u', '', (string) $raw);
         $min = $meta['min'] ?? 0;
         $max = $meta['max'] ?? PHP_INT_MAX;
 

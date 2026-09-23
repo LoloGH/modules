@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 return [
 
-    'version' => '0.20.0',
+    'version' => '0.21.0',
 
     /*
     | Établissement exploitant l'application. Mêmes variables d'environnement
@@ -86,6 +86,17 @@ return [
     'receivables' => [
         'patient_due_days' => (int) env('FINANCE_PATIENT_DUE_DAYS', 0),
         'insurer_due_days' => (int) env('FINANCE_INSURER_DUE_DAYS', 30),
+    ],
+
+    /*
+    | Alertes. `cash_ceiling` : au-delà de ce montant en espèces dans un
+    | tiroir, le caissier est invité à faire un dépôt (0 : aucun plafond).
+    | `session_max_hours` : au-delà, une session ouverte est signalée comme
+    | oubliée (0 : jamais).
+    */
+    'alerts' => [
+        'cash_ceiling' => (int) env('FINANCE_CASH_CEILING', 0),
+        'session_max_hours' => (int) env('FINANCE_SESSION_MAX_HOURS', 12),
     ],
 
     /*
