@@ -47,6 +47,7 @@ final class AnalyticCenterController extends FinanceController
             'name' => (string) Text::clean($request->validated('name')),
             'parent_id' => $parentId === null ? null : (int) $parentId,
             'kind' => (string) $request->validated('kind'),
+            'account_code' => Text::clean($request->validated('account_code')),
             'is_active' => true,
         ]);
 
@@ -86,6 +87,7 @@ final class AnalyticCenterController extends FinanceController
                 'name' => (string) Text::clean($request->validated('name')),
                 'parent_id' => $parentId,
                 'kind' => $kind,
+                'account_code' => Text::clean($request->validated('account_code')),
             ]);
 
             $auditor->record(

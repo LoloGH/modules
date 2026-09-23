@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 return [
 
-    'version' => '0.21.0',
+    'version' => '0.22.0',
 
     /*
     | Établissement exploitant l'application. Mêmes variables d'environnement
@@ -86,6 +86,50 @@ return [
     'receivables' => [
         'patient_due_days' => (int) env('FINANCE_PATIENT_DUE_DAYS', 0),
         'insurer_due_days' => (int) env('FINANCE_INSURER_DUE_DAYS', 30),
+    ],
+
+    /*
+    | Comptabilité : les comptes utilisés par l'export comptable. Plan
+    | SYSCOHADA par défaut ; l'établissement les ajuste dans l'écran
+    | « Paramètres financiers », et chaque centre analytique peut porter son
+    | propre compte de produits.
+    */
+    'accounting' => [
+        'accounts' => [
+            'cash' => '571',            // Caisse
+            'bank' => '521',            // Banque
+            'patients' => '4111',       // Clients — patients
+            'insurers' => '4112',       // Clients — organismes payeurs
+            'deposits' => '4191',       // Avances reçues des clients
+            'revenue' => '706',         // Produits des services
+            'discounts' => '7091',      // Remises accordées
+            'expenses' => '605',        // Charges (défaut)
+        ],
+
+        // Le compte de trésorerie, par nature de moyen de paiement.
+        'method_accounts' => [
+            'cash' => '571',
+            'mobile_money' => '5511',
+            'card' => '5512',
+            'transfer' => '521',
+            'cheque' => '5121',
+            'electronic' => '5512',
+            'online' => '5512',
+            'patient_account' => '4191',
+            'insurance' => '4112',
+        ],
+
+        // Le compte de charge, par catégorie de dépense.
+        'expense_accounts' => [
+            'fournitures' => '605',
+            'medicaments' => '601',
+            'carburant' => '605',
+            'maintenance' => '624',
+            'personnel' => '661',
+            'services' => '605',
+            'remboursement' => '4191',
+            'divers' => '658',
+        ],
     ],
 
     /*

@@ -24,6 +24,7 @@ final class AnalyticCenterUpdateRequest extends FinanceRequest
             'name' => ['required', 'string', 'max:191'],
             'parent_id' => ['nullable', 'integer', 'exists:finance_analytic_centers,id'],
             'kind' => ['required', Rule::in(array_keys(AnalyticCenter::kindLabels()))],
+            'account_code' => ['nullable', 'string', 'max:16'],
         ];
     }
 }

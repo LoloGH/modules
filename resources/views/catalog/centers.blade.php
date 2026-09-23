@@ -31,6 +31,10 @@
                             @endforeach
                         </select>
                     </label>
+                    <label>Compte de produits
+                        <input name="account_code" value="{{ old('account_code') }}" placeholder="706">
+                        <span class="help">Pour l'export comptable. Vide : le compte par défaut.</span>
+                    </label>
                 </div>
                 <div class="actions">
                     <button type="submit"><x-finance::icon name="plus" /> Créer le centre</button>
@@ -68,6 +72,9 @@
                                         @endforeach
                                     </select>
                                 </label>
+                                <label>Compte de produits
+                                    <input name="account_code" value="{{ $center->account_code }}" placeholder="706">
+                                </label>
                             </div>
                             <div class="actions">
                                 <button type="submit" class="ghost sm"><x-finance::icon name="check" /> Enregistrer</button>
@@ -90,7 +97,7 @@
             <div class="tw">
                 <table class="stack">
                     <thead>
-                    <tr><th>Nom</th><th>Code</th><th>Type</th><th class="num">Actes</th><th>État</th>@can('finance.catalog.manage')<th></th>@endcan</tr>
+                    <tr><th>Nom</th><th>Code</th><th>Type</th><th>Compte</th><th class="num">Actes</th><th>État</th>@can('finance.catalog.manage')<th></th>@endcan</tr>
                     </thead>
                     <tbody>
                     @foreach ($tree as $row)
@@ -104,6 +111,7 @@
                             </td>
                             <td data-l="Code" class="mono">{{ $center->code }}</td>
                             <td data-l="Type">{{ $center->kindLabel() }}</td>
+                            <td data-l="Compte" class="mono">{{ $center->account_code ?? '—' }}</td>
                             <td data-l="Actes" class="num">{{ $center->acts_count }}</td>
                             <td data-l="État">
                                 <span class="badge {{ $center->is_active ? 'ok' : 'off' }}">{{ $center->is_active ? 'Actif' : 'Désactivé' }}</span>

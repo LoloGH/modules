@@ -132,6 +132,9 @@ final class Rbac
             'Créances' => [
                 'finance.receivables.view' => 'Consulter les créances',
             ],
+            'Comptabilité' => [
+                'finance.accounting.export' => 'Exporter les écritures comptables',
+            ],
             'Pilotage' => [
                 'finance.dashboard.view' => 'Consulter le tableau de bord financier',
                 'finance.reports.view' => 'Consulter les rapports financiers',
@@ -221,6 +224,7 @@ final class Rbac
                 'finance.accounts.view',
                 'finance.receivables.view',
                 'finance.reports.view',
+                'finance.accounting.export',
                 'finance.audit.view',
             ],
 

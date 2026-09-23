@@ -44,6 +44,7 @@ final class Navigation
                     self::item('Remises et remboursements', 'avoir', 'finance.credits.index', 'finance.credits.view', ['finance.credits.*']),
                     self::item('Créances', 'creance', 'finance.receivables.index', 'finance.receivables.view'),
                     self::item('Rapports', 'rapport', 'finance.reports.index', 'finance.reports.view'),
+                    self::item('Exports comptables', 'facture', 'finance.accounting.index', 'finance.accounting.export', ['finance.accounting.*']),
                     self::item('Journal d\'audit', 'document', 'finance.audit.index', 'finance.audit.view', ['finance.audit.*']),
                 ],
             ],

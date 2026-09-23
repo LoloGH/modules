@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.21.0, alertes, paramètres financiers, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.22.0, exports comptables, alertes, paramètres financiers, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -146,6 +146,29 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     (onglet « Assurances et aides sociales », nature), Rapports (prises en
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
+- **Exports comptables** (`comptabilite`, `finance.accounting.export`,
+  comptable ; `Services\AccountingExport`, `Support\AccountingEntry`) — les
+  écritures du module en **partie double**, pour que le comptable les
+  reprenne dans son logiciel. Le module ne tient pas la comptabilité : il
+  traduit ce qu'il a enregistré.
+  - Ce que chaque fait produit : facture émise (clients au débit, produits au
+    crédit), encaissement (trésorerie au débit ; le client s'il solde une
+    facture, sinon les produits), avance (avances reçues au crédit),
+    décaissement (charge au débit), règlement d'assureur (trésorerie contre
+    client organisme), rejet (la créance passe de l'organisme au patient),
+    remise approuvée (remises accordées au débit).
+  - **Les annulations ne partent jamais en comptabilité** : une écriture
+    annulée n'a jamais existé pour la caisse.
+  - **Les comptes ne sont pas codés en dur** : plan SYSCOHADA par défaut,
+    ajustable dans « Paramètres financiers » (caisse, banque, clients
+    patients et organismes, avances, produits, remises, charges), par nature
+    de moyen de paiement et par catégorie de dépense. **Chaque centre
+    analytique peut porter son propre compte de produits**
+    (`account_code`) ; sinon le compte par défaut s'applique.
+  - L'écran montre la **balance**, le journal (aperçu) et le **contrôle
+    d'équilibre** avant tout téléchargement : un export qui ne s'équilibre
+    pas se voit ici plutôt que chez le comptable. Deux CSV : le journal
+    (une ligne par écriture, avec sa pièce et son centre) et la balance.
 - **Alertes** (`alertes`, `Services\AlertCenter`, `Support\Alert`) — ce qui
   attend un geste, avec l'écran où le faire.
   - **Aucune table de notifications, aucun envoi** : ni courriel, ni SMS, ni

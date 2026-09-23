@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Keneya\FinanceCaisse\Http\Controllers\AccountingController;
 use Keneya\FinanceCaisse\Http\Controllers\ActController;
 use Keneya\FinanceCaisse\Http\Controllers\AlertController;
 use Keneya\FinanceCaisse\Http\Controllers\AnalyticCenterController;
@@ -161,6 +162,13 @@ Route::get('alertes', [AlertController::class, 'index'])->name('alerts.index');
 Route::middleware('can:finance.settings.manage')->group(function (): void {
     Route::get('parametres', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('parametres', [SettingsController::class, 'update'])->name('settings.update');
+});
+
+// Exports comptables : les écritures du module, en partie double.
+Route::middleware('can:finance.accounting.export')->group(function (): void {
+    Route::get('comptabilite', [AccountingController::class, 'index'])->name('accounting.index');
+    Route::get('comptabilite/journal', [AccountingController::class, 'journal'])->name('accounting.journal');
+    Route::get('comptabilite/balance', [AccountingController::class, 'balance'])->name('accounting.balance');
 });
 
 // Journal d'audit : lecture seule, et exportable.
