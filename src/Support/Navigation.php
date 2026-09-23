@@ -40,7 +40,9 @@ final class Navigation
                 'items' => [
                     self::item('Produits', 'produit', 'pharmacie.catalog.products.index', 'pharmacie.products.view', ['pharmacie.catalog.products.*']),
                     self::item('Catégories', 'inventaire', 'pharmacie.catalog.categories.index', 'pharmacie.products.view', ['pharmacie.catalog.categories.*']),
-                    self::soon('Lots et péremptions', 'lot'),
+                    self::item('Stock', 'lot', 'pharmacie.stock.index', 'pharmacie.stock.view', ['pharmacie.stock.index', 'pharmacie.stock.products.*', 'pharmacie.stock.batches.*']),
+                    self::item('Péremptions', 'alert', 'pharmacie.stock.expiring', 'pharmacie.stock.view'),
+                    self::item('Emplacements', 'reception', 'pharmacie.stock.locations.index', 'pharmacie.stock.view', ['pharmacie.stock.locations.*']),
                     self::soon('Réceptions', 'reception'),
                     self::soon('Inventaires', 'inventaire'),
                 ],

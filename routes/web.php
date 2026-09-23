@@ -5,8 +5,10 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Route;
 use Keneya\Pharmacie\Http\Controllers\CategoryController;
 use Keneya\Pharmacie\Http\Controllers\HomeController;
+use Keneya\Pharmacie\Http\Controllers\LocationController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
 use Keneya\Pharmacie\Http\Controllers\QueueController;
+use Keneya\Pharmacie\Http\Controllers\StockController;
 
 /*
 | Les droits se contrôlent ici, route par route (middleware `can:`), et les
@@ -30,6 +32,23 @@ Route::middleware('can:pharmacie.products.view')->group(function (): void {
     Route::get('catalogue/produits', [ProductController::class, 'index'])->name('catalog.products.index');
     Route::get('catalogue/produits/{product}', [ProductController::class, 'show'])->name('catalog.products.show');
     Route::get('catalogue/categories', [CategoryController::class, 'index'])->name('catalog.categories.index');
+});
+
+// Stock : lots, emplacements, peremptions et grand livre des mouvements.
+Route::middleware('can:pharmacie.stock.view')->group(function (): void {
+    Route::get('stock', [StockController::class, 'index'])->name('stock.index');
+    Route::get('stock/peremptions', [StockController::class, 'expiring'])->name('stock.expiring');
+    Route::get('stock/emplacements', [LocationController::class, 'index'])->name('stock.locations.index');
+    Route::get('stock/produits/{product}', [StockController::class, 'product'])->name('stock.products.show');
+    Route::get('stock/lots/{batch}', [StockController::class, 'batch'])->name('stock.batches.show');
+});
+
+// Corriger, bloquer, ranger : un droit distinct de celui de lire.
+Route::middleware('can:pharmacie.stock.adjust')->group(function (): void {
+    Route::post('stock/ajustements', [StockController::class, 'adjust'])->name('stock.adjust');
+    Route::post('stock/lots/{batch}/blocage', [StockController::class, 'toggleBatch'])->name('stock.batches.toggle');
+    Route::post('stock/emplacements', [LocationController::class, 'store'])->name('stock.locations.store');
+    Route::post('stock/emplacements/{location}/basculer', [LocationController::class, 'toggle'])->name('stock.locations.toggle');
 });
 
 Route::middleware('can:pharmacie.products.manage')->group(function (): void {
