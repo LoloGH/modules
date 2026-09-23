@@ -26,6 +26,23 @@ class WorkbenchServiceProvider extends ServiceProvider
     {
         $this->app['config']->set('auth.providers.users.model', DemoUser::class);
 
+        // La base de demonstration, au meme endroit pour la console et pour
+        // le serveur web : le squelette de Testbench se purge a chaque
+        // installation, et la commande et le serveur ne lisaient alors pas
+        // le meme fichier.
+        $database = dirname(__DIR__, 3).'/database/demo.sqlite';
+
+        if (! is_dir(dirname($database))) {
+            mkdir(dirname($database), 0777, true);
+        }
+
+        if (! is_file($database)) {
+            touch($database);
+        }
+
+        $this->app['config']->set('database.default', 'sqlite');
+        $this->app['config']->set('database.connections.sqlite.database', $database);
+
         // La file d'attente de l'hôte de test : quelques patients en dur,
         // pour que le comptoir soit navigable avant l'intégration.
         $this->app->singleton(PharmacyQueueProvider::class, DemoQueue::class);

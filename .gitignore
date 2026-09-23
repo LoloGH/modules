@@ -7,3 +7,6 @@
 .vscode
 
 PROMPT-*.md
+
+# Base de demonstration du mode autonome
+/database/*.sqlite

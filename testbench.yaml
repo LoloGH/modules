@@ -17,7 +17,9 @@ migrations: false
 
 workbench:
   start: '/dev'
-  install: true
+  # `install: false` : le squelette est deja installe par composer, et le
+  # reinstaller a chaque `serve` remettait a zero la base de demonstration.
+  install: false
   health: false
   discovers:
     web: false
@@ -35,6 +37,8 @@ env:
   - APP_LOCALE=fr
   - APP_FALLBACK_LOCALE=fr
   - APP_FAKER_LOCALE=fr_FR
+  # La base de demonstration est fixee par WorkbenchServiceProvider :
+  # database/demo.sqlite, hors du squelette de Testbench qui se purge.
   - DB_CONNECTION=sqlite
   - SESSION_DRIVER=file
   - QUEUE_CONNECTION=sync
