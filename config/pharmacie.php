@@ -25,6 +25,9 @@ return [
     | que les modules DME et Finance : un seul réglage pour tous.
     */
     'facility' => [
+        // L'etablissement regarde par defaut. Multi-etablissement : l'hote
+        // designera le sien par Support\Facility::use().
+        'id' => (int) env('PHARMACIE_FACILITY_ID', 1),
         'name' => env('KENEYA_FACILITY_NAME', 'Centre Hospitalier Keneya'),
         'address' => env('KENEYA_FACILITY_ADDRESS', 'Bamako, Mali'),
         'phone' => env('KENEYA_FACILITY_PHONE', '+223 20 00 00 00'),

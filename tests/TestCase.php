@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\PharmacieServiceProvider;
+use Keneya\Pharmacie\Support\Facility;
 use Keneya\Pharmacie\Tests\Support\TestUser;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use ReflectionClass;
@@ -88,6 +89,7 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         Pharmacie::flushState();
+        Facility::flushState();
 
         $this->createTables();
 

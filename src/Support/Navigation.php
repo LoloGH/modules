@@ -38,7 +38,8 @@ final class Navigation
             [
                 'section' => 'Stock',
                 'items' => [
-                    self::soon('Produits', 'produit'),
+                    self::item('Produits', 'produit', 'pharmacie.catalog.products.index', 'pharmacie.products.view', ['pharmacie.catalog.products.*']),
+                    self::item('Catégories', 'inventaire', 'pharmacie.catalog.categories.index', 'pharmacie.products.view', ['pharmacie.catalog.categories.*']),
                     self::soon('Lots et péremptions', 'lot'),
                     self::soon('Réceptions', 'reception'),
                     self::soon('Inventaires', 'inventaire'),
