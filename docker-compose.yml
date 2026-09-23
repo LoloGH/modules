@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    working_dir: /app
+    # Prépare la base de démonstration puis sert le module : `docker compose up`
+    # suffit à ouvrir http://127.0.0.1:8001/dev
+    command: composer serve:docker
+    volumes:
+      - .:/app
+      # `vendor` hors du montage Windows : des dizaines de milliers de
+      # fichiers y coûteraient ~8 ms chacun. Après un changement de
+      # dépendances : docker compose run --rm app composer install
+      - vendor:/app/vendor
+      - opcache:/tmp/opcache
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/99-keneya.ini:ro
+    ports:
+      # 8001 : Keneya Finance occupe déjà 8000 sur le poste de développement.
+      - "8001:8000"
+
+volumes:
+  vendor:
+  opcache:

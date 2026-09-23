@@ -1,0 +1,43 @@
+### Application Laravel hôte minimale, fournie par Orchestra Testbench.
+###
+### Elle n'existe que pour vérifier que le module se monte et se navigue
+### sans Keneya Workflow :
+###
+###   docker compose run --rm app composer install
+###   docker compose up            # http://127.0.0.1:8001/dev
+###
+### L'hôte de démonstration se comporte comme un vrai hôte : il fournit ses
+### utilisateurs, ses rôles, sa page de connexion et sa file d'attente (voir
+### workbench/). Le mode autonome du module y est donc désactivé.
+
+providers:
+  - Workbench\App\Providers\WorkbenchServiceProvider
+
+migrations: false
+
+workbench:
+  start: '/dev'
+  install: true
+  health: false
+  discovers:
+    web: false
+    api: false
+    commands: false
+    views: false
+  build: []
+  assets: []
+  sync: []
+
+env:
+  - APP_NAME="Keneya-Pharmacie (hôte de test)"
+  - APP_ENV=local
+  - APP_DEBUG=true
+  - APP_LOCALE=fr
+  - APP_FALLBACK_LOCALE=fr
+  - APP_FAKER_LOCALE=fr_FR
+  - DB_CONNECTION=sqlite
+  - SESSION_DRIVER=file
+  - QUEUE_CONNECTION=sync
+  - CACHE_STORE=file
+  - MAIL_MAILER=log
+  - PHARMACIE_STANDALONE_DEV=false
