@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use Keneya\Pharmacie\Http\Controllers\AlertController;
 use Keneya\Pharmacie\Http\Controllers\CategoryController;
 use Keneya\Pharmacie\Http\Controllers\DispensingController;
 use Keneya\Pharmacie\Http\Controllers\HomeController;
@@ -36,6 +37,9 @@ Route::middleware('can:pharmacie.products.view')->group(function (): void {
     Route::get('catalogue/produits/{product}', [ProductController::class, 'show'])->name('catalog.products.show');
     Route::get('catalogue/categories', [CategoryController::class, 'index'])->name('catalog.categories.index');
 });
+
+// Alertes : chacune est deja filtree par le droit d'agir dessus.
+Route::get('alertes', [AlertController::class, 'index'])->name('alerts.index');
 
 // Ordonnances du dossier medical : on les lit, on ne les duplique pas.
 Route::middleware('can:pharmacie.dispensing.view')->group(function (): void {

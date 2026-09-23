@@ -30,6 +30,7 @@ final class Navigation
                 'section' => '',
                 'items' => [
                     self::item('Tableau de bord', 'dashboard', 'pharmacie.home'),
+                    self::item('Alertes', 'bell', 'pharmacie.alerts.index'),
                     self::item('File d\'attente', 'horloge', 'pharmacie.queue.index', 'pharmacie.queue.view', ['pharmacie.queue.*']),
                     self::item('Comptoir', 'dispensation', 'pharmacie.dispensing.create', 'pharmacie.dispensing.create'),
                     self::item('Dispensations', 'dispensation', 'pharmacie.dispensing.index', 'pharmacie.dispensing.view', ['pharmacie.dispensing.*']),
