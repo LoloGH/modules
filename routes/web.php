@@ -7,6 +7,7 @@ use Keneya\Pharmacie\Http\Controllers\CategoryController;
 use Keneya\Pharmacie\Http\Controllers\DispensingController;
 use Keneya\Pharmacie\Http\Controllers\HomeController;
 use Keneya\Pharmacie\Http\Controllers\LocationController;
+use Keneya\Pharmacie\Http\Controllers\PrescriptionController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
 use Keneya\Pharmacie\Http\Controllers\QueueController;
 use Keneya\Pharmacie\Http\Controllers\StockController;
@@ -34,6 +35,12 @@ Route::middleware('can:pharmacie.products.view')->group(function (): void {
     Route::get('catalogue/produits', [ProductController::class, 'index'])->name('catalog.products.index');
     Route::get('catalogue/produits/{product}', [ProductController::class, 'show'])->name('catalog.products.show');
     Route::get('catalogue/categories', [CategoryController::class, 'index'])->name('catalog.categories.index');
+});
+
+// Ordonnances du dossier medical : on les lit, on ne les duplique pas.
+Route::middleware('can:pharmacie.dispensing.view')->group(function (): void {
+    Route::get('ordonnances', [PrescriptionController::class, 'index'])->name('prescriptions.index');
+    Route::get('ordonnances/{reference}', [PrescriptionController::class, 'show'])->name('prescriptions.show');
 });
 
 // Dispensation : le comptoir. Lire ce qui a ete delivre, delivrer, annuler :

@@ -15,6 +15,7 @@ use Keneya\Pharmacie\Models\DispensationItem;
 use Keneya\Pharmacie\Models\Location;
 use Keneya\Pharmacie\Models\Product;
 use Keneya\Pharmacie\Models\StockMovement;
+use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Services\NumberGenerator;
 use Keneya\Pharmacie\Services\StockLedger;
 use Keneya\Pharmacie\Services\StockPicker;
@@ -22,6 +23,7 @@ use Keneya\Pharmacie\Support\Actor;
 use Keneya\Pharmacie\Support\Facility;
 use Keneya\Pharmacie\Support\Money;
 use Keneya\Pharmacie\Support\Text;
+use Throwable;
 
 /**
  * Délivrer : le geste central de la pharmacie.
@@ -120,6 +122,31 @@ final class DispenseProducts
 
             return $dispensation->refresh();
         });
+    }
+
+    /**
+     * Dit au dossier médical ce qui a été servi sur son ordonnance.
+     *
+     * Appelé APRÈS la transaction : le stock a bougé, c'est un fait. Si le
+     * dossier médical est injoignable, la dispensation reste écrite et la
+     * pharmacie continue de tourner — on ne perd pas une sortie de stock
+     * parce qu'un autre module ne répond pas.
+     */
+    public function reportToPrescriber(Dispensation $dispensation): void
+    {
+        if ($dispensation->prescription_ref === null) {
+            return;
+        }
+
+        try {
+            Pharmacie::prescriptionSink()->dispensed(
+                (string) $dispensation->prescription_ref,
+                $dispensation,
+                (int) $dispensation->outstanding === 0,
+            );
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /**

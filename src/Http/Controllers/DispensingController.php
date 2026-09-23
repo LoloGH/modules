@@ -100,14 +100,28 @@ final class DispensingController extends PharmacieController
             'prescription_ref' => ['nullable', 'string', 'max:64'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'lines' => ['required', 'array', 'min:1'],
-            'lines.*.product_id' => ['required', 'integer', 'exists:pharmacie_products,id'],
-            'lines.*.quantity' => ['required', 'integer', 'min:1'],
+            'lines.*.product_id' => ['nullable', 'integer', 'exists:pharmacie_products,id'],
+            'lines.*.quantity' => ['nullable', 'integer', 'min:0'],
             'lines.*.prescribed_quantity' => ['nullable', 'integer', 'min:0'],
             'lines.*.posology' => ['nullable', 'string', 'max:191'],
             'lines.*.batch_id' => ['nullable', 'integer', 'exists:pharmacie_batches,id'],
             'lines.*.override_reason' => ['nullable', 'string', 'max:500'],
             'lines.*.comment' => ['nullable', 'string', 'max:500'],
         ]);
+
+        // Les lignes sans produit ou sans quantite ne sont pas delivrees :
+        // sur une ordonnance, elles restent simplement a servir.
+        $lines = array_values(array_filter(
+            $data['lines'],
+            static fn (array $line): bool => ($line['product_id'] ?? null) !== null && (int) ($line['quantity'] ?? 0) > 0,
+        ));
+
+        if ($lines === []) {
+            return back()->withInput()->with(
+                'pharmacie_error',
+                'Aucune ligne a delivrer : choisissez au moins un produit et une quantite.',
+            );
+        }
 
         $dispensation = $action->handle(
             Location::query()->findOrFail((int) $data['location_id']),
@@ -119,7 +133,7 @@ final class DispensingController extends PharmacieController
                 'batch_id' => isset($line['batch_id']) && $line['batch_id'] !== null ? (int) $line['batch_id'] : null,
                 'override_reason' => $line['override_reason'] ?? null,
                 'comment' => $line['comment'] ?? null,
-            ], $data['lines'])),
+            ], $lines)),
             $this->user($request),
             [
                 'patient_id' => $data['patient_id'] ?? null,
@@ -134,6 +148,9 @@ final class DispensingController extends PharmacieController
                 'notes' => $data['notes'] ?? null,
             ],
         );
+
+        // Le dossier medical apprend ce qui a ete servi sur son ordonnance.
+        $action->reportToPrescriber($dispensation);
 
         return redirect()->route('pharmacie.dispensing.show', $dispensation)->with(
             'pharmacie_status',

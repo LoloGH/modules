@@ -8,6 +8,8 @@ use Closure;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\App;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
+use Keneya\Pharmacie\Contracts\PrescriptionProvider;
+use Keneya\Pharmacie\Contracts\PrescriptionSink;
 use Keneya\Pharmacie\Contracts\SaleSink;
 
 /**
@@ -64,6 +66,22 @@ final class Pharmacie
     public static function queue(): PharmacyQueueProvider
     {
         return App::make(PharmacyQueueProvider::class);
+    }
+
+    /**
+     * Les ordonnances à servir, fournies par l'hôte (aucune par défaut).
+     */
+    public static function prescriptions(): PrescriptionProvider
+    {
+        return App::make(PrescriptionProvider::class);
+    }
+
+    /**
+     * Ce que la pharmacie rend au dossier médical après avoir servi.
+     */
+    public static function prescriptionSink(): PrescriptionSink
+    {
+        return App::make(PrescriptionSink::class);
     }
 
     /**

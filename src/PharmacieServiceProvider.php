@@ -13,8 +13,11 @@ use Keneya\Pharmacie\Access\PharmacieAccessGate;
 use Keneya\Pharmacie\Audit\Auditor;
 use Keneya\Pharmacie\Console\Commands\SyncPermissions;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
+use Keneya\Pharmacie\Contracts\PrescriptionProvider;
+use Keneya\Pharmacie\Contracts\PrescriptionSink;
 use Keneya\Pharmacie\Contracts\SaleSink;
 use Keneya\Pharmacie\Http\Middleware\EnsureHostGrantsAccess;
+use Keneya\Pharmacie\Prescriptions\NoPrescriptions;
 use Keneya\Pharmacie\Queue\NoPharmacyQueue;
 use Keneya\Pharmacie\Sales\NoSaleSink;
 use Keneya\Pharmacie\Standalone\StandaloneMode;
@@ -47,6 +50,11 @@ class PharmacieServiceProvider extends ServiceProvider
         // jamais écraser celle qu'un hôte aurait enregistrée avant le module.
         $this->app->singletonIf(PharmacyQueueProvider::class, NoPharmacyQueue::class);
         $this->app->singletonIf(SaleSink::class, NoSaleSink::class);
+
+        // Les ordonnances : lues chez l'hôte (le DME), et le retour de ce qui
+        // a été servi. Sans hôte, aucune ordonnance et rien à rendre.
+        $this->app->singletonIf(PrescriptionProvider::class, NoPrescriptions::class);
+        $this->app->singletonIf(PrescriptionSink::class, NoPrescriptions::class);
     }
 
     public function boot(): void
