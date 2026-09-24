@@ -20,6 +20,7 @@ use Keneya\Pharmacie\Services\NumberGenerator;
 use Keneya\Pharmacie\Services\StockLedger;
 use Keneya\Pharmacie\Services\StockPicker;
 use Keneya\Pharmacie\Support\Actor;
+use Keneya\Pharmacie\Support\Controlled;
 use Keneya\Pharmacie\Support\Facility;
 use Keneya\Pharmacie\Support\Money;
 use Keneya\Pharmacie\Support\Text;
@@ -234,6 +235,15 @@ final class DispenseProducts
             throw new PharmacieRuleViolation("Ligne {$position} ({$product->name}) : la quantité doit être supérieure à zéro.");
         }
 
+        // Un produit sous surveillance exige davantage : une habilitation,
+        // une ordonnance, un patient nommé. Ce qu'il exige exactement vient
+        // de la configuration, car la règle change d'un pays à l'autre.
+        Controlled::assertDispensable($product, [
+            'patient_id' => $dispensation->patient_id,
+            'patient_name' => $dispensation->patient_name,
+            'prescription_ref' => $dispensation->prescription_ref,
+        ], $dispenser, $position);
+
         $substitutedFor = isset($line['substituted_for_id']) && $line['substituted_for_id'] !== null
             ? Product::query()->find((int) $line['substituted_for_id'])
             : null;
@@ -290,6 +300,31 @@ final class DispenseProducts
         $amount = $served * $unitPrice;
 
         $item->update(['quantity' => $served, 'amount' => $amount]);
+
+        // Un produit sous surveillance laisse une trace nominative, en plus
+        // du mouvement de stock : c'est ce qui rend le registre opposable.
+        if ($served > 0 && Controlled::applies($product)) {
+            $this->auditor->record(
+                'controlled_dispensed',
+                $dispensation,
+                sprintf(
+                    'Produit sous surveillance délivré : %d %s de %s à %s (%s)',
+                    $served,
+                    $product->unit ?? 'unité',
+                    $product->label(),
+                    $dispensation->patient_name ?? $dispensation->patient_id ?? 'patient non désigné',
+                    $dispensation->prescription_ref ?? 'sans ordonnance',
+                ),
+                [],
+                [
+                    'product' => $product->code,
+                    'quantity' => $served,
+                    'patient_id' => $dispensation->patient_id,
+                    'prescription' => $dispensation->prescription_ref,
+                ],
+                $dispenser,
+            );
+        }
 
         return [
             'amount' => $amount,

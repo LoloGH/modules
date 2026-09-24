@@ -8,10 +8,12 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Keneya\Pharmacie\Models\AdverseEvent;
 use Keneya\Pharmacie\Models\Batch;
 use Keneya\Pharmacie\Models\Dispensation;
 use Keneya\Pharmacie\Models\Product;
 use Keneya\Pharmacie\Models\PurchaseOrder;
+use Keneya\Pharmacie\Models\Recall;
 use Keneya\Pharmacie\Models\Stock;
 use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Support\Alert;
@@ -51,6 +53,8 @@ final class AlertCenter
             $can('pharmacie.dispensing.view') ? $this->shortfalls() : [],
             $can('pharmacie.dispensing.create') ? $this->awaitingBilling() : [],
             $can('pharmacie.queue.view') ? $this->queue() : [],
+            $can('pharmacie.vigilance.view') ? $this->recalls() : [],
+            $can('pharmacie.vigilance.view') ? $this->adverseEvents() : [],
         );
 
         usort($alerts, static fn (Alert $a, Alert $b): int => $a->weight() <=> $b->weight());
@@ -191,6 +195,65 @@ final class AlertCenter
             'Ils ne peuvent pas être délivrés tant que la décision n\'est pas levée.',
             route('pharmacie.stock.index'),
             'Voir le stock',
+        )];
+    }
+
+    /**
+     * Un rappel en cours : le lot est bloqué, mais les patients servis ne
+     * sont pas encore tous joints. C'est l'alerte la plus urgente du module.
+     *
+     * @return list<Alert>
+     */
+    private function recalls(): array
+    {
+        $recalls = Recall::query()->ofFacility()->where('status', Recall::STATUS_OPEN)->with('patients')->get();
+
+        if ($recalls->isEmpty()) {
+            return [];
+        }
+
+        $toContact = $recalls->sum(
+            fn (Recall $recall): int => $recall->reachesPatients() ? $recall->remainingToContact() : 0,
+        );
+
+        return [new Alert(
+            'recalls_open',
+            $toContact > 0 ? Alert::LEVEL_DANGER : Alert::LEVEL_WARN,
+            sprintf('%d rappel(s) de lot en cours', $recalls->count()),
+            $toContact > 0
+                ? sprintf('%d patient(s) ayant reçu un lot rappelé restent à joindre.', $toContact)
+                : 'Les patients concernés ont été joints : le rappel peut être clos.',
+            route('pharmacie.vigilance.recalls.index'),
+            'Suivre les rappels',
+        )];
+    }
+
+    /**
+     * Les signalements d'effet indésirable qui attendent encore une suite.
+     *
+     * @return list<Alert>
+     */
+    private function adverseEvents(): array
+    {
+        $events = AdverseEvent::query()->ofFacility()
+            ->whereNot('status', AdverseEvent::STATUS_CLOSED)
+            ->get();
+
+        if ($events->isEmpty()) {
+            return [];
+        }
+
+        $serious = $events->filter(fn (AdverseEvent $event): bool => $event->isSerious());
+
+        return [new Alert(
+            'adverse_events_open',
+            $serious->isEmpty() ? Alert::LEVEL_WARN : Alert::LEVEL_DANGER,
+            sprintf("%d signalement(s) d'effet indésirable sans conclusion", $events->count()),
+            $serious->isEmpty()
+                ? 'À transmettre ou à clore.'
+                : sprintf('%d cas grave(s) : à transmettre sans attendre.', $serious->count()),
+            route('pharmacie.vigilance.events.index'),
+            'Voir les signalements',
         )];
     }
 

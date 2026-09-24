@@ -15,6 +15,7 @@ use Keneya\Pharmacie\Http\Controllers\QueueController;
 use Keneya\Pharmacie\Http\Controllers\StockController;
 use Keneya\Pharmacie\Http\Controllers\SupplyController;
 use Keneya\Pharmacie\Http\Controllers\TransferController;
+use Keneya\Pharmacie\Http\Controllers\VigilanceController;
 
 /*
 | Les droits se contrôlent ici, route par route (middleware `can:`), et les
@@ -132,6 +133,28 @@ Route::middleware('can:pharmacie.stock.adjust')->group(function (): void {
     Route::post('transferts/{transfer}/decision', [TransferController::class, 'decide'])->name('transfers.decide');
     Route::post('transferts/{transfer}/envoi', [TransferController::class, 'send'])->name('transfers.send');
     Route::post('transferts/{transfer}/reception', [TransferController::class, 'receive'])->name('transfers.receive');
+});
+
+// Surveillance : registre des produits sous controle, rappels de lots,
+// pharmacovigilance. Consulter, signaler et decider d'un rappel sont trois
+// droits distincts.
+Route::middleware('can:pharmacie.vigilance.view')->group(function (): void {
+    Route::get('surveillance/registre', [VigilanceController::class, 'register'])->name('vigilance.register');
+    Route::get('surveillance/rappels', [VigilanceController::class, 'recalls'])->name('vigilance.recalls.index');
+    Route::get('surveillance/rappels/{recall}', [VigilanceController::class, 'recall'])->name('vigilance.recalls.show');
+    Route::get('surveillance/signalements', [VigilanceController::class, 'events'])->name('vigilance.events.index');
+    Route::get('surveillance/signalements/{event}', [VigilanceController::class, 'event'])->name('vigilance.events.show');
+});
+
+Route::post('surveillance/signalements', [VigilanceController::class, 'storeEvent'])
+    ->middleware('can:pharmacie.vigilance.report')->name('vigilance.events.store');
+
+Route::middleware('can:pharmacie.vigilance.manage')->group(function (): void {
+    Route::post('surveillance/rappels', [VigilanceController::class, 'openRecall'])->name('vigilance.recalls.store');
+    Route::post('surveillance/rappels/patients/{line}', [VigilanceController::class, 'contactPatient'])->name('vigilance.recalls.contact');
+    Route::post('surveillance/rappels/{recall}/cloture', [VigilanceController::class, 'closeRecall'])->name('vigilance.recalls.close');
+    Route::post('surveillance/signalements/{event}/transmission', [VigilanceController::class, 'transmitEvent'])->name('vigilance.events.transmit');
+    Route::post('surveillance/signalements/{event}/cloture', [VigilanceController::class, 'closeEvent'])->name('vigilance.events.close');
 });
 
 // Corriger, bloquer, ranger : un droit distinct de celui de lire.

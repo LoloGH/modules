@@ -58,7 +58,25 @@ return [
             'transfer' => 'TRF',
             'inventory' => 'INV',
             'loss' => 'PER',
+            'recall' => 'RAP',
+            'adverse_event' => 'EIV',
         ],
+    ],
+
+    /*
+    | Contrôle renforcé : ce qu'un produit sous surveillance (stupéfiant,
+    | psychotrope, produit sous contrôle) exige de plus au moment d'être
+    | délivré. Le drapeau `is_controlled` du produit décide si ces règles
+    | s'appliquent ; ces réglages disent ce qu'elles exigent.
+    |
+    | Rien n'est figé dans le code : la réglementation n'est pas la même d'un
+    | pays à l'autre, et elle change.
+    */
+    'controlled' => [
+        // La capacité exigée pour servir un tel produit. Vide : aucune.
+        'ability' => env('PHARMACIE_CONTROLLED_ABILITY', 'pharmacie.controlled.dispense'),
+        'require_prescription' => (bool) env('PHARMACIE_CONTROLLED_REQUIRE_PRESCRIPTION', true),
+        'require_patient' => (bool) env('PHARMACIE_CONTROLLED_REQUIRE_PATIENT', true),
     ],
 
     /*

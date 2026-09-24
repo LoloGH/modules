@@ -103,6 +103,12 @@ final class Rbac
                 'pharmacie.dispensing.create' => 'Délivrer des produits',
                 'pharmacie.dispensing.cancel' => 'Annuler une dispensation',
             ],
+            'Contrôle renforcé et vigilance' => [
+                'pharmacie.controlled.dispense' => 'Délivrer un produit sous surveillance',
+                'pharmacie.vigilance.view' => 'Consulter le registre, les rappels et les signalements',
+                'pharmacie.vigilance.report' => 'Signaler un effet indésirable',
+                'pharmacie.vigilance.manage' => 'Ouvrir un rappel de lot, transmettre et clore un signalement',
+            ],
             'Pilotage' => [
                 'pharmacie.dashboard.view' => 'Consulter le tableau de bord de la pharmacie',
                 'pharmacie.reports.view' => 'Consulter les rapports de la pharmacie',
@@ -159,6 +165,8 @@ final class Rbac
                 'pharmacie.stock.view', 'pharmacie.stock.receive', 'pharmacie.stock.adjust',
                 'pharmacie.inventory.count', 'pharmacie.inventory.validate',
                 'pharmacie.dispensing.view', 'pharmacie.dispensing.create', 'pharmacie.dispensing.cancel',
+                'pharmacie.controlled.dispense',
+                'pharmacie.vigilance.view', 'pharmacie.vigilance.report', 'pharmacie.vigilance.manage',
                 'pharmacie.dashboard.view', 'pharmacie.reports.view',
                 'pharmacie.audit.view',
             ],
@@ -171,6 +179,10 @@ final class Rbac
                 'pharmacie.products.view',
                 'pharmacie.stock.view',
                 'pharmacie.dispensing.view', 'pharmacie.dispensing.create',
+                // Il sert au comptoir : il voit les rappels en cours et
+                // signale ce qu'un patient lui rapporte, mais il n'ouvre
+                // pas un rappel et ne délivre pas de stupéfiant.
+                'pharmacie.vigilance.view', 'pharmacie.vigilance.report',
             ],
 
             // Le magasinier tient les entrées et compte : il ne délivre pas.
@@ -179,6 +191,7 @@ final class Rbac
                 'pharmacie.products.view',
                 'pharmacie.stock.view', 'pharmacie.stock.receive', 'pharmacie.stock.adjust',
                 'pharmacie.inventory.count',
+                'pharmacie.vigilance.view',
                 'pharmacie.reports.view',
             ],
         ];

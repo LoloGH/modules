@@ -54,6 +54,14 @@ final class Navigation
                 ],
             ],
             [
+                'section' => 'Surveillance',
+                'items' => [
+                    self::item('Registre sous contrôle', 'verrou', 'pharmacie.vigilance.register', 'pharmacie.vigilance.view'),
+                    self::item('Rappels de lots', 'alert', 'pharmacie.vigilance.recalls.index', 'pharmacie.vigilance.view', ['pharmacie.vigilance.recalls.*']),
+                    self::item('Pharmacovigilance', 'controle', 'pharmacie.vigilance.events.index', 'pharmacie.vigilance.view', ['pharmacie.vigilance.events.*']),
+                ],
+            ],
+            [
                 'section' => 'Paramètres',
                 'items' => [
                     self::soon('Paramètres de la pharmacie', 'reglage'),
