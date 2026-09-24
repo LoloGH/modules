@@ -1,4 +1,7 @@
 /vendor
+# La base de demonstration de l'hote de test : elle se regenere par
+# `finance:demo-setup`, et ne regarde que la machine qui l'a produite.
+/database/*.sqlite
 /build
 .env
 .phpunit.cache
