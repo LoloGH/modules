@@ -31,7 +31,7 @@ final class VigilanceController extends PharmacieController
 {
     /**
      * Le registre des produits sous surveillance : chaque entrée, chaque
-     * sortie, dans l'ordre, avec le solde après. Il se lit du grand livre —
+     * sortie, dans l'ordre, avec le solde après. Il se lit du grand livre :
      * il n'y a pas de seconde comptabilité à tenir à jour, donc rien qui
      * puisse diverger.
      */

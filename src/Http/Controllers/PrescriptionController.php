@@ -106,7 +106,7 @@ final class PrescriptionController extends PharmacieController
     /**
      * Le produit du catalogue qui correspond : par code quand le DME le
      * donne, sinon par nom ou par DCI. Une correspondance douteuse ne force
-     * rien — le pharmacien choisit.
+     * rien, le pharmacien choisit.
      */
     private function matchProduct(PrescriptionLine $line): ?Product
     {

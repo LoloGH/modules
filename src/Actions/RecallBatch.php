@@ -23,13 +23,13 @@ use Keneya\Pharmacie\Support\Text;
  *
  * L'ouverture d'un rappel fait deux choses d'un coup :
  *
- *   1. le lot est **bloqué** — le grand livre refusera désormais de le
+ *   1. le lot est **bloqué**, le grand livre refusera désormais de le
  *      délivrer, sans qu'aucun écran n'ait besoin d'y penser ;
  *   2. la liste des patients servis de ce lot est **figée**, à partir du
  *      détail par lot des dispensations.
  *
- * Elle ne détruit rien : ce qui reste en stock est mis de côté, pas effacé —
- * le fournisseur voudra peut-être le reprendre, et la destruction a son
+ * Elle ne détruit rien : ce qui reste en stock est mis de côté, pas effacé.
+ * Le fournisseur voudra peut-être le reprendre, et la destruction a son
  * propre écran, avec témoin.
  *
  * Un rappel qui vise les patients ne se clôt pas tant qu'il reste quelqu'un

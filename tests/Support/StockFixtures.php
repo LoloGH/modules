@@ -12,7 +12,7 @@ use Keneya\Pharmacie\Services\StockLedger;
 
 /**
  * De quoi monter un stock de test en deux lignes : un produit, un lot, un
- * emplacement, et des unités entrées par le grand livre — jamais écrites à la
+ * emplacement, et des unités entrées par le grand livre, jamais écrites à la
  * main, pour que les tests éprouvent le vrai chemin.
  */
 trait StockFixtures

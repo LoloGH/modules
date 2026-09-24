@@ -21,7 +21,7 @@ use Keneya\Pharmacie\Support\Text;
  *
  * Un produit se désactive, il ne se supprime pas : ses lots, ses mouvements et
  * ses dispensations doivent rester lisibles. Le prix de vente est séparé du
- * reste (`pharmacie.prices.manage`) — fixer un prix n'est pas décrire un
+ * reste (`pharmacie.prices.manage`), fixer un prix n'est pas décrire un
  * produit.
  */
 final class ProductController extends PharmacieController

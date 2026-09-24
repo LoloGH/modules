@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * Ce qu'il advient de l'argent d'une dispensation.
  *
  * La pharmacie ne tient pas de caisse : elle dit ce qui est dû et à quel
- * titre, puis l'envoie par `Contracts\SaleSink` — vers la caisse Finance, ou
+ * titre, puis l'envoie par `Contracts\SaleSink`, vers la caisse Finance, ou
  * vers ce que l'établissement aura choisi. Ce qu'elle garde ici, c'est
  * l'état : à payer, envoyé, réglé, ou rien à payer.
  */

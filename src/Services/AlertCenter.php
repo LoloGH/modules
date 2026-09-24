@@ -25,7 +25,7 @@ use Keneya\Pharmacie\Support\Money;
  *
  * Aucune table de notifications, aucun envoi : chaque alerte est un état de la
  * base, relu à l'affichage. Un lot détruit, une commande reçue, un stock
- * refait, et l'alerte disparaît d'elle-même — elle ne peut donc pas mentir.
+ * refait, et l'alerte disparaît d'elle-même, elle ne peut donc pas mentir.
  *
  * Chacune n'est calculée que si la personne a le droit d'agir dessus : on ne
  * signale jamais un travail qu'on ne peut pas faire, et un lien d'alerte ne

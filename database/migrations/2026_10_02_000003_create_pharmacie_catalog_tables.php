@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Un produit n'est pas seulement un nom : c'est une DCI, une forme, un dosage,
  * une voie d'administration et un conditionnement. Deux produits de même nom
- * commercial mais de dosage différent sont deux produits — les confondre, c'est
+ * commercial mais de dosage différent sont deux produits, les confondre, c'est
  * délivrer le mauvais.
  *
  * `facility_id` dès la première table : un établissement peut en compter

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * Un rappel part d'un lot et remonte jusqu'aux patients : c'est la raison
  * d'être de `pharmacie_dispensation_batches`, qui garde depuis le premier
  * jour quel lot est parti dans quelle main. La liste des patients est figée à
- * l'ouverture du rappel, puis suivie ligne à ligne — car « prévenir les
+ * l'ouverture du rappel, puis suivie ligne à ligne, car « prévenir les
  * patients » ne veut rien dire tant qu'on ne sait pas lequel reste à joindre.
  *
  * Un signalement d'effet indésirable relie le patient, le médicament, le lot

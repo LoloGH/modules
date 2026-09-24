@@ -23,7 +23,7 @@ use Keneya\Pharmacie\Support\Text;
  * Le cycle d'une commande : on la prépare, on l'envoie, on la suit, et on
  * l'annule si elle ne viendra pas.
  *
- * Une commande envoyée ne se réécrit pas — c'est un engagement pris auprès
+ * Une commande envoyée ne se réécrit pas, c'est un engagement pris auprès
  * d'un fournisseur. Elle s'annule, avec un motif, et seulement tant que rien
  * n'a été reçu : au-delà, ce qui est arrivé est arrivé.
  */

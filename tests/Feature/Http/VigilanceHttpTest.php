@@ -78,7 +78,7 @@ class VigilanceHttpTest extends TestCase
         $location = $this->makeLocation();
         $this->stockUp($this->makeBatch($product, 'LOT-A', now()->addYear()->toDateString()), 20);
 
-        // Le préparateur délivre tous les jours — mais pas un stupéfiant.
+        // Le préparateur délivre tous les jours, mais pas un stupéfiant.
         $this->actingAs($this->userWithRole(Rbac::ROLE_DISPENSER))
             ->from(route('pharmacie.dispensing.create'))
             ->post(route('pharmacie.dispensing.store'), [

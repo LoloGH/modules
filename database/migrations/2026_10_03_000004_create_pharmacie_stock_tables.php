@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Schema;
  * sous verrou. Rien ne s'efface : une erreur s'annule par une écriture
  * inverse, jamais en effaçant.
  *
- * Un lot épuisé reste : sa traçabilité — qui l'a reçu, qui l'a servi, à qui —
+ * Un lot épuisé reste : sa traçabilité, qui l'a reçu, qui l'a servi, à qui,
  * survit à sa dernière unité.
  */
 return new class extends Migration

@@ -20,7 +20,7 @@ use Keneya\Pharmacie\Support\Text;
  * Signaler un effet indésirable, et suivre ce signalement jusqu'au bout.
  *
  * Le signalement se fait avec ce qu'on a : parfois le lot exact, parfois
- * seulement le produit. On ne bloque donc pas sur le lot — un signalement
+ * seulement le produit. On ne bloque donc pas sur le lot, un signalement
  * imparfait vaut mieux qu'un signalement jamais fait. En revanche, ce qui a
  * été observé ne peut pas rester vide.
  *

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Une réception n'est pas une saisie de stock : c'est un **contrôle**. On
  * compare ce qui était commandé à ce qui arrive, on relève les lots et leurs
- * péremptions, on signale les anomalies — et c'est seulement ensuite que les
+ * péremptions, on signale les anomalies, et c'est seulement ensuite que les
  * unités entrent, par le grand livre.
  *
  * Une réception validée ne se réécrit pas : une erreur se corrige par un
@@ -46,7 +46,7 @@ return new class extends Migration
             $table->string('number', 32)->unique();
             $table->foreignId('supplier_id')->constrained('pharmacie_suppliers')->restrictOnDelete();
 
-            // brouillon → envoyée → reçue (partiellement ou totalement) → annulée
+            // brouillon vers envoyée vers reçue (partiellement ou totalement) vers annulée
             $table->string('status', 16)->default('draft');
             $table->date('ordered_on')->nullable();
             $table->date('expected_on')->nullable();

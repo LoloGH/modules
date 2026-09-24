@@ -8,7 +8,7 @@ namespace Keneya\Pharmacie\Support;
  * Une alerte : quelque chose qui attend un geste, dit en une phrase, avec
  * l'écran où le faire.
  *
- * Le module ne notifie personne par courriel ni par SMS — il n'ajoute aucune
+ * Le module ne notifie personne par courriel ni par SMS, il n'ajoute aucune
  * dépendance et ne suppose aucun service extérieur. Une alerte est un état
  * de la base, relu à chaque affichage : elle disparaît d'elle-même quand la
  * situation est réglée, et ne peut donc jamais mentir.

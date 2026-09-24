@@ -15,7 +15,7 @@ use Keneya\Pharmacie\Tests\Support\StockFixtures;
 use Keneya\Pharmacie\Tests\TestCase;
 
 /**
- * L'approvisionnement : commander, recevoir, et faire entrer le stock — avec
+ * L'approvisionnement : commander, recevoir, et faire entrer le stock, avec
  * ce que la réception refuse.
  */
 class SupplyHttpTest extends TestCase

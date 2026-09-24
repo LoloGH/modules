@@ -15,7 +15,7 @@ use LogicException;
  *
  * On n'y écrit qu'en ajoutant : toute tentative de modification ou de
  * suppression lève une exception. Une erreur se corrige par une écriture
- * inverse, motivée — jamais en effaçant, sinon le stock ne se recalcule plus
+ * inverse, motivée, jamais en effaçant, sinon le stock ne se recalcule plus
  * et ne vaut plus rien.
  *
  * @property int $quantity signée : positive en entrée, négative en sortie

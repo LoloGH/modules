@@ -19,8 +19,8 @@ use Keneya\Pharmacie\Support\Text;
  * Envoyer à la caisse ce qui doit être payé.
  *
  * La pharmacie ne tient pas de tiroir : elle dit ce qui est dû, et l'envoie
- * par le contrat de vente. Ce que la caisse en fait — un passage en file, une
- * facture, un ticket — ne la regarde pas.
+ * par le contrat de vente. Ce que la caisse en fait, un passage en file, une
+ * facture, un ticket, ne la regarde pas.
  *
  * Quatre titres de facturation, et chacun a ses conséquences :
  *

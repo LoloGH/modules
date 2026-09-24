@@ -19,10 +19,10 @@ use Keneya\Pharmacie\Contracts\StaffDirectory;
  * L'hôte n'a que trois choses à déclarer, et il peut les déclarer une par
  * une :
  *
- *   1. qui entre — `Pharmacie::authorizeAccessUsing()` ;
- *   2. qui attend — une implémentation de {@see PharmacyQueueProvider} liée
+ *   1. qui entre, `Pharmacie::authorizeAccessUsing()` ;
+ *   2. qui attend, une implémentation de {@see PharmacyQueueProvider} liée
  *      dans le conteneur ;
- *   3. où part ce qui doit être payé — une implémentation de
+ *   3. où part ce qui doit être payé, une implémentation de
  *      {@see SaleSink} (Finance, ou autre chose).
  *
  * Rien d'autre n'est imposé : ni modèle utilisateur, ni page de connexion,

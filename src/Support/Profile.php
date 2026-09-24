@@ -13,7 +13,7 @@ use Throwable;
  *
  * Purement décoratif. Le modèle utilisateur appartient à l'hôte : il peut ne
  * pas connaître les rôles de spatie, et une lecture qui échoue ne doit jamais
- * casser une page — on retombe alors sur rien du tout.
+ * casser une page, on retombe alors sur rien du tout.
  */
 final class Profile
 {

@@ -63,7 +63,7 @@ final class StockLedger
 
     /**
      * Réserve des unités : elles restent physiquement là, mais ne sont plus
-     * disponibles pour quelqu'un d'autre. Aucune écriture au grand livre —
+     * disponibles pour quelqu'un d'autre. Aucune écriture au grand livre :
      * rien n'est sorti.
      */
     public function reserve(Batch $batch, Location $location, int $quantity): void

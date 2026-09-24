@@ -19,7 +19,7 @@ use Keneya\Pharmacie\Support\Text;
  * Les emplacements de stock : savoir combien on en a ne suffit pas, il faut
  * savoir où.
  *
- * Un emplacement se désactive, il ne se supprime pas — et pas tant qu'il
+ * Un emplacement se désactive, il ne se supprime pas, et pas tant qu'il
  * porte encore des unités, qui ne se trouveraient plus nulle part.
  */
 final class LocationController extends PharmacieController

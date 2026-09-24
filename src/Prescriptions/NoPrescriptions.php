@@ -11,8 +11,8 @@ use Keneya\Pharmacie\Models\Dispensation;
 /**
  * Sans dossier medical branche : aucune ordonnance, et rien a lui rendre.
  *
- * La pharmacie reste utilisable — on sert au comptoir, sans ordonnance
- * electronique — et l'ecran dit clairement que le DME n'est pas branche,
+ * La pharmacie reste utilisable, on sert au comptoir, sans ordonnance
+ * electronique, et l'ecran dit clairement que le DME n'est pas branche,
  * plutot que d'afficher une liste vide sans explication.
  */
 final class NoPrescriptions implements PrescriptionProvider, PrescriptionSink

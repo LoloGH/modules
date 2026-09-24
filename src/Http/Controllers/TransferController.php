@@ -17,7 +17,7 @@ use Keneya\Pharmacie\Models\Transfer;
  *
  * Quatre gestes, quatre responsabilités : demander, valider, envoyer,
  * recevoir. L'écran montre toujours où en est chaque transfert, et ce qui est
- * en transit — c'est-à-dire parti, mais pas encore arrivé.
+ * en transit, c'est-à-dire parti, mais pas encore arrivé.
  */
 final class TransferController extends PharmacieController
 {

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Deux tables, deux questions distinctes :
  *
- *   - `pharmacie_settings` : les réglages du module — durées d'alerte,
+ *   - `pharmacie_settings` : les réglages du module, durées d'alerte,
  *     numérotation, règles des produits sous surveillance. Sans ligne, le
  *     fichier de configuration fait foi, et le module tourne comme avant.
  *   - `pharmacie_user_permissions` : ce que chacun peut faire ici. L'hôte

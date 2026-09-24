@@ -28,7 +28,7 @@ use Keneya\Pharmacie\Models\StockMovement;
  * Deux honnêtetés à garder en tête, dites aussi dans les écrans :
  *
  *   - la **consommation** est ce qui est sorti pour être délivré, diminué de
- *     ce que les annulations ont fait revenir — pas ce qui a été prescrit ;
+ *     ce que les annulations ont fait revenir, pas ce qui a été prescrit ;
  *   - la **rotation** rapporte la consommation de la période à la valeur du
  *     stock d'aujourd'hui : le module ne photographie pas la valeur du stock
  *     chaque nuit, donc c'est un ordre de grandeur, pas une comptabilité.

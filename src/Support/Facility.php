@@ -10,7 +10,7 @@ namespace Keneya\Pharmacie\Support;
  * Toutes les tables du module portent `facility_id` dès la première migration.
  * Tant qu'un seul établissement existe, cette classe rend toujours la même
  * valeur et personne ne s'en aperçoit ; le jour où une pharmacie secondaire
- * ouvre, il suffit à l'hôte de déclarer laquelle est regardée — aucune table
+ * ouvre, il suffit à l'hôte de déclarer laquelle est regardée, aucune table
  * n'est à réécrire.
  */
 final class Facility

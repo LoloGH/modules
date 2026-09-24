@@ -11,7 +11,7 @@ use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
  * La file par défaut : vide.
  *
  * Tant qu'aucun hôte ne fournit sa file, la pharmacie n'en invente pas. Les
- * écrans le disent — « l'application hôte ne fournit pas encore de file » —
+ * écrans le disent, « l'application hôte ne fournit pas encore de file »,
  * plutôt que d'afficher des patients qui n'existent pas.
  */
 final class NoPharmacyQueue implements PharmacyQueueProvider

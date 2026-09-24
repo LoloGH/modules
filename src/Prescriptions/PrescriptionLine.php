@@ -9,7 +9,7 @@ namespace Keneya\Pharmacie\Prescriptions;
  *
  * `productCode` est facultatif : le DME prescrit souvent un nom, pas une
  * référence du catalogue pharmaceutique. Quand il le donne, la pharmacie
- * retrouve le produit toute seule ; sinon, le pharmacien le choisit — et
+ * retrouve le produit toute seule ; sinon, le pharmacien le choisit, et
  * c'est là qu'une substitution peut se décider.
  */
 final readonly class PrescriptionLine

@@ -18,7 +18,7 @@ use Keneya\Pharmacie\Support\Text;
 /**
  * Les catégories du catalogue : elles rangent et elles filtrent.
  *
- * Une catégorie se désactive, elle ne se supprime pas — et pas tant qu'elle
+ * Une catégorie se désactive, elle ne se supprime pas, et pas tant qu'elle
  * porte encore des produits actifs, qui ne se rangeraient plus nulle part.
  */
 final class CategoryController extends PharmacieController

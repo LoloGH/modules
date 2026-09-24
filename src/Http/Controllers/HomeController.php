@@ -17,7 +17,7 @@ use Keneya\Pharmacie\Services\Analytics;
  * Les chiffres sont recalculés à chaque affichage, et seulement pour qui a
  * le droit de les voir : sans le droit de lire le stock, l'écran le dit au
  * lieu d'afficher un zéro qui passerait pour un fait. Aucun chiffre n'est
- * inventé — un écran vide vaut mieux qu'un chiffre faux.
+ * inventé, un écran vide vaut mieux qu'un chiffre faux.
  */
 final class HomeController extends PharmacieController
 {

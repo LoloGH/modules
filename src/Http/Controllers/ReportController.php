@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Les rapports : ce que la pharmacie a consommé, ce qu'elle immobilise, ce
  * qu'elle perd, et ce qu'il lui faudra.
  *
- * Une seule barre de filtres — période, catégorie, emplacement — partagée
+ * Une seule barre de filtres (période, catégorie, emplacement) partagée
  * par les deux écrans et par les exports : le chiffre exporté est celui qui
  * était à l'écran, jamais un autre.
  */
@@ -48,7 +48,7 @@ final class ReportController extends PharmacieController
 
     /**
      * L'export : le même tableau, en CSV, pour être repris dans un tableur.
-     * Aucune dépendance — un CSV s'écrit à la main.
+     * Aucune dépendance, un CSV s'écrit à la main.
      */
     public function export(Request $request, Analytics $analytics): StreamedResponse
     {

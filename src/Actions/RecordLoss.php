@@ -23,8 +23,8 @@ use Keneya\Pharmacie\Support\Text;
  * Sortir du stock ce qui ne sera pas délivré : périmé, cassé, volé, détérioré.
  *
  * C'est une décision, pas une correction discrète. Elle porte un motif, un
- * auteur, une valeur — parce qu'une perte coûte quelque chose et doit se lire
- * dans les rapports — et, pour une destruction, le nom du témoin.
+ * auteur, une valeur, parce qu'une perte coûte quelque chose et doit se lire
+ * dans les rapports, et, pour une destruction, le nom du témoin.
  *
  * Détruire un lot entièrement le marque comme détruit : il ne reviendra pas
  * en stock par erreur.

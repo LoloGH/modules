@@ -183,7 +183,7 @@ final class DispensingController extends PharmacieController
     }
 
     /**
-     * Envoyer a la caisse ce qui doit etre paye — ou ecrire que rien ne sera
+     * Envoyer a la caisse ce qui doit etre paye, ou ecrire que rien ne sera
      * demande, et a quel titre.
      */
     public function bill(Request $request, Dispensation $dispensation, SendToCashier $action): RedirectResponse

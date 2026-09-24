@@ -164,7 +164,7 @@ final class PharmacieSettings
         // On ne touche qu'aux clés envoyées. Une case décochée n'est pas
         // envoyée par le navigateur : c'est le champ caché du formulaire qui
         // la fait valoir « non ». Déduire « faux » d'une absence éteindrait
-        // une règle de contrôle renforcé au premier envoi partiel — un écran
+        // une règle de contrôle renforcé au premier envoi partiel, un écran
         // qui ne montre qu'un groupe, un appel qui n'en règle qu'un.
         foreach ($values as $key => $raw) {
             if (! isset($editable[$key]) || $raw === null) {

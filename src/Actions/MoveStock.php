@@ -26,14 +26,14 @@ use Keneya\Pharmacie\Support\Text;
  *
  * Chaque étape appartient à quelqu'un, et le stock ne bouge qu'à deux
  * moments : il **sort** à l'envoi, il **entre** à la réception. Entre les
- * deux, les unités sont en transit — visibles, et à personne.
+ * deux, les unités sont en transit, visibles, et à personne.
  *
  * Ce qui est refusé :
  *
  *   - transférer vers l'emplacement d'où l'on part ;
  *   - envoyer plus que ce qui est disponible à l'origine ;
  *   - recevoir plus que ce qui est parti ;
- *   - recevoir moins sans justifier l'écart — c'est ainsi qu'on sait où le
+ *   - recevoir moins sans justifier l'écart, c'est ainsi qu'on sait où le
  *     stock se perd.
  */
 final class MoveStock

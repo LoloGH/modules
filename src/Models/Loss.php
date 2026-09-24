@@ -13,7 +13,7 @@ use Keneya\Pharmacie\Support\Facility;
  * Une perte ou une destruction : ce qui sort du stock sans avoir ete
  * delivre.
  *
- * Toujours avec un motif, toujours avec un auteur, et une valeur — car une
+ * Toujours avec un motif, toujours avec un auteur, et une valeur, car une
  * perte coute quelque chose, et ce quelque chose doit se lire dans les
  * rapports.
  */

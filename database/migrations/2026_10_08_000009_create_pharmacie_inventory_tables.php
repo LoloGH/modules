@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * Un inventaire compare le **théorique** au **compté**. L'écart n'est pas une
  * erreur à effacer : c'est une information. Il se justifie ligne par ligne,
  * se valide par quelqu'un d'autre que celui qui a compté, et ne corrige le
- * stock qu'à la validation — par des écritures d'ajustement qui restent au
+ * stock qu'à la validation, par des écritures d'ajustement qui restent au
  * grand livre.
  *
  * Une destruction, elle, est une décision : quoi, combien, pourquoi, et un
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained('pharmacie_categories')->nullOnDelete();
             $table->foreignId('product_id')->nullable()->constrained('pharmacie_products')->nullOnDelete();
 
-            // ouvert (en cours de comptage) → validé, ou abandonné
+            // ouvert (en cours de comptage) vers validé, ou abandonné
             $table->string('status', 16)->default('open');
             $table->text('notes')->nullable();
 

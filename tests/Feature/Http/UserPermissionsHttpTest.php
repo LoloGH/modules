@@ -17,7 +17,7 @@ use Keneya\Pharmacie\Tests\TestCase;
 /**
  * Écran « Utilisateurs » : qui a droit à quoi dans la pharmacie.
  *
- * Ce qui est coché est accordé, ce qui ne l'est pas est refusé — et cela
+ * Ce qui est coché est accordé, ce qui ne l'est pas est refusé, et cela
  * l'emporte sur les rôles de l'application hôte, sinon l'écran mentirait.
  */
 class UserPermissionsHttpTest extends TestCase

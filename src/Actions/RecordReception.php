@@ -29,7 +29,7 @@ use Keneya\Pharmacie\Support\Text;
  *
  * C'est un contrôle avant d'être une saisie. Chaque ligne exige son **lot** et
  * sa **date de péremption** : sans elles, on ne saura plus jamais ce qu'on
- * détient ni jusqu'à quand — et le rappel d'un lot deviendrait impossible.
+ * détient ni jusqu'à quand, et le rappel d'un lot deviendrait impossible.
  *
  * Tout ou rien : les lots naissent, les unités entrent par le grand livre et
  * la commande se met à jour dans une seule transaction. Une réception à moitié

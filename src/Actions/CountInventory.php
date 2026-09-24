@@ -26,11 +26,11 @@ use Keneya\Pharmacie\Support\Text;
  *
  * Trois moments, trois responsabilités :
  *
- *   1. **ouvrir** — le théorique est figé, lot par lot : ce que le système
+ *   1. **ouvrir**, le théorique est figé, lot par lot : ce que le système
  *      croyait avoir au moment où l'on commence ;
- *   2. **compter** — on saisit le réel ; tant que l'inventaire est ouvert,
+ *   2. **compter**, on saisit le réel ; tant que l'inventaire est ouvert,
  *      rien n'est corrigé ;
- *   3. **valider** — quelqu'un d'AUTRE que celui qui a compté accepte les
+ *   3. **valider**, quelqu'un d'AUTRE que celui qui a compté accepte les
  *      écarts, et c'est alors seulement que le stock est corrigé, par des
  *      écritures d'ajustement qui restent au grand livre.
  *
@@ -164,7 +164,7 @@ final class CountInventory
      * Valider : les écarts deviennent des ajustements de stock.
      *
      * Celui qui a compté ne valide pas son propre comptage, et un écart sans
-     * motif bloque tout — sinon l'inventaire ne sert qu'à effacer les
+     * motif bloque tout, sinon l'inventaire ne sert qu'à effacer les
      * erreurs au lieu de les comprendre.
      */
     public function validate(Inventory $inventory, Authenticatable $actor): Inventory

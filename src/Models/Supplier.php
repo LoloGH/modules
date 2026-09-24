@@ -13,7 +13,7 @@ use Keneya\Pharmacie\Support\Facility;
  * Un fournisseur : son identité, ses conditions, et tout ce qu'il a livré.
  *
  * On ne le supprime pas : ses commandes et ses lots resteraient orphelins, et
- * l'on ne saurait plus d'où vient un médicament — ce qui est précisément ce
+ * l'on ne saurait plus d'où vient un médicament, ce qui est précisément ce
  * qu'un rappel de lot demande de savoir.
  */
 class Supplier extends Model

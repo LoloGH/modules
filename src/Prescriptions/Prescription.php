@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
  * Une ordonnance telle que le dossier médical la décrit.
  *
  * Volontairement pauvre : de quoi servir, et rien de plus. Le pharmacien a
- * besoin du patient, du prescripteur, des lignes et des alertes d'allergie —
+ * besoin du patient, du prescripteur, des lignes et des alertes d'allergie,
  * pas du dossier médical complet.
  */
 final readonly class Prescription
@@ -38,7 +38,7 @@ final readonly class Prescription
     }
 
     /**
-     * Une ordonnance périmée se sert encore — mais le pharmacien doit le
+     * Une ordonnance périmée se sert encore, mais le pharmacien doit le
      * savoir : c'est à lui de juger, pas au logiciel de décider seul.
      */
     public function isExpired(): bool

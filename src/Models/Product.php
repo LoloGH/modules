@@ -14,7 +14,7 @@ use Keneya\Pharmacie\Support\Facility;
  * d'hygiène.
  *
  * Le produit dit ce qu'on référence ; il ne dit ni combien il en reste, ni
- * jusqu'à quand il est utilisable — cela appartient aux lots.
+ * jusqu'à quand il est utilisable, cela appartient aux lots.
  *
  * @property int $id
  * @property string $code

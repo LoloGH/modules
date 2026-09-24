@@ -22,7 +22,7 @@ use Workbench\App\Models\DemoUser;
  * Remplit la pharmacie de démonstration : un catalogue, des emplacements, un
  * fournisseur, des réceptions, des dispensations et une perte.
  *
- * Tout passe par les actions réelles — réception, dispensation, perte — et
+ * Tout passe par les actions réelles (réception, dispensation, perte) et
  * jamais par des écritures directes en base : les données de démonstration
  * empruntent donc exactement les chemins que l'application emprunte, et ce
  * qu'on voit à l'écran est ce que le module sait vraiment produire.
@@ -149,7 +149,7 @@ class DemoData extends Command
         ], $storekeeper, ['delivery_note' => 'BL-2026-0158']);
 
         // La réserve réapprovisionne le comptoir : le magasinier demande,
-        // le pharmacien approuve — jamais la même personne.
+        // le pharmacien approuve, jamais la même personne.
         $transfer = $transfers->request($reserve, $comptoir, [
             ['product_id' => $products['ARTE20']->id, 'quantity' => 100],
             ['product_id' => $products['PARA500']->id, 'quantity' => 400],

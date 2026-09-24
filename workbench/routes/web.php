@@ -27,7 +27,7 @@ Route::get('/dev', function () {
     $current = Auth::user();
     $status = $current === null
         ? '<p>Vous n\'êtes connecté avec aucun profil.</p>'
-        : sprintf('<p>Connecté : <strong>%s</strong> — <a href="/pharmacie">ouvrir le module</a> · <a href="/dev/logout">se déconnecter</a></p>', e($current->name));
+        : sprintf('<p>Connecté : <strong>%s</strong>, <a href="/pharmacie">ouvrir le module</a> · <a href="/dev/logout">se déconnecter</a></p>', e($current->name));
 
     return response(
         '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'

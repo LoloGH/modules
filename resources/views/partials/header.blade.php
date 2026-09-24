@@ -23,6 +23,14 @@
     </a>
 
 
+    {{-- L'interrupteur de theme, a cote de la cloche. Sans JavaScript il ne
+         fait rien et l'interface suit le reglage du systeme, comme avant. --}}
+    <button type="button" class="theme-switch" data-theme-switch
+            title="Basculer entre clair et sombre" aria-label="Basculer entre clair et sombre">
+        <x-pharmacie::icon name="soleil" class="ic quand-sombre" />
+        <x-pharmacie::icon name="lune" class="ic quand-clair" />
+    </button>
+
     <span class="muted" style="display:flex;align-items:center;gap:.4375rem;font-size:.8438rem">
         <x-pharmacie::icon name="calendrier" />
         {{ ucfirst(now()->translatedFormat('D d M Y')) }}

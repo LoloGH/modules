@@ -10,11 +10,11 @@ use Keneya\Pharmacie\Models\Product;
 use Keneya\Pharmacie\Models\Stock;
 
 /**
- * Le choix des lots : **FEFO — First Expired, First Out**.
+ * Le choix des lots : **FEFO, First Expired, First Out**.
  *
  * Quand un produit existe en plusieurs lots, celui qui périme le premier sort
  * le premier. Le comptoir n'a pas à chercher : le système propose, et le
- * pharmacien peut toujours choisir autrement — mais alors c'est tracé, avec un
+ * pharmacien peut toujours choisir autrement, mais alors c'est tracé, avec un
  * motif (voir la dispensation).
  *
  * Ne sont jamais proposés : les lots périmés, bloqués ou détruits, et les lots
@@ -70,7 +70,7 @@ final class StockPicker
      * proche de la péremption au plus lointain.
      *
      * Le reliquat (`missing`) n'est pas une erreur : c'est une information.
-     * C'est à l'appelant — la dispensation — de décider s'il sert
+     * C'est à l'appelant (la dispensation) de décider s'il sert
      * partiellement ou s'il refuse.
      *
      * @return array{lines: list<array{batch: Batch, quantity: int}>, missing: int}

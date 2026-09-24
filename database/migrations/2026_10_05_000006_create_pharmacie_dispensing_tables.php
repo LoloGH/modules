@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Trois quantités ne se confondent jamais : **prescrit**, **délivré**,
  * **restant à délivrer**. Une ordonnance dont tout n'est pas disponible se
- * sert partiellement, et le reliquat reste visible — il n'y a pas de honte à
+ * sert partiellement, et le reliquat reste visible, il n'y a pas de honte à
  * manquer d'un médicament, il y en a à le cacher.
  *
  * Le reliquat vit ici, dans la pharmacie : c'est un fait de stock, pas un
@@ -39,7 +39,7 @@ return new class extends Migration
 
             $table->foreignId('location_id')->constrained('pharmacie_locations')->restrictOnDelete();
 
-            // brouillon (en préparation) → délivrée → annulée
+            // brouillon (en préparation) vers délivrée vers annulée
             $table->string('status', 16)->default('draft');
             $table->unsignedBigInteger('total')->default(0);
             // Ce qu'il reste à servir sur l'ordonnance, tous produits

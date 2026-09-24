@@ -13,7 +13,7 @@ use Keneya\Pharmacie\Tests\TestCase;
 
 /**
  * Les transferts : le stock sort d'un côté, entre de l'autre, et entre les
- * deux il est en transit — visible, et à personne.
+ * deux il est en transit, visible, et à personne.
  */
 class TransfersHttpTest extends TestCase
 {

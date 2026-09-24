@@ -15,8 +15,8 @@ use Keneya\Pharmacie\Support\Facility;
  * Un lot : la seule chose qui dise jusqu'à quand un produit est utilisable.
  *
  * Un même médicament vit en plusieurs lots à la fois, de péremptions et de
- * prix différents. Un lot épuisé n'est pas supprimé : son histoire — reçu de
- * qui, servi à qui — doit rester lisible des années après.
+ * prix différents. Un lot épuisé n'est pas supprimé : son histoire, reçu de
+ * qui, servi à qui, doit rester lisible des années après.
  *
  * L'état « périmé » et l'état « épuisé » ne sont pas stockés : ils se lisent
  * de la date et des quantités, pour qu'ils ne puissent jamais mentir.
@@ -86,8 +86,8 @@ class Batch extends Model
     }
 
     /**
-     * Un lot délivrable : ni périmé, ni bloqué, ni détruit. Le reste — la
-     * quantité disponible — se vérifie au moment de sortir.
+     * Un lot délivrable : ni périmé, ni bloqué, ni détruit. Le reste, la
+     * quantité disponible, se vérifie au moment de sortir.
      */
     public function isDispensable(?Carbon $on = null): bool
     {
@@ -135,7 +135,7 @@ class Batch extends Model
 
     /**
      * L'ordre FEFO : ce qui périme en premier sort en premier. Un lot sans
-     * date passe en dernier — on ne le fait pas passer avant une date connue.
+     * date passe en dernier, on ne le fait pas passer avant une date connue.
      *
      * @param  Builder<Batch>  $query
      * @return Builder<Batch>

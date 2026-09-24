@@ -7,12 +7,12 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Les transferts entre emplacements : pharmacie centrale → urgences,
- * réserve → comptoir.
+ * Les transferts entre emplacements : pharmacie centrale vers urgences,
+ * réserve vers comptoir.
  *
  * Un transfert a un cycle, et chaque étape est une décision de quelqu'un :
- * **demandé → validé → sorti → reçu**. Entre la sortie et la réception, les
- * unités ne sont nulle part — elles sont **en transit**, et le système doit
+ * **demandé vers validé vers sorti vers reçu**. Entre la sortie et la réception, les
+ * unités ne sont nulle part, elles sont **en transit**, et le système doit
  * pouvoir le dire : c'est là que le stock se perd, dans les pharmacies qui ne
  * le suivent pas.
  */
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->foreignId('from_location_id')->constrained('pharmacie_locations')->restrictOnDelete();
             $table->foreignId('to_location_id')->constrained('pharmacie_locations')->restrictOnDelete();
 
-            // demande → valide → envoye → recu ; ou refuse / annule.
+            // demande vers valide vers envoye vers recu ; ou refuse / annule.
             $table->string('status', 16)->default('requested');
             $table->text('reason')->nullable();
 

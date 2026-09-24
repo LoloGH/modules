@@ -15,7 +15,7 @@ use Keneya\Pharmacie\Queue\QueuedPatient;
  *
  * Elle imite ce que fera Keneya Workflow : deux files, des patients qui
  * attendent, et un appel qui marque le patient comme appelé. Les appels sont
- * gardés dans le cache de la session de développement — rien n'est écrit dans
+ * gardés dans le cache de la session de développement, rien n'est écrit dans
  * le module, qui ne possède pas la file.
  */
 final class DemoQueue implements PharmacyQueueProvider

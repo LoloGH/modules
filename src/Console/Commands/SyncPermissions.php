@@ -25,7 +25,7 @@ use Spatie\Permission\PermissionRegistrar;
  * Une mise à jour du module peut introduire des permissions qui n'existaient
  * pas quand les rôles ont été créés. La commande dit alors ce qui manquerait
  * à chaque rôle par rapport aux valeurs de départ, et `--grant-missing`
- * l'accorde — sur décision explicite, jamais d'office.
+ * l'accorde, sur décision explicite, jamais d'office.
  */
 final class SyncPermissions extends Command
 {
@@ -69,7 +69,7 @@ final class SyncPermissions extends Command
             }
 
             // Le rôle existe déjà : on regarde seulement ce que les valeurs
-            // de départ lui donneraient et qu'il n'a pas — typiquement les
+            // de départ lui donneraient et qu'il n'a pas, typiquement les
             // permissions apparues avec une version plus récente du module.
             $missing = array_values(array_diff($permissions, $role->permissions->pluck('name')->all()));
 

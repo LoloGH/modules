@@ -130,7 +130,7 @@ final class DispenseProducts
      *
      * Appelé APRÈS la transaction : le stock a bougé, c'est un fait. Si le
      * dossier médical est injoignable, la dispensation reste écrite et la
-     * pharmacie continue de tourner — on ne perd pas une sortie de stock
+     * pharmacie continue de tourner, on ne perd pas une sortie de stock
      * parce qu'un autre module ne répond pas.
      */
     public function reportToPrescriber(Dispensation $dispensation): void
@@ -152,7 +152,7 @@ final class DispenseProducts
 
     /**
      * Annuler : le stock revient, lot par lot, par des écritures inverses.
-     * Rien n'est effacé — la dispensation reste, marquée annulée.
+     * Rien n'est effacé, la dispensation reste, marquée annulée.
      */
     public function cancel(Dispensation $dispensation, string $reason, Authenticatable $actor): Dispensation
     {
@@ -179,7 +179,7 @@ final class DispenseProducts
 
                     // Le stock revient tel qu'il est sorti : même lot, même
                     // emplacement. Un lot périmé entre-temps revient quand
-                    // même — il faudra le détruire, pas le faire disparaître.
+                    // même, il faudra le détruire, pas le faire disparaître.
                     $this->ledger->receive(
                         $served->batch,
                         $location,
@@ -334,7 +334,7 @@ final class DispenseProducts
     }
 
     /**
-     * Le plan de sortie : FEFO par défaut, ou le lot désigné — et alors la
+     * Le plan de sortie : FEFO par défaut, ou le lot désigné, et alors la
      * dérogation est tracée.
      *
      * @param  array{batch_id?: ?int, override_reason?: ?string}  $line
@@ -368,7 +368,7 @@ final class DispenseProducts
         $overrode = $suggested !== null && (int) $suggested->id !== (int) $batch->id;
         $reason = Text::clean($line['override_reason'] ?? null);
 
-        // Servir un autre lot que celui proposé est permis — mais jamais en
+        // Servir un autre lot que celui proposé est permis, mais jamais en
         // silence : c'est la règle qui protège le FEFO d'être contourné par
         // habitude.
         if ($overrode && $reason === null) {

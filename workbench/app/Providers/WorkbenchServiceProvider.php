@@ -17,7 +17,7 @@ use Workbench\App\Pharmacy\DemoStaffDirectory;
 
 /**
  * L'application hôte de démonstration : son modèle utilisateur, sa commande
- * de préparation, ses pages de connexion par profil — et sa file d'attente.
+ * de préparation, ses pages de connexion par profil, et sa file d'attente.
  *
  * Elle se comporte comme se comportera Keneya Workflow : c'est elle qui
  * décide qui entre, et c'est elle qui range les patients dans la file. Le

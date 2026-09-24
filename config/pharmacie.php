@@ -96,8 +96,8 @@ return [
     |
     | Au rythme de consommation observé, il faut de quoi tenir l'horizon,
     | plus le délai de livraison du fournisseur, plus une marge de sécurité.
-    | Ces trois durées dépendent du terrain — un fournisseur local et un
-    | fournisseur d'importation n'ont pas le même délai — donc elles se
+    | Ces trois durées dépendent du terrain, un fournisseur local et un
+    | fournisseur d'importation n'ont pas le même délai, donc elles se
     | règlent ici.
     */
     'forecast' => [

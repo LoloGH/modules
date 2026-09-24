@@ -18,7 +18,7 @@ use Keneya\Pharmacie\Support\Rbac;
  * fait peut se régler ici, sans toucher aux rôles ni aux types de personnel
  * de l'hôte. Quelqu'un dont les capacités sont réglées ici a exactement
  * celles-là : ce qui est coché est accordé, ce qui ne l'est pas est refusé,
- * quels que soient ses rôles ailleurs. Sans réglage, rien ne change — ses
+ * quels que soient ses rôles ailleurs. Sans réglage, rien ne change, ses
  * rôles décident, comme avant.
  *
  * La décision passe par un `Gate::before` enregistré avant ceux de spatie et
@@ -29,7 +29,7 @@ final class UserPermissions
 {
     /**
      * Permissions qui ne se règlent jamais ici : l'entrée dans le module
-     * appartient à l'hôte, et son administration — paramètres et droits —
+     * appartient à l'hôte, et son administration (paramètres et droits)
      * reste à l'administrateur. La confier depuis cet écran permettrait de
      * s'en attribuer l'accès à soi-même.
      */
