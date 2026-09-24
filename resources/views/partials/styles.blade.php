@@ -83,12 +83,32 @@
         overflow-y: auto;
     }
 
+
+    /*
+        La barre de défilement du menu : invisible au repos, elle apparaît
+        quand la souris entre dans la barre latérale. Une barre toujours
+        peinte attire l'œil sur un rail, pas sur le menu — et c'est le menu
+        qu'on vient lire.
+
+        Les deux syntaxes cohabitent : `scrollbar-color` pour Firefox, les
+        pseudo-éléments pour Chrome, Edge et Safari.
+    */
+    .sidebar { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+    .sidebar:hover, .sidebar:focus-within { scrollbar-color: var(--line) transparent; }
+
+    .sidebar::-webkit-scrollbar { width: .5rem; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; transition: background .18s ease; }
+    .sidebar:hover::-webkit-scrollbar-thumb,
+    .sidebar:focus-within::-webkit-scrollbar-thumb { background: var(--line); }
+    /* Sous le doigt de la souris, la pastille se fonce : on sait qu'on la tient. */
+    .sidebar::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
+
     .brand { display: flex; align-items: center; gap: .625rem; padding: 1rem 1.125rem; border-bottom: 1px solid var(--line-soft); }
     .brand:hover { text-decoration: none; }
     .brand .mark { width: 2.25rem; height: 2.25rem; flex: none; }
     .brand .name { font-size: 1.0625rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em; line-height: 1.15; }
     .brand .name em { font-style: normal; color: var(--brand); }
-    .brand .tag { display: block; font-size: .6875rem; font-weight: 500; color: var(--muted); letter-spacing: .01em; }
 
     .nav { padding: .75rem .625rem 1.25rem; display: flex; flex-direction: column; gap: .125rem; }
     .nav .group { margin: 1rem 0 .25rem; padding: 0 .625rem; font-size: .6875rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); }

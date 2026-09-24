@@ -28,7 +28,6 @@
         <x-finance::logo />
         <span>
             <span class="name">Keneya <em>Finance</em></span>
-            <span class="tag">Gestion financière hospitalière</span>
         </span>
     </a>
 
