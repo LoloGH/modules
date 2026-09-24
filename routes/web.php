@@ -13,6 +13,7 @@ use Keneya\Pharmacie\Http\Controllers\ProductController;
 use Keneya\Pharmacie\Http\Controllers\QueueController;
 use Keneya\Pharmacie\Http\Controllers\StockController;
 use Keneya\Pharmacie\Http\Controllers\SupplyController;
+use Keneya\Pharmacie\Http\Controllers\TransferController;
 
 /*
 | Les droits se contrôlent ici, route par route (middleware `can:`), et les
@@ -97,6 +98,19 @@ Route::middleware('can:pharmacie.stock.view')->group(function (): void {
     Route::get('stock/emplacements', [LocationController::class, 'index'])->name('stock.locations.index');
     Route::get('stock/produits/{product}', [StockController::class, 'product'])->name('stock.products.show');
     Route::get('stock/lots/{batch}', [StockController::class, 'batch'])->name('stock.batches.show');
+});
+
+// Transferts entre emplacements : demande, validation, envoi, reception.
+Route::middleware('can:pharmacie.stock.view')->group(function (): void {
+    Route::get('transferts', [TransferController::class, 'index'])->name('transfers.index');
+    Route::get('transferts/{transfer}', [TransferController::class, 'show'])->name('transfers.show');
+});
+
+Route::middleware('can:pharmacie.stock.adjust')->group(function (): void {
+    Route::post('transferts', [TransferController::class, 'store'])->name('transfers.store');
+    Route::post('transferts/{transfer}/decision', [TransferController::class, 'decide'])->name('transfers.decide');
+    Route::post('transferts/{transfer}/envoi', [TransferController::class, 'send'])->name('transfers.send');
+    Route::post('transferts/{transfer}/reception', [TransferController::class, 'receive'])->name('transfers.receive');
 });
 
 // Corriger, bloquer, ranger : un droit distinct de celui de lire.

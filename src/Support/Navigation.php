@@ -45,6 +45,7 @@ final class Navigation
                     self::item('Stock', 'lot', 'pharmacie.stock.index', 'pharmacie.stock.view', ['pharmacie.stock.index', 'pharmacie.stock.products.*', 'pharmacie.stock.batches.*']),
                     self::item('Péremptions', 'alert', 'pharmacie.stock.expiring', 'pharmacie.stock.view'),
                     self::item('Emplacements', 'reception', 'pharmacie.stock.locations.index', 'pharmacie.stock.view', ['pharmacie.stock.locations.*']),
+                    self::item('Transferts', 'fleche', 'pharmacie.transfers.index', 'pharmacie.stock.view', ['pharmacie.transfers.*']),
                     self::item('Réceptions', 'reception', 'pharmacie.supply.receptions.index', 'pharmacie.stock.view', ['pharmacie.supply.receptions.*']),
                     self::item('Commandes', 'ordonnance', 'pharmacie.supply.orders.index', 'pharmacie.stock.view', ['pharmacie.supply.orders.*']),
                     self::item('Fournisseurs', 'utilisateur', 'pharmacie.supply.suppliers.index', 'pharmacie.stock.view', ['pharmacie.supply.suppliers.*']),

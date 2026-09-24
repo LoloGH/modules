@@ -55,6 +55,7 @@ return [
             'dispensation' => 'DIS',
             'order' => 'CMD',
             'reception' => 'REC',
+            'transfer' => 'TRF',
             'inventory' => 'INV',
             'loss' => 'PER',
         ],
