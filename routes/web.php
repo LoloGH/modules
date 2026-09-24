@@ -7,6 +7,7 @@ use Keneya\Pharmacie\Http\Controllers\AlertController;
 use Keneya\Pharmacie\Http\Controllers\CategoryController;
 use Keneya\Pharmacie\Http\Controllers\DispensingController;
 use Keneya\Pharmacie\Http\Controllers\HomeController;
+use Keneya\Pharmacie\Http\Controllers\InventoryController;
 use Keneya\Pharmacie\Http\Controllers\LocationController;
 use Keneya\Pharmacie\Http\Controllers\PrescriptionController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
@@ -99,6 +100,26 @@ Route::middleware('can:pharmacie.stock.view')->group(function (): void {
     Route::get('stock/produits/{product}', [StockController::class, 'product'])->name('stock.products.show');
     Route::get('stock/lots/{batch}', [StockController::class, 'batch'])->name('stock.batches.show');
 });
+
+// Inventaires, pertes et destructions : compter n'est pas valider.
+Route::middleware('can:pharmacie.stock.view')->group(function (): void {
+    Route::get('inventaires', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('inventaires/{inventory}', [InventoryController::class, 'show'])->name('inventory.show');
+    Route::get('pertes', [InventoryController::class, 'losses'])->name('inventory.losses');
+});
+
+Route::middleware('can:pharmacie.inventory.count')->group(function (): void {
+    Route::post('inventaires', [InventoryController::class, 'open'])->name('inventory.open');
+    Route::post('inventaires/{inventory}/comptage', [InventoryController::class, 'count'])->name('inventory.count');
+});
+
+Route::middleware('can:pharmacie.inventory.validate')->group(function (): void {
+    Route::post('inventaires/{inventory}/validation', [InventoryController::class, 'validateInventory'])->name('inventory.validate');
+    Route::post('inventaires/{inventory}/abandon', [InventoryController::class, 'cancel'])->name('inventory.cancel');
+});
+
+Route::post('pertes', [InventoryController::class, 'storeLoss'])
+    ->middleware('can:pharmacie.stock.adjust')->name('inventory.losses.store');
 
 // Transferts entre emplacements : demande, validation, envoi, reception.
 Route::middleware('can:pharmacie.stock.view')->group(function (): void {
