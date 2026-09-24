@@ -54,6 +54,13 @@ final class Navigation
                 ],
             ],
             [
+                'section' => 'Pilotage',
+                'items' => [
+                    self::item('Rapports', 'rapport', 'pharmacie.reports.index', 'pharmacie.reports.view'),
+                    self::item('Prévision', 'calendrier', 'pharmacie.reports.forecast', 'pharmacie.reports.view'),
+                ],
+            ],
+            [
                 'section' => 'Surveillance',
                 'items' => [
                     self::item('Registre sous contrôle', 'verrou', 'pharmacie.vigilance.register', 'pharmacie.vigilance.view'),

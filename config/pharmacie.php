@@ -92,6 +92,21 @@ return [
     ],
 
     /*
+    | Prévision de réapprovisionnement.
+    |
+    | Au rythme de consommation observé, il faut de quoi tenir l'horizon,
+    | plus le délai de livraison du fournisseur, plus une marge de sécurité.
+    | Ces trois durées dépendent du terrain — un fournisseur local et un
+    | fournisseur d'importation n'ont pas le même délai — donc elles se
+    | règlent ici.
+    */
+    'forecast' => [
+        'horizon_days' => (int) env('PHARMACIE_FORECAST_HORIZON_DAYS', 60),
+        'lead_time_days' => (int) env('PHARMACIE_FORECAST_LEAD_TIME_DAYS', 30),
+        'safety_days' => (int) env('PHARMACIE_FORECAST_SAFETY_DAYS', 15),
+    ],
+
+    /*
     | Montage dans l'application hôte : préfixe d'URL et de nom de route
     | propres au module, pour ne jamais entrer en collision avec l'hôte.
     */

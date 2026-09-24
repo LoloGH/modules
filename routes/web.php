@@ -12,6 +12,7 @@ use Keneya\Pharmacie\Http\Controllers\LocationController;
 use Keneya\Pharmacie\Http\Controllers\PrescriptionController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
 use Keneya\Pharmacie\Http\Controllers\QueueController;
+use Keneya\Pharmacie\Http\Controllers\ReportController;
 use Keneya\Pharmacie\Http\Controllers\StockController;
 use Keneya\Pharmacie\Http\Controllers\SupplyController;
 use Keneya\Pharmacie\Http\Controllers\TransferController;
@@ -133,6 +134,15 @@ Route::middleware('can:pharmacie.stock.adjust')->group(function (): void {
     Route::post('transferts/{transfer}/decision', [TransferController::class, 'decide'])->name('transfers.decide');
     Route::post('transferts/{transfer}/envoi', [TransferController::class, 'send'])->name('transfers.send');
     Route::post('transferts/{transfer}/reception', [TransferController::class, 'receive'])->name('transfers.receive');
+});
+
+// Rapports, prevision et exports : un seul jeu de filtres, partage par les
+// ecrans et par les exports, pour que le chiffre exporte soit celui qui
+// etait a l'ecran.
+Route::middleware('can:pharmacie.reports.view')->group(function (): void {
+    Route::get('rapports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('rapports/prevision', [ReportController::class, 'forecast'])->name('reports.forecast');
+    Route::get('rapports/export', [ReportController::class, 'export'])->name('reports.export');
 });
 
 // Surveillance : registre des produits sous controle, rappels de lots,
