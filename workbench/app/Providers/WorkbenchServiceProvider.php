@@ -7,11 +7,13 @@ namespace Workbench\App\Providers;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
+use Keneya\Pharmacie\Contracts\StaffDirectory;
 use Keneya\Pharmacie\Pharmacie;
 use Workbench\App\Console\Commands\DemoData;
 use Workbench\App\Console\Commands\DemoSetup;
 use Workbench\App\Models\DemoUser;
 use Workbench\App\Pharmacy\DemoQueue;
+use Workbench\App\Pharmacy\DemoStaffDirectory;
 
 /**
  * L'application hôte de démonstration : son modèle utilisateur, sa commande
@@ -47,6 +49,7 @@ class WorkbenchServiceProvider extends ServiceProvider
         // La file d'attente de l'hôte de test : quelques patients en dur,
         // pour que le comptoir soit navigable avant l'intégration.
         $this->app->singleton(PharmacyQueueProvider::class, DemoQueue::class);
+        $this->app->singleton(StaffDirectory::class, DemoStaffDirectory::class);
     }
 
     public function boot(): void

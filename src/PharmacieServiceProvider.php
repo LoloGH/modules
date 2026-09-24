@@ -4,22 +4,27 @@ declare(strict_types=1);
 
 namespace Keneya\Pharmacie;
 
+use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Keneya\Pharmacie\Access\PharmacieAccessGate;
+use Keneya\Pharmacie\Access\UserPermissions;
 use Keneya\Pharmacie\Audit\Auditor;
 use Keneya\Pharmacie\Console\Commands\SyncPermissions;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionSink;
 use Keneya\Pharmacie\Contracts\SaleSink;
+use Keneya\Pharmacie\Contracts\StaffDirectory;
 use Keneya\Pharmacie\Http\Middleware\EnsureHostGrantsAccess;
 use Keneya\Pharmacie\Prescriptions\NoPrescriptions;
 use Keneya\Pharmacie\Queue\NoPharmacyQueue;
 use Keneya\Pharmacie\Sales\NoSaleSink;
+use Keneya\Pharmacie\Services\PharmacieSettings;
+use Keneya\Pharmacie\Staff\NoStaffDirectory;
 use Keneya\Pharmacie\Standalone\StandaloneMode;
 use Keneya\Pharmacie\Support\Money;
 
@@ -44,6 +49,8 @@ class PharmacieServiceProvider extends ServiceProvider
         $this->app->singleton(StandaloneMode::class);
         $this->app->singleton(PharmacieAccessGate::class);
         $this->app->singleton(Auditor::class);
+        $this->app->singleton(PharmacieSettings::class);
+        $this->app->singleton(UserPermissions::class);
 
         // La file d'attente et la destination des ventes : l'hôte les
         // fournit en liant ses propres implémentations. `singletonIf` pour ne
@@ -55,10 +62,36 @@ class PharmacieServiceProvider extends ServiceProvider
         // a été servi. Sans hôte, aucune ordonnance et rien à rendre.
         $this->app->singletonIf(PrescriptionProvider::class, NoPrescriptions::class);
         $this->app->singletonIf(PrescriptionSink::class, NoPrescriptions::class);
+
+        // L'annuaire du personnel : l'hôte dit qui entre, pour qu'on puisse
+        // régler ses capacités avant sa première venue au comptoir.
+        $this->app->singletonIf(StaffDirectory::class, NoStaffDirectory::class);
+
+        $this->registerUserPermissions();
+    }
+
+    /**
+     * Les capacités réglées dans la pharmacie (écran « Utilisateurs ») passent
+     * avant les rôles : ce Gate::before s'enregistre dès la résolution du
+     * Gate, donc avant ceux que spatie et l'hôte posent au démarrage. Un refus
+     * réglé ici n'est ainsi jamais recouvert par un rôle qui accorde.
+     */
+    private function registerUserPermissions(): void
+    {
+        $this->callAfterResolving(Gate::class, function (Gate $gate): void {
+            $gate->before(fn ($user, string $ability): ?bool => $user === null
+                ? null
+                : $this->app->make(UserPermissions::class)->decide($user, $ability));
+        });
     }
 
     public function boot(): void
     {
+        // Les réglages de l'établissement se posent par-dessus le fichier de
+        // configuration : tout le module continue de lire
+        // `config('pharmacie.…')` sans savoir d'où vient la valeur.
+        $this->app->make(PharmacieSettings::class)->apply();
+
         $this->registerMiddlewareAliases();
         $this->registerResources();
         $this->registerRoutes();

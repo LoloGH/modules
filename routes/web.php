@@ -13,9 +13,11 @@ use Keneya\Pharmacie\Http\Controllers\PrescriptionController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
 use Keneya\Pharmacie\Http\Controllers\QueueController;
 use Keneya\Pharmacie\Http\Controllers\ReportController;
+use Keneya\Pharmacie\Http\Controllers\SettingsController;
 use Keneya\Pharmacie\Http\Controllers\StockController;
 use Keneya\Pharmacie\Http\Controllers\SupplyController;
 use Keneya\Pharmacie\Http\Controllers\TransferController;
+use Keneya\Pharmacie\Http\Controllers\UserPermissionController;
 use Keneya\Pharmacie\Http\Controllers\VigilanceController;
 
 /*
@@ -134,6 +136,21 @@ Route::middleware('can:pharmacie.stock.adjust')->group(function (): void {
     Route::post('transferts/{transfer}/decision', [TransferController::class, 'decide'])->name('transfers.decide');
     Route::post('transferts/{transfer}/envoi', [TransferController::class, 'send'])->name('transfers.send');
     Route::post('transferts/{transfer}/reception', [TransferController::class, 'receive'])->name('transfers.receive');
+});
+
+// Parametres de l'etablissement : ce qui se regle depuis l'application
+// plutot que dans le fichier de configuration.
+Route::middleware('can:pharmacie.settings.manage')->group(function (): void {
+    Route::get('parametres', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('parametres', [SettingsController::class, 'update'])->name('settings.update');
+});
+
+// Qui a droit a quoi. Un droit distinct de celui de regler les parametres :
+// donner des capacites n'est pas fixer des delais.
+Route::middleware('can:pharmacie.roles.manage')->group(function (): void {
+    Route::get('utilisateurs', [UserPermissionController::class, 'index'])->name('users.index');
+    Route::post('utilisateurs/capacites', [UserPermissionController::class, 'store'])->name('users.permissions.store');
+    Route::post('utilisateurs/capacites/reinitialiser', [UserPermissionController::class, 'reset'])->name('users.permissions.reset');
 });
 
 // Rapports, prevision et exports : un seul jeu de filtres, partage par les

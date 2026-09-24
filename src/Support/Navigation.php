@@ -71,7 +71,8 @@ final class Navigation
             [
                 'section' => 'Paramètres',
                 'items' => [
-                    self::soon('Paramètres de la pharmacie', 'reglage'),
+                    self::item('Paramètres de la pharmacie', 'reglage', 'pharmacie.settings.index', 'pharmacie.settings.manage'),
+                    self::item('Utilisateurs', 'utilisateur', 'pharmacie.users.index', 'pharmacie.roles.manage', ['pharmacie.users.*']),
                 ],
             ],
         ];

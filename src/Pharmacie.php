@@ -11,6 +11,7 @@ use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionSink;
 use Keneya\Pharmacie\Contracts\SaleSink;
+use Keneya\Pharmacie\Contracts\StaffDirectory;
 
 /**
  * Le point d'entrée du module pour l'application hôte.
@@ -82,6 +83,15 @@ final class Pharmacie
     public static function prescriptionSink(): PrescriptionSink
     {
         return App::make(PrescriptionSink::class);
+    }
+
+    /**
+     * Le personnel que l'hôte fait entrer dans la pharmacie (aucun par
+     * défaut) : c'est la liste de l'écran « Utilisateurs ».
+     */
+    public static function staff(): StaffDirectory
+    {
+        return App::make(StaffDirectory::class);
     }
 
     /**
