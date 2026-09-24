@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
 use Keneya\Pharmacie\Pharmacie;
+use Workbench\App\Console\Commands\DemoData;
 use Workbench\App\Console\Commands\DemoSetup;
 use Workbench\App\Models\DemoUser;
 use Workbench\App\Pharmacy\DemoQueue;
@@ -51,7 +52,7 @@ class WorkbenchServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([DemoSetup::class]);
+            $this->commands([DemoSetup::class, DemoData::class]);
         }
 
         // L'hôte décide qui entre : ici, tout profil connecté qui porte une

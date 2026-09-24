@@ -188,8 +188,31 @@ n'est pas référencé.
 
 ---
 
-## 6. Prochaine étape proposée
+## 6. Où en est la construction
 
-**Tranche 1 — Catalogue pharmaceutique.** Sans catalogue, ni réception ni
-dispensation n'ont de sens. Elle pose aussi les conventions que toutes les
-autres suivront : `facility_id`, audit, droits, recherche, écrans.
+Les tranches **1 à 11 sont construites et testées** : catalogue, stock,
+approvisionnement, dispensation, ordonnances, envoi à la caisse, alertes,
+transferts, inventaires et pertes, contrôle renforcé et rappels de lots,
+analyse et prévision. Chaque tranche a ses tests, et la suite complète est
+verte.
+
+La **tranche 12 — intégration à WorkFlow** est volontairement gardée pour la
+fin : le module se teste d'abord seul, sur sa propre pile Docker, avant
+d'être branché à l'application hôte.
+
+### Essayer le module seul
+
+```
+docker compose up -d
+docker compose run --rm app php vendor/bin/testbench pharmacie:demo-setup
+docker compose run --rm app php vendor/bin/testbench pharmacie:demo-data
+```
+
+Puis <http://localhost:8001/dev> : on y choisit un profil (pharmacien,
+préparateur, magasinier, administrateur) et on ouvre `/pharmacie`. Les
+données de démonstration passent par les actions réelles — réception,
+transfert, dispensation, perte — jamais par des écritures directes en base.
+
+Après une mise à jour du module, `pharmacie:sync-permissions` dit quelles
+permissions nouvelles manqueraient aux rôles déjà en place ; il ne les
+accorde que si on le lui demande (`--grant-missing`).
