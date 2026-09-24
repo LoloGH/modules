@@ -53,7 +53,7 @@ final class LedgerController extends FinanceController
     }
 
     /**
-     * Recettes : les encaissements VALIDES, vus par ce qu'ils rapportent —
+     * Recettes : les encaissements VALIDES, vus par ce qu'ils rapportent :
      * source (acte ou libellé), service (centre analytique), moyen.
      */
     public function revenue(Request $request): View

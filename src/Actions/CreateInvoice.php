@@ -18,7 +18,7 @@ use Keneya\FinanceCaisse\Support\Text;
 
 /**
  * Émet une facture à partir du catalogue : chaque ligne est un acte actif,
- * facturé à son tarif standard du jour, que l'on ne saisit pas — fixer un
+ * facturé à son tarif standard du jour, que l'on ne saisit pas, fixer un
  * prix est une décision de gestion, pas de guichet.
  */
 final class CreateInvoice

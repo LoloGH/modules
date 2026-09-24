@@ -16,7 +16,7 @@ use Keneya\FinanceCaisse\Queue\SettledPayment;
  * `CashQueueProvider`. Finance l'appelle par `Finance::visitAdvancer()`.
  *
  * Finance l'appelle dans la MÊME transaction que l'encaissement : si l'hôte
- * lève une exception, l'encaissement est annulé avec lui — jamais d'argent
+ * lève une exception, l'encaissement est annulé avec lui, jamais d'argent
  * encaissé pour un patient resté bloqué à la caisse. L'hôte ne crée AUCUN
  * paiement de son côté : la source de vérité du paiement est Finance.
  *

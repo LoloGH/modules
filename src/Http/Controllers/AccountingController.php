@@ -14,8 +14,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Les exports comptables : les écritures du module, dans la forme que le
  * comptable reprendra dans son logiciel.
  *
- * L'écran montre d'abord ce qui sortira — le journal, la balance, et le
- * contrôle d'équilibre — avant de laisser télécharger. Un export qui ne
+ * L'écran montre d'abord ce qui sortira, le journal, la balance, et le
+ * contrôle d'équilibre, avant de laisser télécharger. Un export qui ne
  * s'équilibre pas se voit à l'écran plutôt que chez le comptable.
  */
 final class AccountingController extends FinanceController

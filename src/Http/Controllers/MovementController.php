@@ -35,7 +35,7 @@ final class MovementController extends FinanceController
     public function storePayment(PaymentRequest $request, CashSession $session, RecordPayment $action, CollectQueuedVisit $collect, CreateInvoice $invoices): RedirectResponse
     {
         // Avec une prise en charge : une facture de l'acte, prise en charge,
-        // et l'encaissement de la part patient qui s'y rattache — ensemble,
+        // et l'encaissement de la part patient qui s'y rattache, ensemble,
         // ou pas du tout. Sans elle, pas de transaction englobante : l'échec
         // d'un encaissement venu de la file doit garder sa trace d'audit.
         if (empty($request->validated('insurer_id'))) {

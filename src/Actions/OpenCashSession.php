@@ -24,7 +24,7 @@ use Keneya\FinanceCaisse\Support\Money;
  * dépasse pas sa limite de sessions ouvertes simultanées, une caisse
  * désactivée ne s'ouvre pas, le fonds initial n'est pas négatif.
  *
- * La limite vaut 1 par défaut — un caissier, un tiroir — et se règle par
+ * La limite vaut 1 par défaut (un caissier, un tiroir) et se règle par
  * établissement dans la configuration, puis caissier par caissier dans
  * `finance_cashier_settings`.
  */
@@ -85,7 +85,7 @@ final class OpenCashSession
     }
 
     /**
-     * Le caissier est affecté à cette caisse — ou n'est restreint à aucune,
+     * Le caissier est affecté à cette caisse, ou n'est restreint à aucune,
      * ce qui les autorise toutes.
      */
     private function assertAssignedTo(CashRegister $register, string $cashierId): void

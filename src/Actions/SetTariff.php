@@ -18,7 +18,7 @@ use Keneya\FinanceCaisse\Support\Text;
  * Fixe ou change le tarif d'un acte pour un contexte (`kind`).
  *
  * Règle centrale : à un instant donné, un acte n'a qu'UN tarif actif par
- * contexte. Changer un prix ne modifie jamais la ligne existante — on la
+ * contexte. Changer un prix ne modifie jamais la ligne existante, on la
  * désactive et on en crée une nouvelle, pour que l'historique financier
  * reste lisible et qu'une facture passée garde son explication.
  */

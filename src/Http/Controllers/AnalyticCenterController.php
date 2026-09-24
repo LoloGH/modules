@@ -66,7 +66,7 @@ final class AnalyticCenterController extends FinanceController
 
     /**
      * Modifier un centre : son nom, son rattachement et sa nature. Le code ne
-     * change pas — les rapports et les exports passés s'y réfèrent.
+     * change pas, les rapports et les exports passés s'y réfèrent.
      */
     public function update(AnalyticCenterUpdateRequest $request, AnalyticCenter $center, Auditor $auditor): RedirectResponse
     {

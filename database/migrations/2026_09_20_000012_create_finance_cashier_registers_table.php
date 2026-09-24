@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Convention importante : **aucune ligne pour un caissier signifie « toutes
  * les caisses »**. L'affectation est une restriction volontaire, pas un
- * passage obligé — un établissement qui ne s'en sert pas continue de
+ * passage obligé, un établissement qui ne s'en sert pas continue de
  * fonctionner comme avant, et personne ne se retrouve enfermé dehors parce
  * qu'un administrateur a oublié de cocher une case.
  *

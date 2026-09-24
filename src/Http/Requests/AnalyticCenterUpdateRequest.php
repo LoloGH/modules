@@ -9,7 +9,7 @@ use Keneya\FinanceCaisse\Models\AnalyticCenter;
 
 /**
  * Modifier un centre analytique : son nom, son rattachement et sa nature. Le
- * code ne change pas — les rapports et les exports passés s'y réfèrent.
+ * code ne change pas, les rapports et les exports passés s'y réfèrent.
  */
 final class AnalyticCenterUpdateRequest extends FinanceRequest
 {

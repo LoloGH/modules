@@ -17,8 +17,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Le journal d'audit financier : qui a fait quoi, quand, et sur quoi.
  *
  * Lecture seule, et rien d'autre : une ligne d'audit ne se modifie ni ne se
- * supprime (voir Models\AuditLog). L'écran sert au contrôle — retrouver une
- * clôture validée, une annulation, une remise approuvée — et s'exporte pour
+ * supprime (voir Models\AuditLog). L'écran sert au contrôle, retrouver une
+ * clôture validée, une annulation, une remise approuvée, et s'exporte pour
  * être joint à un rapport.
  */
 final class AuditController extends FinanceController

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Une ligne de facture : l'acte, son libellé et son prix figés au jour de la
- * facture — le catalogue évoluera, la facture reste lisible.
+ * facture, le catalogue évoluera, la facture reste lisible.
  */
 class InvoiceLine extends Model
 {

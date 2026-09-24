@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * n'impose une profondeur, l'établissement organise ses centres comme il
  * organise ses services.
  *
- * Un centre ne se supprime pas — ni en cascade, ni en détachant ses enfants
+ * Un centre ne se supprime pas, ni en cascade, ni en détachant ses enfants
  * (`restrictOnDelete`) : un rapport financier passé doit rester lisible.
  * On le désactive.
  */

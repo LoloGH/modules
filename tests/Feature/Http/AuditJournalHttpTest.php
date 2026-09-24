@@ -14,7 +14,7 @@ use Keneya\FinanceCaisse\Support\Rbac;
 use LogicException;
 
 /**
- * Le journal d'audit : qui a fait quoi, lisible, filtrable, exportable — et
+ * Le journal d'audit : qui a fait quoi, lisible, filtrable, exportable, et
  * qu'on ne réécrit pas.
  */
 class AuditJournalHttpTest extends HttpTestCase

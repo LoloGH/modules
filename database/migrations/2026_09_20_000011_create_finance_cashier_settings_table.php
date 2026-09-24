@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * Réglages propres à un caissier, qui surchargent le défaut de
  * l'établissement.
  *
- * Une seule ligne par caissier, repérée par `cashier_id` — la même chaîne
+ * Une seule ligne par caissier, repérée par `cashier_id`, la même chaîne
  * que celle copiée dans les sessions de caisse, valable quel que soit le type
  * de clé de l'hôte. Aucune clé étrangère : le module ne possède pas la table
  * des utilisateurs.

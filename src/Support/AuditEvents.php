@@ -8,8 +8,8 @@ namespace Keneya\FinanceCaisse\Support;
  * Les événements du journal d'audit, avec leur libellé et leur famille.
  *
  * Le journal enregistre un code (`payment_recorded`) ; cet écran le lit en
- * français. Un code inconnu — écrit par une version plus récente, ou par
- * l'hôte — s'affiche tel quel plutôt que de disparaître du filtre : le
+ * français. Un code inconnu, écrit par une version plus récente, ou par
+ * l'hôte, s'affiche tel quel plutôt que de disparaître du filtre : le
  * journal ne cache jamais une ligne qu'il ne sait pas nommer.
  */
 final class AuditEvents

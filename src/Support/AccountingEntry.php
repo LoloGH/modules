@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
  * Une ligne d'écriture comptable : un compte, un sens, un montant.
  *
  * Le module ne tient pas la comptabilité de l'établissement : il traduit ses
- * propres écritures — encaissements, factures, avances, règlements — dans la
+ * propres écritures (encaissements, factures, avances, règlements) dans la
  * forme que le comptable attend, pour qu'il les reprenne dans son logiciel.
  * Rien n'est inventé : chaque ligne porte la pièce dont elle vient.
  */

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Une remise demandée sur une facture : ce que l'établissement renonce à
  * réclamer au patient.
  *
- * Demandée par qui encaisse, approuvée par qui contrôle — jamais la même
+ * Demandée par qui encaisse, approuvée par qui contrôle, jamais la même
  * personne. Tant qu'elle n'est pas approuvée, elle ne change rien.
  *
  * @property int $amount

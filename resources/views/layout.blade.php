@@ -4,6 +4,22 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', __('finance::messages.home.title')) · {{ __('finance::messages.home.title') }}</title>
+    {{-- Pose le theme choisi avant le premier rendu : sans cela, une page
+         claire clignerait une fraction de seconde avant de passer au noir. --}}
+    <script>
+        (function () {
+            try {
+                var choix = localStorage.getItem('finance.theme');
+
+                if (choix === 'dark' || choix === 'light') {
+                    document.documentElement.setAttribute('data-theme', choix);
+                }
+            } catch (e) {
+                // Stockage refuse (navigation privee, reglage du poste) :
+                // l'interface suit le systeme, et rien ne casse.
+            }
+        })();
+    </script>
     @include('finance::partials.styles')
 </head>
 <body>
@@ -47,5 +63,38 @@
         </main>
     </div>
 </div>
+{{-- L'interrupteur de theme. Le choix est retenu par navigateur : c'est un
+     confort de lecture, pas un reglage de l'etablissement. --}}
+<script>
+    (function () {
+        'use strict';
+
+        var racine = document.documentElement;
+
+        function sombreActuellement() {
+            var pose = racine.getAttribute('data-theme');
+
+            if (pose === 'dark' || pose === 'light') {
+                return pose === 'dark';
+            }
+
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        document.querySelectorAll('[data-theme-switch]').forEach(function (bouton) {
+            bouton.addEventListener('click', function () {
+                var vers = sombreActuellement() ? 'light' : 'dark';
+
+                racine.setAttribute('data-theme', vers);
+
+                try {
+                    localStorage.setItem('finance.theme', vers);
+                } catch (e) {
+                    // Rien a retenir : le choix vaut pour cette page.
+                }
+            });
+        });
+    })();
+</script>
 </body>
 </html>

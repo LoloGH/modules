@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Trois origines : un encaissement précis, une facture, ou le solde du compte
  * du patient. Demandé par qui encaisse, approuvé par qui contrôle, puis payé
- * à la caisse — le décaissement qui le paie lui reste attaché.
+ * à la caisse, le décaissement qui le paie lui reste attaché.
  *
  * @property int $amount
  */

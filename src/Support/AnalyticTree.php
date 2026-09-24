@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 use Keneya\FinanceCaisse\Models\AnalyticCenter;
 
 /**
- * L'arborescence des centres analytiques (Pôle → Service → Activité), lue une
+ * L'arborescence des centres analytiques (Pôle vers Service vers Activité), lue une
  * fois et exploitée partout : affichage à plat avec sa profondeur, et la
  * descendance d'un centre.
  *

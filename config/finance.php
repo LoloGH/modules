@@ -65,7 +65,7 @@ return [
     |
     | `max_open_sessions_per_cashier` : combien de sessions un caissier peut
     | tenir ouvertes en même temps dans cet établissement. 1 correspond au
-    | fonctionnement classique — un caissier, un tiroir. Au-delà, une même
+    | fonctionnement classique, un caissier, un tiroir. Au-delà, une même
     | personne peut tenir plusieurs caisses (par exemple Ticket et Services)
     | sans clôturer entre les deux.
     |
@@ -98,8 +98,8 @@ return [
         'accounts' => [
             'cash' => '571',            // Caisse
             'bank' => '521',            // Banque
-            'patients' => '4111',       // Clients — patients
-            'insurers' => '4112',       // Clients — organismes payeurs
+            'patients' => '4111',       // Clients, patients
+            'insurers' => '4112',       // Clients, organismes payeurs
             'deposits' => '4191',       // Avances reçues des clients
             'revenue' => '706',         // Produits des services
             'discounts' => '7091',      // Remises accordées

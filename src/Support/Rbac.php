@@ -204,7 +204,7 @@ final class Rbac
             ],
 
             // Comptable : contrôle. Valide les clôtures, approuve les
-            // opérations sensibles, et fixe les tarifs — un prix est une
+            // opérations sensibles, et fixe les tarifs, un prix est une
             // décision de gestion, jamais celle du caissier qui encaisse.
             // La structure du catalogue (centres, actes) reste à
             // l'administrateur.

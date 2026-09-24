@@ -26,7 +26,7 @@ use Keneya\FinanceCaisse\Support\DashboardPeriod;
  *
  * Lecture seule, et uniquement à partir de ce que la base contient déjà :
  * encaissements, décaissements, avances, règlements d'assureurs, factures et
- * sessions de caisse. Aucune estimation, aucune donnée de remplissage — un
+ * sessions de caisse. Aucune estimation, aucune donnée de remplissage, un
  * écran vide vaut mieux qu'un chiffre faux.
  *
  * Tout se calcule sur la période choisie (voir DashboardPeriod), comparée à

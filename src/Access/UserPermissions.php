@@ -29,7 +29,7 @@ final class UserPermissions
     /**
      * Permissions qui ne se règlent jamais ici : l'entrée dans le module
      * appartient à l'hôte, et l'administration du module (paramètres, droits)
-     * reste à l'administrateur — la confier depuis cet écran permettrait de
+     * reste à l'administrateur, la confier depuis cet écran permettrait de
      * s'en attribuer l'accès.
      */
     private const RESERVED = ['finance.access', 'finance.settings.manage', 'finance.roles.manage'];

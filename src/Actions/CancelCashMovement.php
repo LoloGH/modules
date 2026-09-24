@@ -49,7 +49,7 @@ final class CancelCashMovement
 
     /**
      * Annuler une avance : l'argent ressort du tiroir. Ce qu'elle a déjà payé
-     * ne se défait pas ici — une avance déjà dépensée ne s'annule pas, sans
+     * ne se défait pas ici, une avance déjà dépensée ne s'annule pas, sans
      * quoi le compte du patient deviendrait négatif.
      */
     public function deposit(PatientDeposit $deposit, string $reason, Authenticatable $actor): PatientDeposit

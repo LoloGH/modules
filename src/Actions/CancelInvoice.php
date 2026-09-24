@@ -16,7 +16,7 @@ use Keneya\FinanceCaisse\Support\Text;
 /**
  * Annule une facture. Elle ne s'efface pas : elle reste visible, avec son
  * auteur et son motif. Tant qu'un encaissement valide y est rattaché, on
- * refuse — l'argent reçu doit d'abord être annulé ou remboursé.
+ * refuse, l'argent reçu doit d'abord être annulé ou remboursé.
  */
 final class CancelInvoice
 {

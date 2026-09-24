@@ -82,7 +82,7 @@ final class DashboardPeriod
                 (int) $today->copy()->startOfMonth()->diffInDays($today) + 1,
             ),
             // Le jour : la comparaison est la veille, mais le graphique garde
-            // une semaine de recul — une seule barre ne dit rien.
+            // une semaine de recul, une seule barre ne dit rien.
             default => new self(
                 'jour',
                 $today->copy()->startOfDay(),

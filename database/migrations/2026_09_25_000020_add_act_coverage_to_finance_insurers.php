@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Schema;
  *
  *  - `finance_insurers.kind` : `insurance` (Assurance) ou `social_aid` (Aide
  *    sociale) ;
- *  - `finance_insurers.coverage_scope` : `all` — tous les actes au taux par
- *    défaut, sauf les règles ci-dessous — ou `selected` — seuls les actes
+ *  - `finance_insurers.coverage_scope` : `all`, tous les actes au taux par
+ *    défaut, sauf les règles ci-dessous (ou `selected`) seuls les actes
  *    listés ;
  *  - `finance_insurer_acts` : une règle par acte, `rate` nul = taux par
  *    défaut, 0 = acte exclu ;

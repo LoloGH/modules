@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * Nullable : tout encaissement ne correspond pas à un acte du catalogue (une
  * avance, un reliquat), et les encaissements déjà enregistrés n'en ont pas.
  * `restrictOnDelete` comme partout : on ne cascade pas des données
- * financières — un acte ne se supprime pas, il se désactive.
+ * financières, un acte ne se supprime pas, il se désactive.
  */
 return new class extends Migration
 {

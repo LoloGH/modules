@@ -106,7 +106,7 @@ final class CashQueueController extends FinanceController
      *     bien à lui et ouverte ;
      *  2. sinon celle de la caisse qui porte le nom de la file (« Caisse
      *     Ticket » pour la file « Caisse Ticket ») ;
-     *  3. sinon la première de ses sessions ouvertes — l'écran lui demande
+     *  3. sinon la première de ses sessions ouvertes, l'écran lui demande
      *     alors de choisir.
      *
      * @param  Collection<int, CashSession>  $sessions

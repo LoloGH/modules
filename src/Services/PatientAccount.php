@@ -79,7 +79,7 @@ final class PatientAccount
 
     /**
      * Le relevé du compte : avances et utilisations, du plus récent au plus
-     * ancien, annulations comprises — un compte se lit aussi par ce qui a été
+     * ancien, annulations comprises, un compte se lit aussi par ce qui a été
      * corrigé.
      *
      * @return Collection<int, array{type: string, model: PatientDeposit|Payment}>

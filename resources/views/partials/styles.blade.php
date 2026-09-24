@@ -98,7 +98,7 @@
     /*
         La barre de défilement du menu : invisible au repos, elle apparaît
         quand la souris entre dans la barre latérale. Une barre toujours
-        peinte attire l'œil sur un rail, pas sur le menu — et c'est le menu
+        peinte attire l'œil sur un rail, pas sur le menu, et c'est le menu
         qu'on vient lire.
 
         Les deux syntaxes cohabitent : `scrollbar-color` pour Firefox, les
@@ -490,7 +490,8 @@
         cette feuille, sous peine de rester claire dans le noir.
     */
     @media (prefers-color-scheme: dark) {
-        :root {
+        /* Le systeme decide, sauf si la personne a choisi le clair ici. */
+        :root:not([data-theme="light"]) {
             --brand: #60a5fa;
             --brand-dark: #3b82f6;
             --brand-soft: #13233e;
@@ -540,5 +541,74 @@
            detache du sombre sans les reteindre. */
         .brand .mark { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .25)); }
     }
+
+    /*
+        Le choix fait avec l'interrupteur l'emporte sur le systeme. Les
+        memes declarations, sous un autre selecteur : une regle CSS ne se
+        partage pas entre un `@media` et un attribut.
+    */
+
+    :root[data-theme="dark"] {
+        --brand: #60a5fa;
+        --brand-dark: #3b82f6;
+        --brand-soft: #13233e;
+        --brand-ring: #1e4272;
+
+        --ink: #e8eef7;
+        --ink-2: #c2cedd;
+        --muted: #94a3b8;
+        --muted-2: #6b7c92;
+
+        --bg: #0b1220;
+        --surface: #121a2b;
+        --line: #26314a;
+        --line-soft: #1b2436;
+
+        --ok: #4ade80;
+        --ok-bg: #0f2a1d;
+        --ok-ring: #1c5136;
+        --warn: #fbbf24;
+        --warn-bg: #2d2413;
+        --danger: #f87171;
+        --danger-bg: #331b1d;
+        --danger-ring: #5f2a2c;
+        --info: #93c5fd;
+        --info-bg: #15233c;
+
+        --on-brand: #06180f;
+        --topbar-bg: rgba(18, 26, 43, .88);
+        --row-hover: #182235;
+        --violet: #c4b5fd;
+        --violet-bg: #231b3d;
+        --chart-fill: #1e3a5f;
+        --pip: #f87171;
+        --scrim: rgba(2, 6, 16, .6);
+
+        --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 1px 3px rgba(0, 0, 0, .3);
+        --shadow-pop: 0 4px 16px rgba(0, 0, 0, .45);
+
+        color-scheme: dark;
+    }
+
+    /* Le survol d'une ligne se voit par un eclaircissement, pas par une
+       couleur : dans le noir, c'est la lumiere qui designe. */
+    :root[data-theme="dark"] tbody tr:hover { background: rgba(255, 255, 255, .03); }
+
+    /* Les logos sont poses sur fond transparent : un leger halo les
+       detache du sombre sans les reteindre. */
+    :root[data-theme="dark"] .brand .mark { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .25)); }
+
+    /* L'interrupteur de theme : meme gabarit que la cloche, a cote d'elle. */
+    .theme-switch {
+        display: flex; align-items: center; justify-content: center;
+        width: 2.25rem; height: 2.25rem; padding: 0;
+        border: 0; border-radius: var(--r);
+        background: transparent; color: var(--ink-2); cursor: pointer;
+    }
+    .theme-switch:hover { background: var(--line-soft); color: var(--ink); }
+    /* On montre l'icone de ce vers quoi on va, pas celle d'ou l'on est. */
+    .theme-switch .quand-sombre { display: none; }
+    :root[data-theme="dark"] .theme-switch .quand-sombre { display: block; }
+    :root[data-theme="dark"] .theme-switch .quand-clair { display: none; }
 
 </style>

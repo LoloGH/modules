@@ -37,7 +37,7 @@ use Keneya\FinanceCaisse\Support\Money;
  *
  * Un caissier peut tenir plusieurs caisses à la fois si l'établissement
  * l'autorise (voir `finance.cash.max_open_sessions_per_cashier`). Avec la
- * limite à 1 — le cas courant — le bureau se comporte comme avant : une
+ * limite à 1 (le cas courant) le bureau se comporte comme avant : une
  * session ouverte mène directement à sa page.
  */
 final class CashDeskController extends FinanceController

@@ -2,7 +2,7 @@
     Report du tarif de l'acte dans le champ « Montant ».
 
     Seul script du module : pas de bibliothèque, pas de dépendance, et la page
-    reste entièrement utilisable sans lui — le tarif figure de toute façon dans
+    reste entièrement utilisable sans lui, le tarif figure de toute façon dans
     l'intitulé de chaque option, et le caissier peut toujours saisir le montant
     à la main.
 
