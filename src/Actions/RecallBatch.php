@@ -111,7 +111,7 @@ final class RecallBatch
                 'batch_recalled',
                 $recall,
                 sprintf(
-                    'Rappel %s du lot %s (%s) : %s — %d unité(s) bloquée(s), %d patient(s) concerné(s)',
+                    'Rappel %s du lot %s (%s) : %s, %d unité(s) bloquée(s), %d patient(s) concerné(s)',
                     $recall->number,
                     $fresh->number,
                     $fresh->product?->label() ?? 'produit inconnu',
@@ -154,7 +154,7 @@ final class RecallBatch
         $this->auditor->record(
             'recall_patient_contacted',
             $line->recall,
-            sprintf('Rappel %s : %s joint — %s', $line->recall?->number, $line->label(), $note),
+            sprintf('Rappel %s : %s joint, %s', $line->recall?->number, $line->label(), $note),
             [],
             ['patient_id' => $line->patient_id, 'note' => $note],
             $actor,

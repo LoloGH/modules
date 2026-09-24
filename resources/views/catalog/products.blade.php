@@ -31,7 +31,7 @@
                     </label>
                     <label>Catégorie
                         <select name="category_id">
-                            <option value="">— Aucune</option>
+                            <option value="">Aucune</option>
                             @foreach ($categories as $category)
                                 <option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->name }}</option>
                             @endforeach
@@ -126,9 +126,9 @@
                                 @if ($product->is_controlled) <span class="badge warn">Contrôle renforcé</span> @endif
                             </td>
                             <td data-l="Nature">{{ $product->kindLabel() }}</td>
-                            <td data-l="Catégorie">{{ $product->category?->name ?? '—' }}</td>
+                            <td data-l="Catégorie">{{ $product->category?->name ?? '-' }}</td>
                             <td data-l="Seuil" class="num">{{ $product->min_threshold }}</td>
-                            <td data-l="Prix" class="num">{{ $product->sale_price === null ? '—' : $money($product->sale_price) }}</td>
+                            <td data-l="Prix" class="num">{{ $product->sale_price === null ? '-' : $money($product->sale_price) }}</td>
                             <td data-l="État">
                                 <span class="badge {{ $product->is_active ? 'ok' : 'off' }}">{{ $product->is_active ? 'Actif' : 'Désactivé' }}</span>
                             </td>
@@ -143,9 +143,9 @@
 
             @if ($products->hasPages())
                 <div class="bd pager">
-                    @if ($products->previousPageUrl()) <a class="btn ghost sm" href="{{ $products->previousPageUrl() }}">← Précédents</a> @endif
+                    @if ($products->previousPageUrl()) <a class="btn ghost sm" href="{{ $products->previousPageUrl() }}">Précédents</a> @endif
                     <span class="muted">Page {{ $products->currentPage() }} sur {{ $products->lastPage() }}</span>
-                    @if ($products->nextPageUrl()) <a class="btn ghost sm" href="{{ $products->nextPageUrl() }}">Suivants →</a> @endif
+                    @if ($products->nextPageUrl()) <a class="btn ghost sm" href="{{ $products->nextPageUrl() }}">Suivants</a> @endif
                 </div>
             @endif
         @endif

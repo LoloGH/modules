@@ -25,7 +25,7 @@
                                     <option value="{{ $stock->batch_id }}">
                                         {{ $stock->batch?->product?->label() }} · lot {{ $stock->batch?->number }}
                                         @if ($stock->batch?->expires_on) (périme le {{ $stock->batch->expires_on->format('d/m/Y') }}) @endif
-                                        — {{ $stock->quantity }} à {{ $stock->location?->name }}
+                                        · {{ $stock->quantity }} à {{ $stock->location?->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -88,7 +88,7 @@
                                 {{ $loss->reason }}
                                 @if ($loss->witness) <span class="sub">témoin : {{ $loss->witness }}</span> @endif
                             </td>
-                            <td data-l="Par">{{ $loss->recorded_by_name ?? '—' }}</td>
+                            <td data-l="Par">{{ $loss->recorded_by_name ?? '-' }}</td>
                         </tr>
                     @endforeach
                     </tbody>

@@ -30,9 +30,9 @@
     <div class="cols">
         <x-pharmacie::card title="La dispensation">
             <dl class="facts">
-                <div class="f"><dt>Patient</dt><dd>{{ $dispensation->patient_name ?? '—' }} <span class="mono">{{ $dispensation->patient_id }}</span></dd></div>
+                <div class="f"><dt>Patient</dt><dd>{{ $dispensation->patient_name ?? '-' }} <span class="mono">{{ $dispensation->patient_id }}</span></dd></div>
                 <div class="f"><dt>Origine</dt><dd>{{ $dispensation->sourceLabel() }}</dd></div>
-                <div class="f"><dt>Ordonnance</dt><dd class="mono">{{ $dispensation->prescription_ref ?? '—' }}</dd></div>
+                <div class="f"><dt>Ordonnance</dt><dd class="mono">{{ $dispensation->prescription_ref ?? '-' }}</dd></div>
                 <div class="f"><dt>Emplacement</dt><dd>{{ $dispensation->location?->name }}</dd></div>
                 <div class="f"><dt>Délivrée par</dt><dd>{{ $dispensation->dispensed_by_name }}</dd></div>
                 <div class="f"><dt>Le</dt><dd>{{ $dispensation->dispensed_at?->format('d/m/Y H:i') }}</dd></div>
@@ -121,7 +121,7 @@
                             @endif
                             @if ($item->comment) <span class="sub">{{ $item->comment }}</span> @endif
                         </td>
-                        <td data-l="Posologie">{{ $item->posology ?? '—' }}</td>
+                        <td data-l="Posologie">{{ $item->posology ?? '-' }}</td>
                         <td data-l="Prescrit" class="num">{{ $item->prescribed_quantity }}</td>
                         <td data-l="Délivré" class="num strong">
                             {{ $item->quantity }}

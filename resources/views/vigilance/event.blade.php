@@ -16,18 +16,18 @@
 
     <x-pharmacie::card title="Ce qui a été signalé">
         <dl class="facts">
-            <div class="f"><dt>Médicament</dt><dd>{{ $event->product?->label() ?? '—' }}</dd></div>
-            <div class="f"><dt>Lot</dt><dd class="mono">{{ $event->batch?->number ?? '—' }}</dd></div>
+            <div class="f"><dt>Médicament</dt><dd>{{ $event->product?->label() ?? '-' }}</dd></div>
+            <div class="f"><dt>Lot</dt><dd class="mono">{{ $event->batch?->number ?? '-' }}</dd></div>
             <div class="f"><dt>Dispensation</dt><dd class="mono">
                 @if ($event->dispensation)
                     <a href="{{ route('pharmacie.dispensing.show', $event->dispensation) }}">{{ $event->dispensation->number }}</a>
                 @else
-                    —
+                    -
                 @endif
             </dd></div>
-            <div class="f"><dt>Début des troubles</dt><dd>{{ $event->started_on?->format('d/m/Y') ?? '—' }}</dd></div>
+            <div class="f"><dt>Début des troubles</dt><dd>{{ $event->started_on?->format('d/m/Y') ?? '-' }}</dd></div>
             <div class="f"><dt>Évolution</dt><dd>{{ $event->outcomeLabel() }}</dd></div>
-            <div class="f"><dt>Signalé par</dt><dd>{{ $event->reported_by_name ?? '—' }}
+            <div class="f"><dt>Signalé par</dt><dd>{{ $event->reported_by_name ?? '-' }}
                 le {{ $event->reported_at?->format('d/m/Y H:i') }}</dd></div>
         </dl>
         <p>{{ $event->description }}</p>
@@ -61,7 +61,7 @@
                     @foreach ($siblings as $sibling)
                         <li>
                             <a href="{{ route('pharmacie.vigilance.events.show', $sibling) }}" class="mono">{{ $sibling->number }}</a>
-                            — {{ $sibling->severityLabel() }}, {{ $sibling->patientLabel() }}
+                            · {{ $sibling->severityLabel() }}, {{ $sibling->patientLabel() }}
                         </li>
                     @endforeach
                 </ul>

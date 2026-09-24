@@ -11,7 +11,7 @@
             Tant que rien n'est réglé ici, une personne garde les droits que lui donnent
             ses rôles et ses capacités dans l'application hôte : ils sont cochés comme
             point de départ. Une fois enregistrées, ses capacités sont exactement celles
-            cochées — ce qui ne l'est pas lui est refusé, quels que soient ses rôles.
+            cochées : ce qui ne l'est pas lui est refusé, quels que soient ses rôles.
         </p>
 
         @unless ($directoryConnected)

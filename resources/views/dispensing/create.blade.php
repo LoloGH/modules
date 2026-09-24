@@ -49,11 +49,11 @@
                         <div class="row">
                             <label>Produit {{ $i + 1 }}
                                 <select name="lines[{{ $i }}][product_id]" @if ($i === 0) required @endif>
-                                    @if ($i > 0) <option value="">— Aucun</option> @endif
+                                    @if ($i > 0) <option value="">Aucun</option> @endif
                                     @foreach ($products as $product)
                                         @php($info = $suggestions[$product->id] ?? ['available' => 0, 'batch' => null])
                                         <option value="{{ $product->id }}">
-                                            {{ $product->label() }} — {{ $info['available'] }} disponible(s)@if ($info['batch']) · lot {{ $info['batch']->number }}@endif
+                                            {{ $product->label() }} · {{ $info['available'] }} disponible(s)@if ($info['batch']) · lot {{ $info['batch']->number }}@endif
                                         </option>
                                     @endforeach
                                 </select>
@@ -63,15 +63,15 @@
                             <label>Posologie <input name="lines[{{ $i }}][posology]" placeholder="1 gélule matin et soir"></label>
                         </div>
                         <div class="row">
-                            <label>Lot (facultatif — FEFO par défaut)
+                            <label>Lot (facultatif, FEFO par défaut)
                                 <select name="lines[{{ $i }}][batch_id]">
-                                    <option value="">— Le lot qui périme le premier</option>
+                                    <option value="">Le lot qui périme le premier</option>
                                     @foreach ($suggestions as $productId => $info)
                                         @foreach ($info['batches'] as $row)
                                             <option value="{{ $row['batch']->id }}">
                                                 {{ $row['batch']->product?->code }} · lot {{ $row['batch']->number }}
                                                 @if ($row['batch']->expires_on) (périme le {{ $row['batch']->expires_on->format('d/m/Y') }}) @endif
-                                                — {{ $row['available'] }} dispo
+                                                · {{ $row['available'] }} dispo
                                             </option>
                                         @endforeach
                                     @endforeach

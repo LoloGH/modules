@@ -64,6 +64,13 @@ class WorkbenchServiceProvider extends ServiceProvider
             fn ($user) => $user !== null && $user->can('pharmacie.access'),
         );
 
+        // Le retour vers l'« hôte » : ici, la page qui choisit un profil.
+        // Dans WorkFlow, ce sera l'espace de travail de la personne.
+        Pharmacie::returnLinkUsing(fn ($user) => $user === null ? null : [
+            'label' => "Retour à l'hôte de démonstration",
+            'url' => url('/dev'),
+        ]);
+
         Route::middleware('web')->group(__DIR__.'/../../routes/web.php');
     }
 }

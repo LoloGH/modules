@@ -17,25 +17,25 @@
     <div class="cols">
         <x-pharmacie::card title="Identification">
             <dl class="facts">
-                <div class="f"><dt>DCI</dt><dd>{{ $product->dci ?? '—' }}</dd></div>
-                <div class="f"><dt>Nom commercial</dt><dd>{{ $product->brand_name ?? '—' }}</dd></div>
-                <div class="f"><dt>Laboratoire</dt><dd>{{ $product->laboratory ?? '—' }}</dd></div>
-                <div class="f"><dt>Classe thérapeutique</dt><dd>{{ $product->therapeutic_class ?? '—' }}</dd></div>
-                <div class="f"><dt>Catégorie</dt><dd>{{ $product->category?->name ?? '—' }}</dd></div>
-                <div class="f"><dt>Code-barres</dt><dd class="mono">{{ $product->barcode ?? '—' }}</dd></div>
+                <div class="f"><dt>DCI</dt><dd>{{ $product->dci ?? '-' }}</dd></div>
+                <div class="f"><dt>Nom commercial</dt><dd>{{ $product->brand_name ?? '-' }}</dd></div>
+                <div class="f"><dt>Laboratoire</dt><dd>{{ $product->laboratory ?? '-' }}</dd></div>
+                <div class="f"><dt>Classe thérapeutique</dt><dd>{{ $product->therapeutic_class ?? '-' }}</dd></div>
+                <div class="f"><dt>Catégorie</dt><dd>{{ $product->category?->name ?? '-' }}</dd></div>
+                <div class="f"><dt>Code-barres</dt><dd class="mono">{{ $product->barcode ?? '-' }}</dd></div>
                 <div class="f"><dt>Générique</dt><dd>{{ $product->is_generic ? 'Oui' : 'Non' }}</dd></div>
             </dl>
         </x-pharmacie::card>
 
         <x-pharmacie::card title="Présentation et gestion">
             <dl class="facts">
-                <div class="f"><dt>Forme</dt><dd>{{ $product->form ?? '—' }}</dd></div>
-                <div class="f"><dt>Dosage</dt><dd>{{ $product->dosage ?? '—' }}</dd></div>
-                <div class="f"><dt>Voie d'administration</dt><dd>{{ $product->route ?? '—' }}</dd></div>
+                <div class="f"><dt>Forme</dt><dd>{{ $product->form ?? '-' }}</dd></div>
+                <div class="f"><dt>Dosage</dt><dd>{{ $product->dosage ?? '-' }}</dd></div>
+                <div class="f"><dt>Voie d'administration</dt><dd>{{ $product->route ?? '-' }}</dd></div>
                 <div class="f"><dt>Unité</dt><dd>{{ $product->unit }}</dd></div>
-                <div class="f"><dt>Conditionnement</dt><dd>{{ $product->packaging ?? '—' }}</dd></div>
+                <div class="f"><dt>Conditionnement</dt><dd>{{ $product->packaging ?? '-' }}</dd></div>
                 <div class="f"><dt>Seuils</dt><dd>{{ $product->min_threshold }}@if ($product->max_threshold) – {{ $product->max_threshold }} @endif</dd></div>
-                <div class="f"><dt>Conservation</dt><dd>{{ $product->storage_conditions ?? '—' }}</dd></div>
+                <div class="f"><dt>Conservation</dt><dd>{{ $product->storage_conditions ?? '-' }}</dd></div>
                 <div class="f total"><dt>Prix de vente</dt><dd>{{ $product->sale_price === null ? 'À fixer' : $money($product->sale_price) }}</dd></div>
             </dl>
         </x-pharmacie::card>
@@ -69,7 +69,7 @@
                     </label>
                     <label>Catégorie
                         <select name="category_id">
-                            <option value="">— Aucune</option>
+                            <option value="">Aucune</option>
                             @foreach ($categories as $category)
                                 <option value="{{ $category->id }}" @selected((string) old('category_id', $product->category_id) === (string) $category->id)>{{ $category->name }}</option>
                             @endforeach

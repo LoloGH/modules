@@ -40,7 +40,7 @@
                         <div class="row">
                             <label>Produit {{ $i + 1 }}
                                 <select name="lines[{{ $i }}][product_id]">
-                                    <option value="">— Aucun</option>
+                                    <option value="">Aucun</option>
                                     @foreach ($products as $product)
                                         <option value="{{ $product->id }}">{{ $product->label() }}</option>
                                     @endforeach
@@ -90,7 +90,7 @@
                             <td data-l="De">{{ $transfer->from?->name }}</td>
                             <td data-l="Vers">{{ $transfer->to?->name }}</td>
                             <td data-l="Lignes" class="num">{{ $transfer->lines->count() }}</td>
-                            <td data-l="Demandé par">{{ $transfer->requested_by_name ?? '—' }}</td>
+                            <td data-l="Demandé par">{{ $transfer->requested_by_name ?? '-' }}</td>
                             <td data-l="État"><span class="badge {{ $transfer->statusTone() }}">{{ $transfer->statusLabel() }}</span></td>
                             <td data-l="" class="acts"><a class="btn ghost sm" href="{{ route('pharmacie.transfers.show', $transfer) }}">Ouvrir</a></td>
                         </tr>

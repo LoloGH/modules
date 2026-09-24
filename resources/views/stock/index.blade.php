@@ -4,7 +4,7 @@
 
 @section('content')
     <x-pharmacie::page title="Stock"
-        sub="Ce qu'il y a, ce qui est promis, ce qu'on peut servir — produit par produit." />
+        sub="Ce qu'il y a, ce qui est promis, ce qu'on peut servir, produit par produit." />
 
     <div class="kpis">
         <x-pharmacie::kpi label="Valeur du stock" icon="lot" tone="green" :value="$money($totals['value'])" foot="Au prix d'achat des lots" />
@@ -91,9 +91,9 @@
 
             @if ($products->hasPages())
                 <div class="bd pager">
-                    @if ($products->previousPageUrl()) <a class="btn ghost sm" href="{{ $products->previousPageUrl() }}">← Précédents</a> @endif
+                    @if ($products->previousPageUrl()) <a class="btn ghost sm" href="{{ $products->previousPageUrl() }}">Précédents</a> @endif
                     <span class="muted">Page {{ $products->currentPage() }} sur {{ $products->lastPage() }}</span>
-                    @if ($products->nextPageUrl()) <a class="btn ghost sm" href="{{ $products->nextPageUrl() }}">Suivants →</a> @endif
+                    @if ($products->nextPageUrl()) <a class="btn ghost sm" href="{{ $products->nextPageUrl() }}">Suivants</a> @endif
                 </div>
             @endif
         @endif

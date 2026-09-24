@@ -108,7 +108,7 @@ final class DispenseProducts
                     $dispensation->patient_name ?? $dispensation->patient_id ?? 'patient non désigné',
                     count($lines),
                     Money::format($total),
-                    $outstanding > 0 ? sprintf(' — reliquat de %d unité(s)', $outstanding) : '',
+                    $outstanding > 0 ? sprintf(', reliquat de %d unité(s)', $outstanding) : '',
                 ),
                 [],
                 [
@@ -250,7 +250,7 @@ final class DispenseProducts
 
         if ($substitutedFor !== null && Text::clean($line['substitution_reason'] ?? null) === null) {
             throw new PharmacieRuleViolation(
-                "Ligne {$position} : une substitution doit être justifiée — ce qui est délivré n'est pas ce qui a été prescrit."
+                "Ligne {$position} : une substitution doit être justifiée : ce qui est délivré n'est pas ce qui a été prescrit."
             );
         }
 

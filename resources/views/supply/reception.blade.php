@@ -19,7 +19,7 @@
                 <div class="f"><dt>Fournisseur</dt><dd>{{ $reception->supplier?->name }}</dd></div>
                 <div class="f"><dt>Reçue le</dt><dd>{{ $reception->received_on?->format('d/m/Y') }}</dd></div>
                 <div class="f"><dt>Emplacement</dt><dd>{{ $reception->location?->name }}</dd></div>
-                <div class="f"><dt>Bon de livraison</dt><dd class="mono">{{ $reception->delivery_note ?? '—' }}</dd></div>
+                <div class="f"><dt>Bon de livraison</dt><dd class="mono">{{ $reception->delivery_note ?? '-' }}</dd></div>
                 <div class="f"><dt>Commande</dt>
                     <dd>
                         @if ($reception->order)
@@ -29,7 +29,7 @@
                         @endif
                     </dd>
                 </div>
-                <div class="f"><dt>Contrôlée par</dt><dd>{{ $reception->received_by_name ?? '—' }}</dd></div>
+                <div class="f"><dt>Contrôlée par</dt><dd>{{ $reception->received_by_name ?? '-' }}</dd></div>
                 <div class="f total"><dt>Total</dt><dd>{{ $money($reception->total) }}</dd></div>
             </dl>
         </x-pharmacie::card>
@@ -61,7 +61,7 @@
                         <td data-l="Lot" class="mono">
                             <a href="{{ route('pharmacie.stock.batches.show', $line->batch) }}">{{ $line->batch?->number }}</a>
                         </td>
-                        <td data-l="Péremption">{{ $line->batch?->expires_on?->format('d/m/Y') ?? '—' }}</td>
+                        <td data-l="Péremption">{{ $line->batch?->expires_on?->format('d/m/Y') ?? '-' }}</td>
                         <td data-l="Quantité" class="num strong">{{ $line->quantity }}</td>
                         <td data-l="Prix" class="num">{{ $money($line->unit_price) }}</td>
                         <td data-l="Montant" class="num">{{ $money($line->amount) }}</td>

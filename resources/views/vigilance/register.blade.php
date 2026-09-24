@@ -38,7 +38,7 @@
                 foot="Depuis l'ouverture du registre" />
         </div>
 
-        <x-pharmacie::card :title="'Registre — '.($product?->label() ?? '')"
+        <x-pharmacie::card :title="'Registre : '.($product?->label() ?? '')"
             hint="Du plus récent au plus ancien" flush>
             @if ($movements->isEmpty())
                 <div class="bd">
@@ -61,14 +61,14 @@
                                 <td data-l="Nature">{{ $kinds[$movement->kind] ?? $movement->kind }}</td>
                                 <td data-l="Lot" class="mono">{{ $movement->batch?->number }}</td>
                                 <td data-l="Emplacement">{{ $movement->location?->name }}</td>
-                                <td data-l="Entrée" class="num">{{ $movement->quantity > 0 ? $movement->quantity : '—' }}</td>
-                                <td data-l="Sortie" class="num">{{ $movement->quantity < 0 ? abs($movement->quantity) : '—' }}</td>
-                                <td data-l="Solde" class="num strong">{{ $balances[$movement->id] ?? '—' }}</td>
+                                <td data-l="Entrée" class="num">{{ $movement->quantity > 0 ? $movement->quantity : '-' }}</td>
+                                <td data-l="Sortie" class="num">{{ $movement->quantity < 0 ? abs($movement->quantity) : '-' }}</td>
+                                <td data-l="Solde" class="num strong">{{ $balances[$movement->id] ?? '-' }}</td>
                                 <td data-l="Pièce" class="mono">
-                                    {{ $movement->document_number ?? '—' }}
+                                    {{ $movement->document_number ?? '-' }}
                                     @if ($movement->reason) <span class="sub">{{ $movement->reason }}</span> @endif
                                 </td>
-                                <td data-l="Par">{{ $movement->actor_name ?? '—' }}</td>
+                                <td data-l="Par">{{ $movement->actor_name ?? '-' }}</td>
                             </tr>
                         @endforeach
                         </tbody>

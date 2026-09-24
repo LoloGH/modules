@@ -52,7 +52,7 @@
                         <tr class="{{ $dispensation->isCancelled() ? 'cancelled' : '' }}">
                             <td data-l="N°" class="mono strong">{{ $dispensation->number }}</td>
                             <td data-l="Patient">
-                                {{ $dispensation->patient_name ?? '—' }}
+                                {{ $dispensation->patient_name ?? '-' }}
                                 <span class="sub mono">{{ $dispensation->patient_id }}</span>
                             </td>
                             <td data-l="Origine">
@@ -75,9 +75,9 @@
 
             @if ($dispensations->hasPages())
                 <div class="bd pager">
-                    @if ($dispensations->previousPageUrl()) <a class="btn ghost sm" href="{{ $dispensations->previousPageUrl() }}">← Précédentes</a> @endif
+                    @if ($dispensations->previousPageUrl()) <a class="btn ghost sm" href="{{ $dispensations->previousPageUrl() }}">Précédentes</a> @endif
                     <span class="muted">Page {{ $dispensations->currentPage() }} sur {{ $dispensations->lastPage() }}</span>
-                    @if ($dispensations->nextPageUrl()) <a class="btn ghost sm" href="{{ $dispensations->nextPageUrl() }}">Suivantes →</a> @endif
+                    @if ($dispensations->nextPageUrl()) <a class="btn ghost sm" href="{{ $dispensations->nextPageUrl() }}">Suivantes</a> @endif
                 </div>
             @endif
         @endif

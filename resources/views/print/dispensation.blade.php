@@ -19,8 +19,8 @@
         </div>
 
         <dl class="rows">
-            <div><dt>Patient</dt><dd>{{ $dispensation->patient_name ?? '—' }}</dd></div>
-            <div><dt>Identifiant</dt><dd>{{ $dispensation->patient_id ?? '—' }}</dd></div>
+            <div><dt>Patient</dt><dd>{{ $dispensation->patient_name ?? '-' }}</dd></div>
+            <div><dt>Identifiant</dt><dd>{{ $dispensation->patient_id ?? '-' }}</dd></div>
             @if ($dispensation->prescription_ref)
                 <div><dt>Ordonnance</dt><dd>{{ $dispensation->prescription_ref }}</dd></div>
             @endif
@@ -36,7 +36,7 @@
             @foreach ($dispensation->items as $item)
                 <tr>
                     <td>{{ $item->label }}</td>
-                    <td>{{ $item->posology ?? '—' }}</td>
+                    <td>{{ $item->posology ?? '-' }}</td>
                     <td class="r">{{ $item->quantity }}</td>
                     <td>
                         @foreach ($item->batches as $served)

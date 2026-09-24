@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', __('pharmacie::messages.home.title')) — {{ __('pharmacie::messages.home.title') }}</title>
+    <title>@yield('title', __('pharmacie::messages.home.title')) · {{ __('pharmacie::messages.home.title') }}</title>
     @include('pharmacie::partials.styles')
 </head>
 <body>

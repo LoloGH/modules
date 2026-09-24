@@ -8,7 +8,7 @@
     </a>
 
     <x-pharmacie::page :title="'Transfert '.$transfer->number"
-                       :sub="$transfer->from?->name.' → '.$transfer->to?->name">
+                       :sub="$transfer->from?->name.' vers '.$transfer->to?->name">
         <x-slot:actions>
             <span class="badge {{ $transfer->statusTone() }}">{{ $transfer->statusLabel() }}</span>
         </x-slot:actions>
@@ -22,11 +22,11 @@
 
     <x-pharmacie::card title="Le transfert">
         <dl class="facts">
-            <div class="f"><dt>Motif</dt><dd>{{ $transfer->reason ?? '—' }}</dd></div>
-            <div class="f"><dt>Demandé par</dt><dd>{{ $transfer->requested_by_name ?? '—' }}</dd></div>
-            <div class="f"><dt>Validé par</dt><dd>{{ $transfer->approved_by_name ?? '—' }}</dd></div>
-            <div class="f"><dt>Parti le</dt><dd>{{ $transfer->sent_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
-            <div class="f"><dt>Reçu le</dt><dd>{{ $transfer->received_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
+            <div class="f"><dt>Motif</dt><dd>{{ $transfer->reason ?? '-' }}</dd></div>
+            <div class="f"><dt>Demandé par</dt><dd>{{ $transfer->requested_by_name ?? '-' }}</dd></div>
+            <div class="f"><dt>Validé par</dt><dd>{{ $transfer->approved_by_name ?? '-' }}</dd></div>
+            <div class="f"><dt>Parti le</dt><dd>{{ $transfer->sent_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
+            <div class="f"><dt>Reçu le</dt><dd>{{ $transfer->received_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
         </dl>
 
         @if ($transfer->isInTransit())
@@ -71,7 +71,7 @@
                             @foreach ($transfer->lines as $line)
                                 <tr>
                                     <td data-l="Produit" class="strong">{{ $line->label }}</td>
-                                    <td data-l="Lot" class="mono">{{ $line->batch?->number ?? '—' }}</td>
+                                    <td data-l="Lot" class="mono">{{ $line->batch?->number ?? '-' }}</td>
                                     <td data-l="Parti" class="num">{{ $line->quantity }}</td>
                                     <td data-l="Reçu" class="num">
                                         <input name="lines[{{ $line->id }}][quantity]" inputmode="numeric" value="{{ $line->quantity }}">
@@ -98,11 +98,11 @@
                 @foreach ($transfer->lines as $line)
                     <tr>
                         <td data-l="Produit" class="strong">{{ $line->label }}</td>
-                        <td data-l="Lot" class="mono">{{ $line->batch?->number ?? '—' }}</td>
+                        <td data-l="Lot" class="mono">{{ $line->batch?->number ?? '-' }}</td>
                         <td data-l="Demandé" class="num">{{ $line->quantity }}</td>
                         <td data-l="Reçu" class="num">{{ $line->received_quantity }}</td>
-                        <td data-l="Écart" class="num strong">{{ $line->gap() ?: '—' }}</td>
-                        <td data-l="Motif">{{ $line->gap_reason ?? '—' }}</td>
+                        <td data-l="Écart" class="num strong">{{ $line->gap() ?: '-' }}</td>
+                        <td data-l="Motif">{{ $line->gap_reason ?? '-' }}</td>
                     </tr>
                 @endforeach
                 </tbody>

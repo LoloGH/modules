@@ -27,7 +27,7 @@
             :value="$money($summary['loss_value'])"
             :foot="$summary['expiry_rate'] === null ? 'Aucune entrée sur la période' : 'Soit '.number_format($summary['expiry_rate'] * 100, 1, ',', ' ').' % de ce qui est entré, périmé'" />
         <x-pharmacie::kpi label="Rotation annualisée" icon="rapport" tone="blue"
-            :value="$summary['turnover'] === null ? '—' : number_format($summary['turnover'], 1, ',', ' ').' ×'"
+            :value="$summary['turnover'] === null ? '-' : number_format($summary['turnover'], 1, ',', ' ').' ×'"
             foot="Au rythme de la période" />
     </div>
 
@@ -61,7 +61,7 @@
                             <td data-l="Produit" class="strong">
                                 <a href="{{ route('pharmacie.stock.products.show', $row['product']) }}">{{ $row['product']->label() }}</a>
                             </td>
-                            <td data-l="Catégorie">{{ $row['product']->category?->name ?? '—' }}</td>
+                            <td data-l="Catégorie">{{ $row['product']->category?->name ?? '-' }}</td>
                             <td data-l="Quantité" class="num">{{ $row['quantity'] }}</td>
                             <td data-l="Valeur" class="num">{{ $money($row['value']) }}</td>
                         </tr>

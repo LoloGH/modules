@@ -1,6 +1,6 @@
 @extends('pharmacie::layout')
 
-@section('title', 'Stock — '.$product->name)
+@section('title', 'Stock : '.$product->name)
 
 @section('content')
     <a class="back" href="{{ route('pharmacie.stock.index') }}">
@@ -34,7 +34,7 @@
                         <tr>
                             <td data-l="Lot" class="mono strong">{{ $batch?->number }}</td>
                             <td data-l="Péremption">
-                                {{ $batch?->expires_on?->format('d/m/Y') ?? '—' }}
+                                {{ $batch?->expires_on?->format('d/m/Y') ?? '-' }}
                                 @if ($batch?->daysToExpiry() !== null)
                                     <span class="sub">
                                         @if ($batch->daysToExpiry() < 0)

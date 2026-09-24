@@ -3,7 +3,7 @@
 @section('title', 'Tableau de bord')
 
 @section('content')
-    <x-pharmacie::page title="Bonjour !" :sub="$facility.' — pharmacie'">
+    <x-pharmacie::page title="Bonjour !" :sub="$facility.' · pharmacie'">
         @if ($canReport)
             <x-slot:actions>
                 <a class="btn ghost sm" href="{{ route('pharmacie.reports.index') }}">
@@ -28,7 +28,7 @@
                               :value="(string) $figures['dispensations_today']"
                               :foot="$money($figures['dispensed_value_today']).' délivrés'" />
         @else
-            <x-pharmacie::kpi label="Stock" icon="produit" tone="green" value="—"
+            <x-pharmacie::kpi label="Stock" icon="produit" tone="green" value="-"
                               foot="Vous n'avez pas le droit de consulter le stock" />
         @endif
     </div>

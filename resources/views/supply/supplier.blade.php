@@ -16,18 +16,18 @@
     <div class="cols">
         <x-pharmacie::card title="Coordonnées">
             <dl class="facts">
-                <div class="f"><dt>Contact</dt><dd>{{ $supplier->contact_name ?? '—' }}</dd></div>
-                <div class="f"><dt>Téléphone</dt><dd>{{ $supplier->phone ?? '—' }}</dd></div>
-                <div class="f"><dt>E-mail</dt><dd>{{ $supplier->email ?? '—' }}</dd></div>
-                <div class="f"><dt>Adresse</dt><dd>{{ $supplier->address ?? '—' }}</dd></div>
+                <div class="f"><dt>Contact</dt><dd>{{ $supplier->contact_name ?? '-' }}</dd></div>
+                <div class="f"><dt>Téléphone</dt><dd>{{ $supplier->phone ?? '-' }}</dd></div>
+                <div class="f"><dt>E-mail</dt><dd>{{ $supplier->email ?? '-' }}</dd></div>
+                <div class="f"><dt>Adresse</dt><dd>{{ $supplier->address ?? '-' }}</dd></div>
             </dl>
         </x-pharmacie::card>
 
         <x-pharmacie::card title="Conditions">
             <dl class="facts">
-                <div class="f"><dt>Délai de paiement</dt><dd>{{ $supplier->payment_days === null ? '—' : $supplier->payment_days.' jour(s)' }}</dd></div>
-                <div class="f"><dt>Délai de livraison</dt><dd>{{ $supplier->lead_time_days === null ? '—' : $supplier->lead_time_days.' jour(s)' }}</dd></div>
-                <div class="f"><dt>Observations</dt><dd>{{ $supplier->notes ?? '—' }}</dd></div>
+                <div class="f"><dt>Délai de paiement</dt><dd>{{ $supplier->payment_days === null ? '-' : $supplier->payment_days.' jour(s)' }}</dd></div>
+                <div class="f"><dt>Délai de livraison</dt><dd>{{ $supplier->lead_time_days === null ? '-' : $supplier->lead_time_days.' jour(s)' }}</dd></div>
+                <div class="f"><dt>Observations</dt><dd>{{ $supplier->notes ?? '-' }}</dd></div>
             </dl>
 
             @can('pharmacie.stock.receive')

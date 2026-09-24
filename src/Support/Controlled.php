@@ -41,13 +41,13 @@ final class Controlled
 
         if ($ability !== null && ($actor === null || ! Gate::forUser($actor)->allows($ability))) {
             throw new PharmacieRuleViolation(
-                $intro.' — sa délivrance demande une habilitation particulière : appelez le pharmacien.'
+                $intro.'. Sa délivrance demande une habilitation particulière : appelez le pharmacien.'
             );
         }
 
         if (self::rule('require_prescription') && Text::clean($details['prescription_ref'] ?? null) === null) {
             throw new PharmacieRuleViolation(
-                $intro.' — il ne se délivre que sur ordonnance : indiquez la référence de l\'ordonnance.'
+                $intro.'. Il ne se délivre que sur ordonnance : indiquez la référence de l\'ordonnance.'
             );
         }
 
@@ -55,7 +55,7 @@ final class Controlled
             && Text::clean($details['patient_id'] ?? null) === null
             && Text::clean($details['patient_name'] ?? null) === null) {
             throw new PharmacieRuleViolation(
-                $intro.' — il ne se délivre pas anonymement : nommez le patient.'
+                $intro.'. Il ne se délivre pas anonymement : nommez le patient.'
             );
         }
     }

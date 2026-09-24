@@ -39,8 +39,8 @@
         </div>
         <div class="bd">
             <dl class="facts">
-                <div class="f"><dt>Créée par</dt><dd>{{ $order->created_by_name ?? '—' }}</dd></div>
-                <div class="f"><dt>Envoyée</dt><dd>{{ $order->sent_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
+                <div class="f"><dt>Créée par</dt><dd>{{ $order->created_by_name ?? '-' }}</dd></div>
+                <div class="f"><dt>Envoyée</dt><dd>{{ $order->sent_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
                 <div class="f total"><dt>Total</dt><dd>{{ $money($order->total) }}</dd></div>
             </dl>
         </div>

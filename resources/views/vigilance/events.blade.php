@@ -19,7 +19,7 @@
                 <div class="row">
                     <label>Dispensation
                         <select name="dispensation_id">
-                            <option value="">—</option>
+                            <option value="">-</option>
                             @foreach ($dispensations as $dispensation)
                                 <option value="{{ $dispensation->id }}">
                                     {{ $dispensation->number }} · {{ $dispensation->patient_name ?? $dispensation->patient_id ?? 'patient non désigné' }}
@@ -29,7 +29,7 @@
                     </label>
                     <label>Produit
                         <select name="product_id">
-                            <option value="">—</option>
+                            <option value="">-</option>
                             @foreach ($products as $product)
                                 <option value="{{ $product->id }}">{{ $product->label() }}</option>
                             @endforeach
@@ -37,7 +37,7 @@
                     </label>
                     <label>Lot
                         <select name="batch_id">
-                            <option value="">—</option>
+                            <option value="">-</option>
                             @foreach ($batches as $batch)
                                 <option value="{{ $batch->id }}">{{ $batch->product?->label() }} · lot {{ $batch->number }}</option>
                             @endforeach
@@ -117,8 +117,8 @@
                         <tr>
                             <td data-l="N°" class="mono strong">{{ $event->number }}</td>
                             <td data-l="Patient">{{ $event->patientLabel() }}</td>
-                            <td data-l="Médicament">{{ $event->product?->label() ?? '—' }}</td>
-                            <td data-l="Lot" class="mono">{{ $event->batch?->number ?? '—' }}</td>
+                            <td data-l="Médicament">{{ $event->product?->label() ?? '-' }}</td>
+                            <td data-l="Lot" class="mono">{{ $event->batch?->number ?? '-' }}</td>
                             <td data-l="Gravité"><span class="badge {{ $event->severityTone() }}">{{ $event->severityLabel() }}</span></td>
                             <td data-l="Évolution">{{ $event->outcomeLabel() }}</td>
                             <td data-l="État"><span class="badge {{ $event->statusTone() }}">{{ $event->statusLabel() }}</span></td>

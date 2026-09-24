@@ -108,7 +108,7 @@ final class RecordReception
                     $supplier->name,
                     count($lines),
                     $location->name,
-                    $reception->anomalies === null ? '' : ' — anomalies signalées',
+                    $reception->anomalies === null ? '' : ', anomalies signalées',
                 ),
                 [],
                 [

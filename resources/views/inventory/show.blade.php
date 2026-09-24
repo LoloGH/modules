@@ -16,9 +16,9 @@
 
     <x-pharmacie::card title="Le comptage">
         <dl class="facts">
-            <div class="f"><dt>Compté par</dt><dd>{{ $inventory->counted_by_name ?? '—' }}</dd></div>
-            <div class="f"><dt>Validé par</dt><dd>{{ $inventory->validated_by_name ?? '—' }}</dd></div>
-            <div class="f"><dt>Validé le</dt><dd>{{ $inventory->validated_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
+            <div class="f"><dt>Compté par</dt><dd>{{ $inventory->counted_by_name ?? '-' }}</dd></div>
+            <div class="f"><dt>Validé par</dt><dd>{{ $inventory->validated_by_name ?? '-' }}</dd></div>
+            <div class="f"><dt>Validé le</dt><dd>{{ $inventory->validated_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
             <div class="f"><dt>Écarts</dt><dd>{{ $inventory->gapCount() }} ligne(s)</dd></div>
         </dl>
         @if ($inventory->cancellation_reason)
@@ -84,9 +84,9 @@
                             <td data-l="Produit" class="strong">{{ $line->label }}</td>
                             <td data-l="Lot" class="mono">{{ $line->batch?->number }}</td>
                             <td data-l="Théorique" class="num">{{ $line->expected_quantity }}</td>
-                            <td data-l="Compté" class="num">{{ $line->counted_quantity ?? '—' }}</td>
-                            <td data-l="Écart" class="num strong">{{ $line->gap > 0 ? '+' : '' }}{{ $line->gap ?: '—' }}</td>
-                            <td data-l="Motif">{{ $line->gap_reason ?? '—' }}</td>
+                            <td data-l="Compté" class="num">{{ $line->counted_quantity ?? '-' }}</td>
+                            <td data-l="Écart" class="num strong">{{ $line->gap > 0 ? '+' : '' }}{{ $line->gap ?: '-' }}</td>
+                            <td data-l="Motif">{{ $line->gap_reason ?? '-' }}</td>
                         </tr>
                     @endforeach
                     </tbody>

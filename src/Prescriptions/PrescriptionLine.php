@@ -32,6 +32,6 @@ final readonly class PrescriptionLine
      */
     public function posology(): string
     {
-        return implode(', ', array_filter([$this->dosage, $this->frequency, $this->duration])) ?: '—';
+        return implode(', ', array_filter([$this->dosage, $this->frequency, $this->duration])) ?: '-';
     }
 }

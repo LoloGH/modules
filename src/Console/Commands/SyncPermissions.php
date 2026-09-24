@@ -90,12 +90,12 @@ final class SyncPermissions extends Command
         $registrar->forgetCachedPermissions();
 
         foreach ($granted as $roleName => $permissions) {
-            $this->info(sprintf('%s : %d permission(s) accordée(s) — %s', $roleName, count($permissions), implode(', ', $permissions)));
+            $this->info(sprintf('%s : %d permission(s) accordée(s) : %s', $roleName, count($permissions), implode(', ', $permissions)));
         }
 
         foreach ($pending as $roleName => $permissions) {
             $this->warn(sprintf(
-                '%s : %d permission(s) des valeurs de départ lui manquent — %s',
+                '%s : %d permission(s) des valeurs de départ lui manquent : %s',
                 $roleName,
                 count($permissions),
                 implode(', ', $permissions),

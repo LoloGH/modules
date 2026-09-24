@@ -43,9 +43,9 @@
                                 {{ $prescription->patientName }}
                                 <span class="sub mono">{{ $prescription->patientId }}</span>
                             </td>
-                            <td data-l="Prescripteur">{{ $prescription->prescriber ?? '—' }}</td>
+                            <td data-l="Prescripteur">{{ $prescription->prescriber ?? '-' }}</td>
                             <td data-l="Émise le">
-                                {{ $prescription->issuedOn?->format('d/m/Y') ?? '—' }}
+                                {{ $prescription->issuedOn?->format('d/m/Y') ?? '-' }}
                                 @if ($prescription->isExpired())
                                     <span class="sub why">validité dépassée</span>
                                 @endif
@@ -55,7 +55,7 @@
                                 @if ($prescription->hasAllergyWarnings())
                                     <span class="badge danger">Allergie signalée</span>
                                 @else
-                                    <span class="muted">—</span>
+                                    <span class="muted">-</span>
                                 @endif
                             </td>
                             <td data-l="" class="acts">

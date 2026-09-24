@@ -94,7 +94,7 @@ final class MoveStock
             $this->auditor->record(
                 'transfer_requested',
                 $transfer,
-                sprintf('Transfert %s demandé : %s → %s, %d ligne(s)', $transfer->number, $from->name, $to->name, count($lines)),
+                sprintf('Transfert %s demandé : %s vers %s, %d ligne(s)', $transfer->number, $from->name, $to->name, count($lines)),
                 [],
                 ['from' => $from->code, 'to' => $to->code, 'lines' => count($lines)],
                 $actor,
@@ -227,7 +227,7 @@ final class MoveStock
 
                 if ($quantity < (int) $line->quantity && $gapReason === null) {
                     throw new PharmacieRuleViolation(sprintf(
-                        '%s : %d unité(s) manquent à l\'arrivée. Justifiez l\'écart — c\'est ainsi qu\'on sait où le stock se perd.',
+                        '%s : %d unité(s) manquent à l\'arrivée. Justifiez l\'écart : c\'est ainsi qu\'on sait où le stock se perd.',
                         $line->label,
                         (int) $line->quantity - $quantity,
                     ));
@@ -264,7 +264,7 @@ final class MoveStock
                     'Transfert %s reçu à %s%s',
                     $fresh->number,
                     $to?->name,
-                    $gaps > 0 ? sprintf(' — écart de %d unité(s)', $gaps) : '',
+                    $gaps > 0 ? sprintf(', écart de %d unité(s)', $gaps) : '',
                 ),
                 ['status' => Transfer::STATUS_SENT],
                 ['status' => Transfer::STATUS_RECEIVED, 'gap' => $gaps],

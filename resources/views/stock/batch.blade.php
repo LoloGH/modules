@@ -22,12 +22,12 @@
     <div class="cols">
         <x-pharmacie::card title="Le lot">
             <dl class="facts">
-                <div class="f"><dt>Fournisseur</dt><dd>{{ $batch->supplier_name ?? '—' }}</dd></div>
-                <div class="f"><dt>Reçu le</dt><dd>{{ $batch->received_on?->format('d/m/Y') ?? '—' }}</dd></div>
-                <div class="f"><dt>Fabriqué le</dt><dd>{{ $batch->manufactured_on?->format('d/m/Y') ?? '—' }}</dd></div>
-                <div class="f"><dt>Périme le</dt><dd>{{ $batch->expires_on?->format('d/m/Y') ?? '—' }}</dd></div>
-                <div class="f"><dt>Prix d'achat</dt><dd>{{ $batch->purchase_price === null ? '—' : $money($batch->purchase_price) }}</dd></div>
-                <div class="f"><dt>Prix de vente</dt><dd>{{ $batch->sale_price === null ? '—' : $money($batch->sale_price) }}</dd></div>
+                <div class="f"><dt>Fournisseur</dt><dd>{{ $batch->supplier_name ?? '-' }}</dd></div>
+                <div class="f"><dt>Reçu le</dt><dd>{{ $batch->received_on?->format('d/m/Y') ?? '-' }}</dd></div>
+                <div class="f"><dt>Fabriqué le</dt><dd>{{ $batch->manufactured_on?->format('d/m/Y') ?? '-' }}</dd></div>
+                <div class="f"><dt>Périme le</dt><dd>{{ $batch->expires_on?->format('d/m/Y') ?? '-' }}</dd></div>
+                <div class="f"><dt>Prix d'achat</dt><dd>{{ $batch->purchase_price === null ? '-' : $money($batch->purchase_price) }}</dd></div>
+                <div class="f"><dt>Prix de vente</dt><dd>{{ $batch->sale_price === null ? '-' : $money($batch->sale_price) }}</dd></div>
                 <div class="f total"><dt>Reste en stock</dt><dd>{{ $batch->onHand() }} {{ $batch->product?->unit }}</dd></div>
             </dl>
         </x-pharmacie::card>
@@ -111,8 +111,8 @@
                             <td data-l="Emplacement">{{ $movement->location?->name }}</td>
                             <td data-l="Quantité" class="num strong">{{ $movement->quantity > 0 ? '+' : '' }}{{ $movement->quantity }}</td>
                             <td data-l="Après" class="num">{{ $movement->quantity_after }}</td>
-                            <td data-l="Motif">{{ $movement->reason ?? '—' }}</td>
-                            <td data-l="Par">{{ $movement->actor_name ?? '—' }}</td>
+                            <td data-l="Motif">{{ $movement->reason ?? '-' }}</td>
+                            <td data-l="Par">{{ $movement->actor_name ?? '-' }}</td>
                         </tr>
                     @endforeach
                     </tbody>

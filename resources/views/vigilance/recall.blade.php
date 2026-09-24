@@ -17,11 +17,11 @@
     <x-pharmacie::card title="Ce qui est rappelé">
         <dl class="facts">
             <div class="f"><dt>Origine</dt><dd>{{ $recall->originLabel() }}</dd></div>
-            <div class="f"><dt>Référence</dt><dd class="mono">{{ $recall->reference ?? '—' }}</dd></div>
+            <div class="f"><dt>Référence</dt><dd class="mono">{{ $recall->reference ?? '-' }}</dd></div>
             <div class="f"><dt>Portée</dt><dd>{{ $recall->levelLabel() }}</dd></div>
             <div class="f"><dt>Unités bloquées</dt><dd>{{ $recall->quantity_blocked }}</dd></div>
-            <div class="f"><dt>Ouvert par</dt><dd>{{ $recall->opened_by_name ?? '—' }}</dd></div>
-            <div class="f"><dt>Ouvert le</dt><dd>{{ $recall->opened_at?->format('d/m/Y H:i') ?? '—' }}</dd></div>
+            <div class="f"><dt>Ouvert par</dt><dd>{{ $recall->opened_by_name ?? '-' }}</dd></div>
+            <div class="f"><dt>Ouvert le</dt><dd>{{ $recall->opened_at?->format('d/m/Y H:i') ?? '-' }}</dd></div>
         </dl>
         <p class="muted">{{ $recall->reason }}</p>
         @if ($recall->closing_note)
@@ -54,19 +54,19 @@
                             </td>
                             <td data-l="Produit">{{ $line->product_label }}</td>
                             <td data-l="Quantité" class="num">{{ $line->quantity }}</td>
-                            <td data-l="Délivré le">{{ $line->dispensed_at?->format('d/m/Y') ?? '—' }}</td>
+                            <td data-l="Délivré le">{{ $line->dispensed_at?->format('d/m/Y') ?? '-' }}</td>
                             <td data-l="Dispensation" class="mono">
                                 @if ($line->dispensation)
                                     <a href="{{ route('pharmacie.dispensing.show', $line->dispensation) }}">{{ $line->dispensation->number }}</a>
                                 @else
-                                    —
+                                    -
                                 @endif
                             </td>
                             <td data-l="Suivi">
                                 @if ($line->contacted)
                                     <span class="badge ok">Joint</span>
                                     <span class="sub">{{ $line->contacted_at?->format('d/m/Y') }} ·
-                                        {{ $line->contacted_by_name }} — {{ $line->contact_note }}</span>
+                                        {{ $line->contacted_by_name }} : {{ $line->contact_note }}</span>
                                 @elseif ($recall->isOpen())
                                     @can('pharmacie.vigilance.manage')
                                         <form method="post" action="{{ route('pharmacie.vigilance.recalls.contact', $line) }}" class="inline">

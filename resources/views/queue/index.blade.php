@@ -59,13 +59,13 @@
                                     {{ $patient->patientName }}
                                     <span class="sub mono">{{ $patient->patientId }}</span>
                                 </td>
-                                <td data-l="Motif">{{ $patient->reason ?? '—' }}</td>
-                                <td data-l="Ordonnance" class="mono">{{ $patient->prescriptionRef ?? '—' }}</td>
+                                <td data-l="Motif">{{ $patient->reason ?? '-' }}</td>
+                                <td data-l="Ordonnance" class="mono">{{ $patient->prescriptionRef ?? '-' }}</td>
                                 <td data-l="Attente">
                                     @if ($patient->waitedMinutes() !== null)
                                         {{ $patient->waitedMinutes() }} min
                                     @else
-                                        —
+                                        -
                                     @endif
                                 </td>
                                 <td data-l="État">

@@ -40,7 +40,7 @@
                 @if ($group === 'Prévision de réapprovisionnement')
                     <p class="muted">
                         Au rythme de consommation observé, le besoin couvre l'horizon, plus le
-                        délai de livraison, plus la marge — moins le stock et ce qui est déjà
+                        délai de livraison, plus la marge, moins le stock et ce qui est déjà
                         commandé.
                     </p>
                 @endif

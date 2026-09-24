@@ -30,7 +30,7 @@
                         </label>
                         <label>Catégorie (si partiel)
                             <select name="category_id">
-                                <option value="">—</option>
+                                <option value="">-</option>
                                 @foreach ($categories as $category)
                                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                                 @endforeach
@@ -38,7 +38,7 @@
                         </label>
                         <label>Produit (si un seul)
                             <select name="product_id">
-                                <option value="">—</option>
+                                <option value="">-</option>
                                 @foreach ($products as $product)
                                     <option value="{{ $product->id }}">{{ $product->label() }}</option>
                                 @endforeach
@@ -71,8 +71,8 @@
                             <td data-l="Emplacement">{{ $inventory->location?->name }}</td>
                             <td data-l="Portée">{{ $inventory->scopeLabel() }}</td>
                             <td data-l="Lignes" class="num">{{ $inventory->lines->count() }}</td>
-                            <td data-l="Écarts" class="num">{{ $inventory->gapCount() ?: '—' }}</td>
-                            <td data-l="Compté par">{{ $inventory->counted_by_name ?? '—' }}</td>
+                            <td data-l="Écarts" class="num">{{ $inventory->gapCount() ?: '-' }}</td>
+                            <td data-l="Compté par">{{ $inventory->counted_by_name ?? '-' }}</td>
                             <td data-l="État"><span class="badge {{ $inventory->statusTone() }}">{{ $inventory->statusLabel() }}</span></td>
                             <td data-l="" class="acts"><a class="btn ghost sm" href="{{ route('pharmacie.inventory.show', $inventory) }}">Ouvrir</a></td>
                         </tr>

@@ -51,7 +51,7 @@
                                 <span class="sub mono">{{ $supplier->code }}</span>
                             </td>
                             <td data-l="Contact">
-                                {{ $supplier->contact_name ?? '—' }}
+                                {{ $supplier->contact_name ?? '-' }}
                                 @if ($supplier->phone) <span class="sub">{{ $supplier->phone }}</span> @endif
                             </td>
                             <td data-l="Commandes" class="num">{{ $supplier->orders_count }}</td>

@@ -134,7 +134,7 @@ final class SendToCashier
                 'Dispensation %s : %s%s (%s)',
                 $dispensation->number,
                 self::kindLabels()[$kind],
-                $reference === null ? '' : ' — pièce '.$reference,
+                $reference === null ? '' : ', pièce '.$reference,
                 Money::format((int) $dispensation->total),
             ),
             [],

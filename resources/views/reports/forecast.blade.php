@@ -52,11 +52,11 @@
                             </td>
                             <td data-l="Par jour" class="num">{{ number_format($row['daily'], 2, ',', ' ') }}</td>
                             <td data-l="En stock" class="num">{{ $row['on_hand'] }}</td>
-                            <td data-l="En commande" class="num">{{ $row['on_order'] ?: '—' }}</td>
+                            <td data-l="En commande" class="num">{{ $row['on_order'] ?: '-' }}</td>
                             <td data-l="Couverture" class="num">
-                                {{ $row['coverage'] === null ? '—' : number_format($row['coverage'], 0, ',', ' ').' j' }}
+                                {{ $row['coverage'] === null ? '-' : number_format($row['coverage'], 0, ',', ' ').' j' }}
                             </td>
-                            <td data-l="Besoin estimé" class="num strong">{{ $row['needed'] ?: '—' }}</td>
+                            <td data-l="Besoin estimé" class="num strong">{{ $row['needed'] ?: '-' }}</td>
                             <td data-l="Risque">
                                 @php
                                     $tone = match ($row['risk']) {

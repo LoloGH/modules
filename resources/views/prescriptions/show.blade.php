@@ -31,10 +31,10 @@
     <div class="cols">
         <x-pharmacie::card title="L'ordonnance">
             <dl class="facts">
-                <div class="f"><dt>Prescripteur</dt><dd>{{ $prescription->prescriber ?? '—' }}</dd></div>
-                <div class="f"><dt>Émise le</dt><dd>{{ $prescription->issuedOn?->format('d/m/Y') ?? '—' }}</dd></div>
-                <div class="f"><dt>Valable jusqu'au</dt><dd>{{ $prescription->validUntil?->format('d/m/Y') ?? '—' }}</dd></div>
-                <div class="f"><dt>Instructions</dt><dd>{{ $prescription->instructions ?? '—' }}</dd></div>
+                <div class="f"><dt>Prescripteur</dt><dd>{{ $prescription->prescriber ?? '-' }}</dd></div>
+                <div class="f"><dt>Émise le</dt><dd>{{ $prescription->issuedOn?->format('d/m/Y') ?? '-' }}</dd></div>
+                <div class="f"><dt>Valable jusqu'au</dt><dd>{{ $prescription->validUntil?->format('d/m/Y') ?? '-' }}</dd></div>
+                <div class="f"><dt>Instructions</dt><dd>{{ $prescription->instructions ?? '-' }}</dd></div>
             </dl>
         </x-pharmacie::card>
 
@@ -102,7 +102,7 @@
                                     </td>
                                     <td data-l="Produit">
                                         <select name="lines[{{ $index }}][product_id]">
-                                            <option value="">— Ne pas délivrer cette ligne</option>
+                                            <option value="">Ne pas délivrer cette ligne</option>
                                             @foreach ($products as $product)
                                                 <option value="{{ $product->id }}" @selected($row['product'] !== null && $row['product']->id === $product->id)>
                                                     {{ $product->label() }}

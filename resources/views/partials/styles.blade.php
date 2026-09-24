@@ -31,6 +31,17 @@
         --info: #1d4ed8;
         --info-bg: #dbeafe;
 
+        --on-brand: #ffffff;
+        --topbar-bg: rgba(255, 255, 255, .88);
+        --row-hover: #fbfcfe;
+        --ok-ring: #bbf7d0;
+        --danger-ring: #fecaca;
+        --violet: #6d28d9;
+        --violet-bg: #ede9fe;
+        --chart-fill: #bfdbfe;
+        --pip: #ef4444;
+        --scrim: rgba(15, 23, 42, .4);
+
         --r-sm: .375rem;
         --r: .625rem;
         --r-lg: .875rem;
@@ -80,7 +91,7 @@
         position: sticky;
         top: 0;
         height: 100vh;
-        overflow-y: auto;
+        overflow: hidden;
     }
 
 
@@ -93,24 +104,40 @@
         Les deux syntaxes cohabitent : `scrollbar-color` pour Firefox, les
         pseudo-éléments pour Chrome, Edge et Safari.
     */
-    .sidebar { scrollbar-width: thin; scrollbar-color: transparent transparent; }
-    .sidebar:hover, .sidebar:focus-within { scrollbar-color: var(--line) transparent; }
+    .nav { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+    .nav:hover, .nav:focus-within { scrollbar-color: var(--line) transparent; }
 
-    .sidebar::-webkit-scrollbar { width: .5rem; }
-    .sidebar::-webkit-scrollbar-track { background: transparent; }
-    .sidebar::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; transition: background .18s ease; }
-    .sidebar:hover::-webkit-scrollbar-thumb,
-    .sidebar:focus-within::-webkit-scrollbar-thumb { background: var(--line); }
+    .nav::-webkit-scrollbar { width: .5rem; }
+    .nav::-webkit-scrollbar-track { background: transparent; }
+    .nav::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; transition: background .18s ease; }
+    .nav:hover::-webkit-scrollbar-thumb,
+    .nav:focus-within::-webkit-scrollbar-thumb { background: var(--line); }
     /* Sous le doigt de la souris, la pastille se fonce : on sait qu'on la tient. */
-    .sidebar::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
+    .nav::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
 
-    .brand { display: flex; align-items: center; gap: .625rem; padding: 1rem 1.125rem; border-bottom: 1px solid var(--line-soft); }
+    /*
+        La marque et le retour ne defilent pas : c'est le menu qui defile, sous
+        eux. On sait donc toujours dans quel module on est, et par ou en
+        sortir, quelle que soit la longueur de la navigation.
+    */
+    .brand-bar { flex: none; background: var(--surface); border-bottom: 1px solid var(--line-soft); }
+
+    .brand { display: flex; align-items: center; gap: .625rem; padding: 1rem 1.125rem; }
     .brand:hover { text-decoration: none; }
     .brand .mark { width: 2.25rem; height: 2.25rem; flex: none; }
     .brand .name { font-size: 1.0625rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em; line-height: 1.15; }
     .brand .name em { font-style: normal; color: var(--brand); }
 
-    .nav { padding: .75rem .625rem 1.25rem; display: flex; flex-direction: column; gap: .125rem; }
+    /* Le retour vers l'application hote : une sortie, pas une destination. */
+    .back-host {
+        display: flex; align-items: center; gap: .5rem;
+        margin: 0 .625rem .75rem; padding: .4375rem .625rem;
+        border-radius: var(--r);
+        color: var(--muted); font-size: .8438rem; font-weight: 500;
+    }
+    .back-host:hover { background: var(--line-soft); color: var(--ink-2); text-decoration: none; }
+
+    .nav { flex: 1; min-height: 0; overflow-y: auto; padding: .75rem .625rem 1.25rem; display: flex; flex-direction: column; gap: .125rem; }
     .nav .group { margin: 1rem 0 .25rem; padding: 0 .625rem; font-size: .6875rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); }
 
     .nav a, .nav span.soon {
@@ -124,7 +151,7 @@
     .nav span.soon { color: var(--muted-2); cursor: default; }
     .nav span.soon .chip { margin-left: auto; font-size: .625rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted-2); background: var(--line-soft); padding: .0625rem .375rem; border-radius: 1rem; }
 
-    .sidebar .version { margin-top: auto; padding: .875rem 1.25rem; font-size: .75rem; color: var(--muted-2); border-top: 1px solid var(--line-soft); }
+    .sidebar .version { flex: none; padding: .875rem 1.25rem; font-size: .75rem; color: var(--muted-2); border-top: 1px solid var(--line-soft); }
 
     .scrim { display: none; }
 
@@ -135,7 +162,7 @@
         height: var(--header); flex: none;
         display: flex; align-items: center; gap: .75rem;
         padding: 0 1.5rem;
-        background: rgba(255, 255, 255, .88);
+        background: var(--topbar-bg);
         backdrop-filter: blur(8px);
         border-bottom: 1px solid var(--line);
     }
@@ -147,7 +174,7 @@
 
     .topbar .bell { position: relative; display: flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: var(--r); color: var(--ink-2); }
     .topbar .bell:hover { background: var(--line-soft); text-decoration: none; }
-    .topbar .bell .dot { position: absolute; top: .25rem; right: .25rem; min-width: 1.0625rem; height: 1.0625rem; padding: 0 .25rem; border-radius: 1rem; background: #ef4444; color: #fff; font-size: .625rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface); }
+    .topbar .bell .dot { position: absolute; top: .25rem; right: .25rem; min-width: 1.0625rem; height: 1.0625rem; padding: 0 .25rem; border-radius: 1rem; background: var(--pip); color: #fff; font-size: .625rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface); }
 
     .topbar .sep { width: 1px; height: 1.75rem; background: var(--line); }
 
@@ -193,7 +220,7 @@
     .kpi .ico.green { background: var(--ok-bg); color: var(--ok); }
     .kpi .ico.red { background: var(--danger-bg); color: var(--danger); }
     .kpi .ico.blue { background: var(--info-bg); color: var(--info); }
-    .kpi .ico.violet { background: #ede9fe; color: #6d28d9; }
+    .kpi .ico.violet { background: var(--violet-bg); color: var(--violet); }
     .kpi .ico.amber { background: var(--warn-bg); color: var(--warn); }
     .kpi .body { min-width: 0; flex: 1; }
     .kpi .label { font-size: .8125rem; font-weight: 600; color: var(--muted); }
@@ -203,7 +230,7 @@
     .kpi.green .value { color: var(--ok); }
     .kpi.red .value { color: var(--danger); }
     .kpi.blue .value { color: var(--info); }
-    .kpi.violet .value { color: #6d28d9; }
+    .kpi.violet .value { color: var(--violet); }
 
     /* ---------------------------------------------------------- Badges */
 
@@ -220,17 +247,17 @@
     .btn, button, input[type="submit"] {
         display: inline-flex; align-items: center; justify-content: center; gap: .4375rem;
         padding: .5rem .875rem; border: 1px solid transparent; border-radius: var(--r);
-        background: var(--brand); color: #fff;
+        background: var(--brand); color: var(--on-brand);
         font: inherit; font-size: .875rem; font-weight: 600; line-height: 1.25;
         cursor: pointer; white-space: nowrap;
     }
-    .btn:hover, button:hover { background: var(--brand-dark); text-decoration: none; color: #fff; }
+    .btn:hover, button:hover { background: var(--brand-dark); text-decoration: none; color: var(--on-brand); }
     .btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--brand-ring); outline-offset: 1px; }
 
     .btn.ghost, button.ghost, .btn.secondary, button.secondary { background: var(--surface); color: var(--ink-2); border-color: var(--line); }
     .btn.ghost:hover, button.ghost:hover, .btn.secondary:hover, button.secondary:hover { background: var(--line-soft); color: var(--ink); }
 
-    .btn.danger, button.danger { background: var(--surface); color: var(--danger); border-color: #fecaca; }
+    .btn.danger, button.danger { background: var(--surface); color: var(--danger); border-color: var(--danger-ring); }
     .btn.danger:hover, button.danger:hover { background: var(--danger-bg); color: var(--danger); }
 
     .btn.sm, button.sm { padding: .3125rem .625rem; font-size: .8125rem; }
@@ -294,7 +321,7 @@
     /* La caisse qu'on regarde : enfoncée, et elle ne mène nulle part. */
     .switch .btn.on { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-ring); cursor: default; }
     .switch .btn.on:hover { background: var(--brand-soft); color: var(--brand); }
-    .switch .btn .pip { width: .5rem; height: .5rem; border-radius: 50%; background: #ef4444; display: inline-block; margin-left: .125rem; box-shadow: 0 0 0 2px var(--surface); }
+    .switch .btn .pip { width: .5rem; height: .5rem; border-radius: 50%; background: var(--pip); display: inline-block; margin-left: .125rem; box-shadow: 0 0 0 2px var(--surface); }
     .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
     form.inline { display: flex; flex-wrap: wrap; gap: .375rem; align-items: center; }
@@ -311,7 +338,7 @@
     thead th { text-align: left; padding: .625rem .875rem; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); background: #fbfcfe; border-bottom: 1px solid var(--line); white-space: nowrap; }
     tbody td { padding: .75rem .875rem; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
     tbody tr:last-child td { border-bottom: 0; }
-    tbody tr:hover { background: #fbfcfe; }
+    tbody tr:hover { background: var(--row-hover); }
     td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
     td.strong { font-weight: 600; }
     td .sub { display: block; font-size: .75rem; color: var(--muted); }
@@ -343,8 +370,8 @@
 
     .flash { display: flex; gap: .625rem; align-items: flex-start; padding: .75rem 1rem; border-radius: var(--r); margin-bottom: 1.25rem; font-size: .9063rem; border: 1px solid transparent; }
     .flash svg.ic { margin-top: .125rem; }
-    .flash.ok { background: var(--ok-bg); color: var(--ok); border-color: #bbf7d0; }
-    .flash.err { background: var(--danger-bg); color: var(--danger); border-color: #fecaca; }
+    .flash.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-ring); }
+    .flash.err { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-ring); }
     .flash ul { margin: 0; padding-left: 1.1rem; }
 
     .facts { display: flex; flex-direction: column; gap: .0625rem; }
@@ -370,7 +397,7 @@
 
     .chart { display: flex; align-items: flex-end; gap: .5rem; height: 12.5rem; padding-top: 1.5rem; }
     .chart .bar { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: .5rem; }
-    .chart .bar .fill { width: 100%; max-width: 3rem; border-radius: var(--r-sm) var(--r-sm) 0 0; background: #bfdbfe; position: relative; min-height: .125rem; }
+    .chart .bar .fill { width: 100%; max-width: 3rem; border-radius: var(--r-sm) var(--r-sm) 0 0; background: var(--chart-fill); position: relative; min-height: .125rem; }
     .chart .bar.last .fill { background: var(--brand); }
     .chart .bar .tip { position: absolute; bottom: 100%; left: 50%; transform: translate(-50%, -.375rem); font-size: .6875rem; font-weight: 700; color: var(--brand); background: var(--brand-soft); border-radius: 1rem; padding: .0625rem .4375rem; white-space: nowrap; }
     .chart .bar .x { font-size: .6875rem; color: var(--muted); white-space: nowrap; }
@@ -401,7 +428,7 @@
             box-shadow: var(--shadow-pop);
         }
         .nav-switch:checked ~ .shell .sidebar { transform: translateX(0); }
-        .nav-switch:checked ~ .shell .scrim { display: block; position: fixed; inset: 0; z-index: 30; background: rgba(15, 23, 42, .4); }
+        .nav-switch:checked ~ .shell .scrim { display: block; position: fixed; inset: 0; z-index: 30; background: var(--scrim); }
         .burger { display: flex; }
         .topbar { padding: 0 1rem; }
         .content { padding: 1.25rem 1rem; }
@@ -452,4 +479,66 @@
         .content { max-width: none; padding: 0; }
         .card { break-inside: avoid; box-shadow: none; }
     }
+
+    /*
+        Mode sombre. Il suit le reglage du systeme : celui qui travaille de
+        nuit, ou dont le poste est en sombre, retrouve la meme interface sans
+        avoir a la redemander.
+
+        Rien n'est redessine : seules les variables changent. C'est aussi la
+        raison pour laquelle aucune couleur ne doit rester ecrite en dur dans
+        cette feuille, sous peine de rester claire dans le noir.
+    */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --brand: #34d399;
+            --brand-dark: #10b981;
+            --brand-soft: #0f2a20;
+            --brand-ring: #1d5c43;
+
+            --ink: #e8eef7;
+            --ink-2: #c2cedd;
+            --muted: #94a3b8;
+            --muted-2: #6b7c92;
+
+            --bg: #0b1220;
+            --surface: #121a2b;
+            --line: #26314a;
+            --line-soft: #1b2436;
+
+            --ok: #4ade80;
+            --ok-bg: #0f2a1d;
+            --ok-ring: #1c5136;
+            --warn: #fbbf24;
+            --warn-bg: #2d2413;
+            --danger: #f87171;
+            --danger-bg: #331b1d;
+            --danger-ring: #5f2a2c;
+            --info: #93c5fd;
+            --info-bg: #15233c;
+
+            --on-brand: #06180f;
+            --topbar-bg: rgba(18, 26, 43, .88);
+            --row-hover: #182235;
+            --violet: #c4b5fd;
+            --violet-bg: #231b3d;
+            --chart-fill: #1e3a5f;
+            --pip: #f87171;
+            --scrim: rgba(2, 6, 16, .6);
+
+            --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 1px 3px rgba(0, 0, 0, .3);
+            --shadow-pop: 0 4px 16px rgba(0, 0, 0, .45);
+
+            color-scheme: dark;
+        }
+
+        /* Le survol d'une ligne se voit par un eclaircissement, pas par une
+           couleur : dans le noir, c'est la lumiere qui designe. */
+        tbody tr:hover { background: rgba(255, 255, 255, .03); }
+
+        /* Les logos sont poses sur fond transparent : un leger halo les
+           detache du sombre sans les reteindre. */
+        .brand .mark { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .25)); }
+    }
+
 </style>

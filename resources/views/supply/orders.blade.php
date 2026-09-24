@@ -50,7 +50,7 @@
                         <div class="row">
                             <label>Produit {{ $i + 1 }}
                                 <select name="lines[{{ $i }}][product_id]" @if ($i === 0) required @endif>
-                                    @if ($i > 0) <option value="">— Aucun</option> @endif
+                                    @if ($i > 0) <option value="">Aucun</option> @endif
                                     @foreach ($products as $product)
                                         <option value="{{ $product->id }}">{{ $product->label() }}</option>
                                     @endforeach
@@ -99,7 +99,7 @@
                         <tr>
                             <td data-l="N°" class="mono strong">{{ $order->number }}</td>
                             <td data-l="Fournisseur">{{ $order->supplier?->name }}</td>
-                            <td data-l="Attendue">{{ $order->expected_on?->format('d/m/Y') ?? '—' }}</td>
+                            <td data-l="Attendue">{{ $order->expected_on?->format('d/m/Y') ?? '-' }}</td>
                             <td data-l="Statut"><span class="badge {{ $order->statusTone() }}">{{ $order->statusLabel() }}</span></td>
                             <td data-l="Reste" class="num">{{ $order->outstanding() }}</td>
                             <td data-l="Montant" class="num">{{ $money($order->total) }}</td>
@@ -112,9 +112,9 @@
 
             @if ($orders->hasPages())
                 <div class="bd pager">
-                    @if ($orders->previousPageUrl()) <a class="btn ghost sm" href="{{ $orders->previousPageUrl() }}">← Précédentes</a> @endif
+                    @if ($orders->previousPageUrl()) <a class="btn ghost sm" href="{{ $orders->previousPageUrl() }}">Précédentes</a> @endif
                     <span class="muted">Page {{ $orders->currentPage() }} sur {{ $orders->lastPage() }}</span>
-                    @if ($orders->nextPageUrl()) <a class="btn ghost sm" href="{{ $orders->nextPageUrl() }}">Suivantes →</a> @endif
+                    @if ($orders->nextPageUrl()) <a class="btn ghost sm" href="{{ $orders->nextPageUrl() }}">Suivantes</a> @endif
                 </div>
             @endif
         @endif

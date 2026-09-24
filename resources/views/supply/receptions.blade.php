@@ -32,7 +32,7 @@
                         </label>
                         <label>Commande
                             <select name="purchase_order_id">
-                                <option value="">— Hors commande</option>
+                                <option value="">Hors commande</option>
                                 @foreach ($openOrders as $order)
                                     <option value="{{ $order->id }}">{{ $order->number }} · {{ $order->supplier?->name }}</option>
                                 @endforeach
@@ -49,7 +49,7 @@
                         <div class="row">
                             <label>Produit {{ $i + 1 }}
                                 <select name="lines[{{ $i }}][product_id]" @if ($i === 0) required @endif>
-                                    @if ($i > 0) <option value="">— Aucun</option> @endif
+                                    @if ($i > 0) <option value="">Aucun</option> @endif
                                     @foreach ($products as $product)
                                         <option value="{{ $product->id }}">{{ $product->label() }}</option>
                                     @endforeach
