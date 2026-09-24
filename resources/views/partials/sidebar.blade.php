@@ -28,7 +28,6 @@
         <x-pharmacie::logo />
         <span>
             <span class="name">Keneya <em>Pharmacie</em></span>
-            <span class="tag">Stock, dispensation et file d'attente</span>
         </span>
     </a>
 
