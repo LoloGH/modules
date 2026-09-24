@@ -16,7 +16,7 @@
                     <label>Nom <input name="name" value="{{ old('name') }}" placeholder="Consultation générale" required></label>
                     <label>Centre analytique
                         <select name="analytic_center_id">
-                            <option value="">— Aucun</option>
+                            <option value="">Aucun</option>
                             @foreach ($centers as $center)
                                 <option value="{{ $center->id }}" @selected((string) old('analytic_center_id') === (string) $center->id)>{{ $center->name }}</option>
                             @endforeach
@@ -58,7 +58,7 @@
                                 <a href="{{ route('finance.catalog.acts.show', $act) }}">{{ $act->name }}</a>
                                 @if ($act->description)<span class="sub">{{ $act->description }}</span>@endif
                             </td>
-                            <td data-l="Centre">{{ $act->center?->name ?? '—' }}</td>
+                            <td data-l="Centre">{{ $act->center?->name ?? '-' }}</td>
                             <td data-l="Tarif standard" class="num strong">
                                 @if ($act->standardTariff === null)
                                     <span class="muted" style="font-weight:400">Non fixé</span>

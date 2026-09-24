@@ -87,7 +87,7 @@ final class ReceivableController extends FinanceController
                 'insurers' => (int) $this->insurerDebts()->get()->sum(fn (Invoice $i): int => $i->insurerOutstanding()),
                 // Créances des organismes, par nature.
                 'byKind' => $this->insurerDebts()->with('insurer')->get()
-                    ->groupBy(fn (Invoice $i): string => $i->insurer?->kindLabel() ?? '—')
+                    ->groupBy(fn (Invoice $i): string => $i->insurer?->kindLabel() ?? '-')
                     ->map(fn ($group): int => (int) $group->sum(fn (Invoice $i): int => $i->insurerOutstanding()))
                     ->all(),
                 'overdue' => (int) $all->filter(fn (Invoice $i): bool => $i->created_at->lt($cutoff))->sum($balance),

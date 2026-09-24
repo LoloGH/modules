@@ -18,7 +18,7 @@
                 <div class="row">
                     <label>Rattaché à
                         <select name="parent_id">
-                            <option value="">— Aucun (centre racine)</option>
+                            <option value="">Aucun (centre racine)</option>
                             @foreach ($parents as $parent)
                                 <option value="{{ $parent->id }}" @selected((string) old('parent_id') === (string) $parent->id)>{{ $parent->name }}</option>
                             @endforeach
@@ -58,7 +58,7 @@
                                 <label>Nom <input name="name" value="{{ $center->name }}" required></label>
                                 <label>Rattaché à
                                     <select name="parent_id">
-                                        <option value="">— Aucun (centre racine)</option>
+                                        <option value="">Aucun (centre racine)</option>
                                         @foreach ($parents as $parent)
                                             @continue($parent->id === $center->id)
                                             <option value="{{ $parent->id }}" @selected($center->parent_id === $parent->id)>{{ $parent->name }}</option>
@@ -111,7 +111,7 @@
                             </td>
                             <td data-l="Code" class="mono">{{ $center->code }}</td>
                             <td data-l="Type">{{ $center->kindLabel() }}</td>
-                            <td data-l="Compte" class="mono">{{ $center->account_code ?? '—' }}</td>
+                            <td data-l="Compte" class="mono">{{ $center->account_code ?? '-' }}</td>
                             <td data-l="Actes" class="num">{{ $center->acts_count }}</td>
                             <td data-l="État">
                                 <span class="badge {{ $center->is_active ? 'ok' : 'off' }}">{{ $center->is_active ? 'Actif' : 'Désactivé' }}</span>

@@ -26,13 +26,13 @@
                                 <tr>
                                     <td data-l="Acte">
                                         <select name="lines[{{ $i }}][act_id]" aria-label="Acte de la ligne {{ $i + 1 }}">
-                                            <option value="">—</option>
+                                            <option value="">-</option>
                                             @foreach ($acts->groupBy(fn ($act) => $act->center?->name ?? 'Sans centre analytique') as $centre => $group)
                                                 <optgroup label="{{ $centre }}">
                                                     @foreach ($group as $act)
                                                         <option value="{{ $act->id }}" data-amount="{{ (int) $act->standardTariff->amount }}"
                                                                 @selected((string) old("lines.$i.act_id") === (string) $act->id)>
-                                                            {{ $act->name }} — {{ $money((int) $act->standardTariff->amount) }}
+                                                            {{ $act->name }} · {{ $money((int) $act->standardTariff->amount) }}
                                                         </option>
                                                     @endforeach
                                                 </optgroup>
@@ -42,14 +42,14 @@
                                     <td data-l="Quantité">
                                         <input name="lines[{{ $i }}][quantity]" inputmode="numeric" value="{{ old("lines.$i.quantity", 1) }}" aria-label="Quantité de la ligne {{ $i + 1 }}">
                                     </td>
-                                    <td data-l="Montant" class="num" data-line-total>—</td>
+                                    <td data-l="Montant" class="num" data-line-total>-</td>
                                 </tr>
                             @endfor
                             </tbody>
                         </table>
                     </div>
                     <div class="bd">
-                        <p class="strong" style="margin:0">Total : <span data-invoice-total>—</span></p>
+                        <p class="strong" style="margin:0">Total : <span data-invoice-total>-</span></p>
                     </div>
                 @endif
             </x-finance::card>
@@ -70,7 +70,7 @@
                         <legend class="lbl" style="margin-bottom:.375rem">Prise en charge (facultatif)</legend>
                         <label>Organisme
                             <select name="insurer_id" data-insurer>
-                                <option value="">— Aucune : le patient paie tout</option>
+                                <option value="">Aucune : le patient paie tout</option>
                                 @foreach ($insurers->groupBy(fn ($i) => $i->kindLabel()) as $kind => $group)
                                     <optgroup label="{{ $kind }}">
                                         @foreach ($group as $insurer)
@@ -102,7 +102,7 @@
                     const option = row.querySelector('select').selectedOptions[0];
                     const qty = parseInt(row.querySelector('input').value, 10) || 0;
                     const amount = option && option.dataset.amount ? parseInt(option.dataset.amount, 10) * qty : 0;
-                    row.querySelector('[data-line-total]').textContent = amount ? fmt(amount) : '—';
+                    row.querySelector('[data-line-total]').textContent = amount ? fmt(amount) : '-';
                     total += amount;
                 });
                 form.querySelector('[data-invoice-total]').textContent = fmt(total);
@@ -123,7 +123,7 @@
                             share += Math.round(amount * (rates[select.value] || 0) / 100);
                         });
                         split.textContent = share > 0
-                            ? map[insurer.value].name + ' prend en charge ' + fmt(share) + ' — part patient : ' + fmt(total - share)
+                            ? map[insurer.value].name + ' prend en charge ' + fmt(share) + ' · part patient : ' + fmt(total - share)
                             : map[insurer.value].name + ' ne couvre aucun des actes choisis.';
                     } else {
                         split.textContent = "Le taux s'applique acte par acte, selon la couverture de l'organisme.";

@@ -128,7 +128,7 @@ final class AuditController extends FinanceController
     private function subject(AuditLog $entry): string
     {
         if ($entry->subject_type === null) {
-            return '—';
+            return '-';
         }
 
         return class_basename((string) $entry->subject_type).' n° '.$entry->subject_id;

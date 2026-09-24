@@ -83,7 +83,7 @@
                             <td data-l="Libellé">{{ $entry->label }}</td>
                             <td data-l="Débit" class="num">{{ $entry->debit === 0 ? '' : $money($entry->debit) }}</td>
                             <td data-l="Crédit" class="num">{{ $entry->credit === 0 ? '' : $money($entry->credit) }}</td>
-                            <td data-l="Centre">{{ $entry->center ?? '—' }}</td>
+                            <td data-l="Centre">{{ $entry->center ?? '-' }}</td>
                         </tr>
                     @endforeach
                     </tbody>

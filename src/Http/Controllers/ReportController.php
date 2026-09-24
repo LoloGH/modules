@@ -53,7 +53,7 @@ final class ReportController extends FinanceController
         return response()->streamDownload(function () use ($report, $type, $filters): void {
             $out = fopen('php://output', 'wb');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, [ReportBuilder::TYPES[$type].' — '.$filters->periodLabel()], ';');
+            fputcsv($out, [ReportBuilder::TYPES[$type].' · '.$filters->periodLabel()], ';');
             fputcsv($out, $report['columns'], ';');
 
             foreach ($report['rows'] as $row) {

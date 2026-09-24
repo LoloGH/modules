@@ -24,12 +24,28 @@
 @endphp
 
 <aside class="sidebar">
-    <a class="brand" href="{{ route('finance.home') }}">
-        <x-finance::logo />
-        <span>
-            <span class="name">Keneya <em>Finance</em></span>
-        </span>
-    </a>
+    {{-- La marque et le retour restent en place : c'est le menu qui défile
+         sous eux. --}}
+    <div class="brand-bar">
+        <a class="brand" href="{{ route('finance.home') }}">
+            <x-finance::logo />
+            <span>
+                <span class="name">Keneya <em>Finance</em></span>
+            </span>
+        </a>
+
+        {{-- On entre dans Finance depuis un écran de l'application hôte, et
+             on doit pouvoir en ressortir autrement que par le bouton
+             « précédent » du navigateur, ou par la déconnexion, qui est
+             pire. Le module lancé seul n'a nulle part où retourner, et
+             n'affiche alors rien. --}}
+        @if ($retourHote = \Keneya\FinanceCaisse\Finance::returnLinkFor($viewer))
+            <a class="back-host" href="{{ $retourHote['url'] }}">
+                <x-finance::icon name="retour" />
+                {{ $retourHote['label'] }}
+            </a>
+        @endif
+    </div>
 
     @if ($hasRealEntry)
         <nav class="nav">

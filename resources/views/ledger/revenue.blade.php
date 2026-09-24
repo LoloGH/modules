@@ -10,7 +10,7 @@
         <x-finance::kpi label="Recettes de la période" icon="recette" tone="green" :value="$money($total)" foot="Encaissements valides" />
         <x-finance::kpi label="Encaissements" icon="paiement" tone="blue" :value="(string) $count" />
         <x-finance::kpi label="Premier service" icon="centre" tone="violet"
-                        :value="$byCenter->isEmpty() ? '—' : $byCenter->keys()->first()"
+                        :value="$byCenter->isEmpty() ? '-' : $byCenter->keys()->first()"
                         :foot="$byCenter->isEmpty() ? null : $money($byCenter->first())" />
     </div>
 
@@ -79,7 +79,7 @@
                                     @if ($payment->act) <span class="sub">{{ $payment->act->name }}</span> @endif
                                 </td>
                                 <td data-l="Moyen">{{ $payment->method?->name }}</td>
-                                <td data-l="Référence" class="mono">{{ $payment->reference ?? '—' }}</td>
+                                <td data-l="Référence" class="mono">{{ $payment->reference ?? '-' }}</td>
                                 <td data-l="Montant" class="num strong">{{ $money($payment->amount) }}</td>
                             </tr>
                         @endforeach
@@ -88,9 +88,9 @@
                 </div>
             @if ($items->hasPages())
                 <div class="bd pager">
-                    @if ($items->previousPageUrl()) <a class="btn ghost sm" href="{{ $items->previousPageUrl() }}">← Précédentes</a> @endif
+                    @if ($items->previousPageUrl()) <a class="btn ghost sm" href="{{ $items->previousPageUrl() }}">Précédentes</a> @endif
                     <span class="muted">Page {{ $items->currentPage() }} sur {{ $items->lastPage() }}</span>
-                    @if ($items->nextPageUrl()) <a class="btn ghost sm" href="{{ $items->nextPageUrl() }}">Suivantes →</a> @endif
+                    @if ($items->nextPageUrl()) <a class="btn ghost sm" href="{{ $items->nextPageUrl() }}">Suivantes</a> @endif
                 </div>
             @endif
             @endif

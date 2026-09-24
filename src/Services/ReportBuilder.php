@@ -66,7 +66,7 @@ final class ReportBuilder
             ),
             'recettes-moyen' => $this->grouped(
                 $this->payments($filters)->load('method'),
-                static fn (Payment $p): string => $p->method?->name ?? '—',
+                static fn (Payment $p): string => $p->method?->name ?? '-',
                 'Moyen de paiement',
             ),
             'resultat-centre' => $this->resultByCenter($filters),
@@ -82,14 +82,14 @@ final class ReportBuilder
             ),
             'reglements-assurance' => $this->grouped(
                 $this->settlements($filters)->load('insurer'),
-                static fn (InsuranceSettlement $s): string => $s->insurer?->name ?? '—',
+                static fn (InsuranceSettlement $s): string => $s->insurer?->name ?? '-',
                 'Assureur',
             ),
             'prises-en-charge-organisme' => $this->coverageByInsurer($filters),
             'prises-en-charge-acte' => $this->coverageByAct($filters),
             'depenses-moyen' => $this->grouped(
                 $filters->disbursements()->where('status', Disbursement::STATUS_VALID)->with('method')->get(),
-                static fn (Disbursement $d): string => $d->method?->name ?? '—',
+                static fn (Disbursement $d): string => $d->method?->name ?? '-',
                 'Moyen de paiement',
             ),
             'synthese' => $this->daily($filters),
@@ -142,7 +142,7 @@ final class ReportBuilder
     private function coverageByInsurer(LedgerFilters $filters): array
     {
         $rows = $this->coveredInvoices($filters)->with('insurer')->get()
-            ->groupBy(fn (Invoice $i): string => ($i->insurer?->name ?? '—').' ('.($i->insurer?->kindLabel() ?? '—').')')
+            ->groupBy(fn (Invoice $i): string => ($i->insurer?->name ?? '-').' ('.($i->insurer?->kindLabel() ?? '-').')')
             ->map(fn ($group, string $name): array => [
                 $name,
                 $group->count(),

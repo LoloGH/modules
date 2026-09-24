@@ -58,8 +58,8 @@ final class FinanceSettings
             'Comptabilité' => [
                 'accounting.accounts.cash' => ['label' => 'Compte de caisse', 'type' => self::TYPE_TEXT, 'help' => 'Utilisé par l\'export comptable.'],
                 'accounting.accounts.bank' => ['label' => 'Compte de banque', 'type' => self::TYPE_TEXT],
-                'accounting.accounts.patients' => ['label' => 'Clients — patients', 'type' => self::TYPE_TEXT],
-                'accounting.accounts.insurers' => ['label' => 'Clients — organismes', 'type' => self::TYPE_TEXT],
+                'accounting.accounts.patients' => ['label' => 'Clients : patients', 'type' => self::TYPE_TEXT],
+                'accounting.accounts.insurers' => ['label' => 'Clients : organismes', 'type' => self::TYPE_TEXT],
                 'accounting.accounts.deposits' => ['label' => 'Avances reçues des patients', 'type' => self::TYPE_TEXT],
                 'accounting.accounts.revenue' => ['label' => 'Produits des services', 'type' => self::TYPE_TEXT, 'help' => 'Défaut : un centre analytique peut porter le sien.'],
                 'accounting.accounts.discounts' => ['label' => 'Remises accordées', 'type' => self::TYPE_TEXT],

@@ -21,7 +21,7 @@
             $pairs[] = $key.' : '.match (true) {
                 is_bool($value) => $value ? 'oui' : 'non',
                 is_array($value) => implode(', ', array_map(static fn ($v): string => is_scalar($v) ? (string) $v : '…', $value)),
-                $value === null => '—',
+                $value === null => '-',
                 default => (string) $value,
             };
         }
@@ -97,12 +97,12 @@
                                 <span class="badge {{ AuditEvents::tone((string) $entry->event) }}">{{ AuditEvents::label((string) $entry->event) }}</span>
                             </td>
                             <td data-l="Description">
-                                {{ $entry->description ?? '—' }}
+                                {{ $entry->description ?? '-' }}
                                 @if ($valeurs($entry->old_values) !== '')
-                                    <span class="sub">Avant — {{ $valeurs($entry->old_values) }}</span>
+                                    <span class="sub">Avant : {{ $valeurs($entry->old_values) }}</span>
                                 @endif
                                 @if ($valeurs($entry->new_values) !== '')
-                                    <span class="sub">Après — {{ $valeurs($entry->new_values) }}</span>
+                                    <span class="sub">Après : {{ $valeurs($entry->new_values) }}</span>
                                 @endif
                             </td>
                             <td data-l="Auteur">
@@ -110,7 +110,7 @@
                                 <span class="sub mono">{{ $entry->user_id }}</span>
                             </td>
                             <td data-l="Objet" class="mono">
-                                {{ $entry->subject_type === null ? '—' : class_basename($entry->subject_type).' n° '.$entry->subject_id }}
+                                {{ $entry->subject_type === null ? '-' : class_basename($entry->subject_type).' n° '.$entry->subject_id }}
                             </td>
                         </tr>
                     @endforeach
@@ -120,9 +120,9 @@
 
             @if ($entries->hasPages())
                 <div class="bd pager">
-                    @if ($entries->previousPageUrl()) <a class="btn ghost sm" href="{{ $entries->previousPageUrl() }}">← Précédentes</a> @endif
+                    @if ($entries->previousPageUrl()) <a class="btn ghost sm" href="{{ $entries->previousPageUrl() }}">Précédentes</a> @endif
                     <span class="muted">Page {{ $entries->currentPage() }} sur {{ $entries->lastPage() }}</span>
-                    @if ($entries->nextPageUrl()) <a class="btn ghost sm" href="{{ $entries->nextPageUrl() }}">Suivantes →</a> @endif
+                    @if ($entries->nextPageUrl()) <a class="btn ghost sm" href="{{ $entries->nextPageUrl() }}">Suivantes</a> @endif
                 </div>
             @endif
         @endif

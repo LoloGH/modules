@@ -34,11 +34,11 @@
                             <td data-l="Session" class="mono">{{ $item->number }}</td>
                             <td data-l="Caisse">{{ $item->register->name }}</td>
                             <td data-l="Caissier">{{ $item->cashier_name }}</td>
-                            <td data-l="Clôturée le">{{ $item->closed_at?->format('d/m/Y H:i') ?? '—' }}</td>
-                            <td data-l="Théorique" class="num">{{ $item->expected_cash === null ? '—' : $money($item->expected_cash) }}</td>
-                            <td data-l="Compté" class="num">{{ $item->counted_cash === null ? '—' : $money($item->counted_cash) }}</td>
+                            <td data-l="Clôturée le">{{ $item->closed_at?->format('d/m/Y H:i') ?? '-' }}</td>
+                            <td data-l="Théorique" class="num">{{ $item->expected_cash === null ? '-' : $money($item->expected_cash) }}</td>
+                            <td data-l="Compté" class="num">{{ $item->counted_cash === null ? '-' : $money($item->counted_cash) }}</td>
                             <td data-l="Écart" class="num">
-                                @if ($item->variance === null) —
+                                @if ($item->variance === null) -
                                 @else <span class="{{ $item->variance < 0 ? 'neg' : ($item->variance > 0 ? 'pos' : 'zero') }}">{{ $item->variance > 0 ? '+' : '' }}{{ $money($item->variance) }}</span>
                                 @endif
                             </td>

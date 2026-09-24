@@ -137,7 +137,7 @@ class Invoice extends Model
 
     public function claimLabel(): string
     {
-        return self::claimLabels()[$this->claim_status] ?? '—';
+        return self::claimLabels()[$this->claim_status] ?? '-';
     }
 
     public function claimTone(): string

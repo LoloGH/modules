@@ -169,7 +169,7 @@
                             <td data-l="Ouverte le">{{ $item->opened_at?->format('d/m/Y H:i') }}</td>
                             <td data-l="Statut"><span class="badge {{ $item->status }}">{{ $item->statusLabel() }}</span></td>
                             <td data-l="Écart" class="num">
-                                @if ($item->variance === null) —
+                                @if ($item->variance === null) -
                                 @else <span class="{{ $item->variance < 0 ? 'neg' : ($item->variance > 0 ? 'pos' : 'zero') }}">{{ $item->variance > 0 ? '+' : '' }}{{ $money($item->variance) }}</span>
                                 @endif
                             </td>

@@ -78,7 +78,7 @@ class InvoiceHttpTest extends HttpTestCase
 
         $this->actingAs($this->cashier())->get(route('finance.invoices.create'))
             ->assertOk()
-            ->assertSee('Acte CONS-GEN — 2 000 FCFA')
+            ->assertSee('Acte CONS-GEN · 2 000 FCFA')
             ->assertSee('Émettre la facture');
 
         $response = $this->post(route('finance.invoices.store'), [

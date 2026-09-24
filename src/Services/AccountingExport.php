@@ -123,7 +123,7 @@ final class AccountingExport
             ->get();
 
         foreach ($invoices as $invoice) {
-            $label = 'Facture '.$invoice->number.' — '.($invoice->patient_name ?? $invoice->patient_id ?? 'Patient');
+            $label = 'Facture '.$invoice->number.' · '.($invoice->patient_name ?? $invoice->patient_id ?? 'Patient');
 
             if ((int) $invoice->patient_share > 0) {
                 $entries[] = $this->debit($invoice->created_at, 'VE', $invoice->number, $this->account('patients'), $label, (int) $invoice->patient_share);
@@ -135,7 +135,7 @@ final class AccountingExport
                     'VE',
                     $invoice->number,
                     $this->account('insurers'),
-                    $label.' — '.($invoice->insurer?->name ?? 'Organisme'),
+                    $label.' · '.($invoice->insurer?->name ?? 'Organisme'),
                     (int) $invoice->insurer_share,
                 );
             }
@@ -171,7 +171,7 @@ final class AccountingExport
             ->get();
 
         foreach ($payments as $payment) {
-            $label = 'Encaissement '.$payment->number.($payment->patient_name ? ' — '.$payment->patient_name : '');
+            $label = 'Encaissement '.$payment->number.($payment->patient_name ? ' · '.$payment->patient_name : '');
             $amount = (int) $payment->amount;
 
             $entries[] = $this->debit(
@@ -221,7 +221,7 @@ final class AccountingExport
             ->get();
 
         foreach ($deposits as $deposit) {
-            $label = 'Avance '.$deposit->number.' — '.($deposit->patient_name ?? $deposit->patient_id);
+            $label = 'Avance '.$deposit->number.' · '.($deposit->patient_name ?? $deposit->patient_id);
 
             $entries[] = $this->debit($deposit->created_at, 'CA', $deposit->number, $this->methodAccount($deposit->method?->kind), $label, (int) $deposit->amount);
             $entries[] = $this->credit($deposit->created_at, 'CA', $deposit->number, $this->account('deposits'), $label, (int) $deposit->amount);
@@ -245,7 +245,7 @@ final class AccountingExport
             ->get();
 
         foreach ($disbursements as $disbursement) {
-            $label = 'Décaissement '.$disbursement->number.' — '.$disbursement->reason;
+            $label = 'Décaissement '.$disbursement->number.' · '.$disbursement->reason;
 
             $entries[] = $this->debit(
                 $disbursement->created_at,
@@ -284,11 +284,11 @@ final class AccountingExport
             ->get();
 
         foreach ($settlements as $settlement) {
-            $label = 'Règlement '.$settlement->number.' — '.($settlement->insurer?->name ?? 'Organisme');
+            $label = 'Règlement '.$settlement->number.' · '.($settlement->insurer?->name ?? 'Organisme');
             $date = $settlement->received_on;
 
             $entries[] = $this->debit($date, 'BQ', $settlement->number, $this->account('bank'), $label, (int) $settlement->amount);
-            $entries[] = $this->credit($date, 'BQ', $settlement->number, $this->account('insurers'), $label.' — facture '.$settlement->invoice?->number, (int) $settlement->amount);
+            $entries[] = $this->credit($date, 'BQ', $settlement->number, $this->account('insurers'), $label.' · facture '.$settlement->invoice?->number, (int) $settlement->amount);
         }
 
         return $entries;
@@ -310,7 +310,7 @@ final class AccountingExport
             ->get();
 
         foreach ($rejections as $rejection) {
-            $label = 'Rejet '.($rejection->insurer?->name ?? 'Organisme').' — facture '.$rejection->invoice?->number;
+            $label = 'Rejet '.($rejection->insurer?->name ?? 'Organisme').' · facture '.$rejection->invoice?->number;
             $piece = (string) ($rejection->invoice?->number ?? $rejection->id);
 
             $entries[] = $this->debit($rejection->created_at, 'OD', $piece, $this->account('patients'), $label, (int) $rejection->amount);
@@ -335,7 +335,7 @@ final class AccountingExport
             ->get();
 
         foreach ($discounts as $discount) {
-            $label = 'Remise '.$discount->number.' — facture '.$discount->invoice?->number;
+            $label = 'Remise '.$discount->number.' · facture '.$discount->invoice?->number;
             $date = $discount->decided_at ?? $discount->created_at;
 
             $entries[] = $this->debit($date, 'OD', $discount->number, $this->account('discounts'), $label, (int) $discount->amount);
@@ -401,8 +401,8 @@ final class AccountingExport
     private const ACCOUNT_LABELS = [
         'cash' => 'Caisse',
         'bank' => 'Banque',
-        'patients' => 'Clients — patients',
-        'insurers' => 'Clients — organismes',
+        'patients' => 'Clients : patients',
+        'insurers' => 'Clients : organismes',
         'deposits' => 'Avances reçues des patients',
         'revenue' => 'Produits des services',
         'discounts' => 'Remises accordées',

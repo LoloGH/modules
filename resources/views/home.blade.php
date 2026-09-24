@@ -3,7 +3,7 @@
 @section('title', 'Tableau de bord')
 
 @section('content')
-    <x-finance::page title="Bonjour !" :sub="$facility.' — vue d\'ensemble de votre activité financière'" />
+    <x-finance::page title="Bonjour !" :sub="$facility.' · vue d\'ensemble de votre activité financière'" />
 
     @unless ($canReadFigures)
         <x-finance::card>
@@ -263,7 +263,7 @@
                                         @if ($payment->patient_name)<span class="sub">{{ $payment->patient_name }}</span>@endif
                                     </td>
                                     <td data-l="Montant" class="num strong">{{ $money($payment->amount) }}</td>
-                                    <td data-l="Moyen">{{ $payment->method?->name ?? '—' }}</td>
+                                    <td data-l="Moyen">{{ $payment->method?->name ?? '-' }}</td>
                                 </tr>
                             @endforeach
                             </tbody>

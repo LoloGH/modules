@@ -47,7 +47,7 @@
                 <p class="muted" style="margin:.75rem 0 0">
                     Par moyen :
                     @foreach ($byMethod as $methodId => $total)
-                        <span class="badge muted">{{ $methods->firstWhere('id', $methodId)?->name ?? '—' }} · {{ $money($total) }}</span>
+                        <span class="badge muted">{{ $methods->firstWhere('id', $methodId)?->name ?? '-' }} · {{ $money($total) }}</span>
                     @endforeach
                 </p>
             @endif
@@ -75,12 +75,12 @@
                             <td data-l="Date">{{ $payment->created_at?->format('d/m/Y H:i') }}
                                 <span class="sub">{{ $payment->session?->register?->name }}</span></td>
                             <td data-l="Patient">
-                                {{ $payment->patient_name ?? '—' }}
+                                {{ $payment->patient_name ?? '-' }}
                                 @if ($payment->patient_id) <span class="sub mono">{{ $payment->patient_id }}</span> @endif
                             </td>
-                            <td data-l="Objet">{{ $payment->act?->name ?? $payment->description ?? '—' }}</td>
+                            <td data-l="Objet">{{ $payment->act?->name ?? $payment->description ?? '-' }}</td>
                             <td data-l="Moyen">{{ $payment->method?->name }}</td>
-                            <td data-l="Référence" class="mono">{{ $payment->reference ?? '—' }}</td>
+                            <td data-l="Référence" class="mono">{{ $payment->reference ?? '-' }}</td>
                             <td data-l="Facture">
                                 @if ($payment->invoice)
                                     @can('finance.invoices.view')
@@ -88,7 +88,7 @@
                                     @else
                                         {{ $payment->invoice->number }}
                                     @endcan
-                                @else — @endif
+                                @else - @endif
                             </td>
                             <td data-l="Statut">
                                 <span class="badge {{ $payment->isCancelled() ? 'danger' : 'ok' }}">{{ $payment->isCancelled() ? 'Annulé' : 'Valide' }}</span>
@@ -105,9 +105,9 @@
 
             @if ($payments->hasPages())
                 <div class="bd pager">
-                    @if ($payments->previousPageUrl()) <a class="btn ghost sm" href="{{ $payments->previousPageUrl() }}">← Précédents</a> @endif
+                    @if ($payments->previousPageUrl()) <a class="btn ghost sm" href="{{ $payments->previousPageUrl() }}">Précédents</a> @endif
                     <span class="muted">Page {{ $payments->currentPage() }} sur {{ $payments->lastPage() }}</span>
-                    @if ($payments->nextPageUrl()) <a class="btn ghost sm" href="{{ $payments->nextPageUrl() }}">Suivants →</a> @endif
+                    @if ($payments->nextPageUrl()) <a class="btn ghost sm" href="{{ $payments->nextPageUrl() }}">Suivants</a> @endif
                 </div>
             @endif
         @endif

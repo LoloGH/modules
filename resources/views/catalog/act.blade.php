@@ -44,7 +44,7 @@
                 @csrf
                 <label class="sr" for="acte-centre">Centre analytique</label>
                 <select id="acte-centre" name="analytic_center_id">
-                    <option value="">— Aucun</option>
+                    <option value="">Aucun</option>
                     @foreach ($centers as $center)
                         <option value="{{ $center->id }}" @selected($act->analytic_center_id === $center->id)>{{ $center->name }}</option>
                     @endforeach
@@ -94,7 +94,7 @@
                         @foreach ($tariffs as $tariff)
                             <tr>
                                 <td data-l="Contexte" class="strong">{{ $tariff->kind }}</td>
-                                <td data-l="Libellé">{{ $tariff->label ?? '—' }}</td>
+                                <td data-l="Libellé">{{ $tariff->label ?? '-' }}</td>
                                 <td data-l="Montant" class="num strong">{{ $money((int) $tariff->amount) }}</td>
                                 <td data-l="Applicable le">{{ $tariff->effective_from?->format('d/m/Y') }}</td>
                                 <td data-l="État">

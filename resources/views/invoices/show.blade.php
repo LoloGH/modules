@@ -26,7 +26,7 @@
 
     @if ($invoice->status === \Keneya\FinanceCaisse\Models\Invoice::STATUS_CANCELLED)
         <p class="flash err">
-            Annulée le {{ $invoice->cancelled_at?->format('d/m/Y H:i') }} par {{ $invoice->cancelled_by_name ?? '—' }} : {{ $invoice->cancellation_reason }}
+            Annulée le {{ $invoice->cancelled_at?->format('d/m/Y H:i') }} par {{ $invoice->cancelled_by_name ?? '-' }} : {{ $invoice->cancellation_reason }}
         </p>
     @endif
 

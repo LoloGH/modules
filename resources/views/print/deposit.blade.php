@@ -21,7 +21,7 @@
         <div class="amount">{{ number_format((int) $deposit->amount, 0, ',', ' ') }} FCFA</div>
 
         <dl class="rows">
-            <div><dt>Patient</dt><dd>{{ $deposit->patient_name ?? '—' }}</dd></div>
+            <div><dt>Patient</dt><dd>{{ $deposit->patient_name ?? '-' }}</dd></div>
             <div><dt>Identifiant</dt><dd>{{ $deposit->patient_id }}</dd></div>
             @if ($deposit->note) <div><dt>Motif</dt><dd>{{ $deposit->note }}</dd></div> @endif
             <div><dt>Moyen</dt><dd>{{ $deposit->method?->name }}</dd></div>

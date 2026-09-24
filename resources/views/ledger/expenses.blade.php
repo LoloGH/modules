@@ -75,11 +75,11 @@
                             <tr class="{{ $item->isCancelled() ? 'cancelled' : '' }}">
                                 <td data-l="Date">{{ $item->created_at?->format('d/m/Y H:i') }} <span class="sub mono">{{ $item->number }}</span></td>
                                 <td data-l="Catégorie">{{ $item->categoryLabel() }}</td>
-                                <td data-l="Centre">{{ $item->center?->name ?? '—' }}</td>
+                                <td data-l="Centre">{{ $item->center?->name ?? '-' }}</td>
                                 <td data-l="Motif" class="strong">{{ $item->reason }}</td>
-                                <td data-l="Bénéficiaire">{{ $item->beneficiary ?? '—' }}</td>
+                                <td data-l="Bénéficiaire">{{ $item->beneficiary ?? '-' }}</td>
                                 <td data-l="Moyen">{{ $item->method?->name }}</td>
-                                <td data-l="Référence" class="mono">{{ $item->reference ?? '—' }}</td>
+                                <td data-l="Référence" class="mono">{{ $item->reference ?? '-' }}</td>
                                 <td data-l="Statut">
                                     <span class="badge {{ $item->isCancelled() ? 'danger' : 'ok' }}">{{ $item->isCancelled() ? 'Annulé' : 'Valide' }}</span>
                                 </td>
@@ -94,9 +94,9 @@
                 </div>
             @if ($items->hasPages())
                 <div class="bd pager">
-                    @if ($items->previousPageUrl()) <a class="btn ghost sm" href="{{ $items->previousPageUrl() }}">← Précédentes</a> @endif
+                    @if ($items->previousPageUrl()) <a class="btn ghost sm" href="{{ $items->previousPageUrl() }}">Précédentes</a> @endif
                     <span class="muted">Page {{ $items->currentPage() }} sur {{ $items->lastPage() }}</span>
-                    @if ($items->nextPageUrl()) <a class="btn ghost sm" href="{{ $items->nextPageUrl() }}">Suivantes →</a> @endif
+                    @if ($items->nextPageUrl()) <a class="btn ghost sm" href="{{ $items->nextPageUrl() }}">Suivantes</a> @endif
                 </div>
             @endif
             @endif

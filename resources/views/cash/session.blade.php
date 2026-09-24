@@ -58,7 +58,7 @@
             @endif
             @if ($session->isValidated())
                 <p class="muted" style="margin-bottom:0">
-                    Validée le {{ $session->validated_at?->format('d/m/Y H:i') }} par {{ $session->validator_name }}@if ($session->validation_note) — {{ $session->validation_note }}@endif
+                    Validée le {{ $session->validated_at?->format('d/m/Y H:i') }} par {{ $session->validator_name }}@if ($session->validation_note) : {{ $session->validation_note }}@endif
                 </p>
             @endif
         </x-finance::card>
@@ -78,7 +78,7 @@
                     @endif
                     @if ($fromInvoice)
                         <p class="flash ok" id="encaisser">
-                            Facture <strong>{{ $fromInvoice->number }}</strong> — {{ $fromInvoice->patient_name ?? $fromInvoice->patient_id }} :
+                            Facture <strong>{{ $fromInvoice->number }}</strong> · {{ $fromInvoice->patient_name ?? $fromInvoice->patient_id }} :
                             solde de {{ $money($fromInvoice->balance()) }}. Un règlement partiel est possible.
                         </p>
                     @endif
@@ -116,14 +116,14 @@
                         </div>
                         <label>Acte encaissé
                             <select name="act_id" data-fills="montant-encaissement">
-                                <option value="">— Aucun (encaissement hors catalogue)</option>
+                                <option value="">Aucun (encaissement hors catalogue)</option>
                                 @foreach ($acts->groupBy(fn ($act) => $act->center?->name ?? 'Sans centre analytique') as $centre => $group)
                                     <optgroup label="{{ $centre }}">
                                         @foreach ($group as $act)
                                             <option value="{{ $act->id }}"
                                                     @if ($act->standardTariff) data-amount="{{ (int) $act->standardTariff->amount }}" @endif
                                                     @selected((string) old('act_id', $fromQueue?->act?->id) === (string) $act->id)>
-                                                {{ $act->name }}@if ($act->standardTariff) — {{ $money((int) $act->standardTariff->amount) }}@endif
+                                                {{ $act->name }}@if ($act->standardTariff) · {{ $money((int) $act->standardTariff->amount) }}@endif
                                             </option>
                                         @endforeach
                                     </optgroup>
@@ -148,7 +148,7 @@
                             <div class="row">
                                 <label>Prise en charge
                                     <select name="insurer_id">
-                                        <option value="">— Aucune : le patient paie tout</option>
+                                        <option value="">Aucune : le patient paie tout</option>
                                         @foreach (collect($coverage)->groupBy('kind', true) as $kind => $group)
                                             <optgroup label="{{ $kind }}">
                                                 @foreach ($group as $id => $item)
@@ -228,7 +228,7 @@
                         <div class="row">
                             <label>Catégorie
                                 <select name="category">
-                                    <option value="">— Non classée</option>
+                                    <option value="">Non classée</option>
                                     @foreach (\Keneya\FinanceCaisse\Models\Disbursement::categories() as $code => $label)
                                         <option value="{{ $code }}" @selected(old('category') === $code)>{{ $label }}</option>
                                     @endforeach
@@ -241,7 +241,7 @@
                                  ne se lit dans le résultat d'aucun service. --}}
                             <label>Centre analytique
                                 <select name="analytic_center_id">
-                                    <option value="">— Non rattachée</option>
+                                    <option value="">Non rattachée</option>
                                     @foreach (\Keneya\FinanceCaisse\Models\AnalyticCenter::query()->forCharges()->get() as $center)
                                         <option value="{{ $center->id }}" @selected((string) old('analytic_center_id') === (string) $center->id)>{{ $center->name }}</option>
                                     @endforeach

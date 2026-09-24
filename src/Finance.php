@@ -29,6 +29,8 @@ final class Finance
      */
     private static ?Closure $facilityResolver = null;
 
+    private static ?Closure $returnLinkResolver = null;
+
     /**
      * L'hôte décide lui-même de l'accès au module. Dès qu'un résolveur est
      * enregistré, sa réponse est définitive : ni la capacité ni l'attribut
@@ -139,5 +141,52 @@ final class Finance
     {
         self::$accessResolver = null;
         self::$facilityResolver = null;
+        self::$returnLinkResolver = null;
+    }
+
+    /**
+     * Le lien de retour vers l'application hôte.
+     *
+     * Quelqu'un entre dans le module depuis un écran de WorkFlow, et doit
+     * pouvoir en ressortir. Sans ce lien, la seule issue est le bouton
+     * « précédent » du navigateur, ou la déconnexion, ce qui est pire.
+     *
+     * L'hôte le déclare, avec le libellé qu'il veut et l'adresse qui convient
+     * à la personne connectée :
+     *
+     *     Finance::returnLinkUsing(fn ($user) => [
+     *         'label' => 'Retour a KEneYa WorkFlow',
+     *         'url' => $user->homeUrl(),
+     *     ]);
+     *
+     * Le module tournant seul n'a nulle part où retourner : sans résolveur,
+     * rien ne s'affiche.
+     */
+    public static function returnLinkUsing(?Closure $resolver): void
+    {
+        self::$returnLinkResolver = $resolver;
+    }
+
+    /**
+     * Le lien de retour pour cette personne, ou nul s'il n'y en a pas.
+     *
+     * @return array{label: string, url: string}|null
+     */
+    public static function returnLinkFor(mixed $user): ?array
+    {
+        if (self::$returnLinkResolver === null || $user === null) {
+            return null;
+        }
+
+        $lien = (self::$returnLinkResolver)($user);
+
+        if (! is_array($lien) || ($lien['url'] ?? '') === '') {
+            return null;
+        }
+
+        return [
+            'label' => (string) ($lien['label'] ?? 'Retour'),
+            'url' => (string) $lien['url'],
+        ];
     }
 }

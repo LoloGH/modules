@@ -92,9 +92,9 @@
                                     {{ $visit->patientName }}
                                     <span class="sub mono">{{ $visit->patientRef }}</span>
                                 </td>
-                                <td data-l="Parcours">{{ $visit->originService ?? '—' }} → {{ $visit->destinationService ?? '—' }}</td>
+                                <td data-l="Parcours">{{ $visit->originService ?? '-' }} vers {{ $visit->destinationService ?? '-' }}</td>
                                 <td data-l="Acte attendu">{{ $visit->act?->name ?? 'Montant à saisir' }}</td>
-                                <td data-l="Tarif" class="num">{{ $visit->expectedAmount() === null ? '—' : $money($visit->expectedAmount()) }}</td>
+                                <td data-l="Tarif" class="num">{{ $visit->expectedAmount() === null ? '-' : $money($visit->expectedAmount()) }}</td>
                                 <td data-l="État">
                                     <span class="badge {{ $visit->isCalled() ? 'info' : 'off' }}">{{ $visit->isCalled() ? 'Appelé' : 'En attente' }}</span>
                                 </td>

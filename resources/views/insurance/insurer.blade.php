@@ -43,8 +43,8 @@
                                 <input type="checkbox" name="acts[{{ $act->id }}][covered]" value="1" @checked($covered) @disabled(! $canManage) aria-label="{{ $act->name }} couvert">
                             </td>
                             <td data-l="Acte" class="strong">{{ $act->name }} <span class="sub mono">{{ $act->code }}</span></td>
-                            <td data-l="Centre">{{ $act->center?->name ?? '—' }}</td>
-                            <td data-l="Tarif" class="num">{{ $act->standardTariff ? $money((int) $act->standardTariff->amount) : '—' }}</td>
+                            <td data-l="Centre">{{ $act->center?->name ?? '-' }}</td>
+                            <td data-l="Tarif" class="num">{{ $act->standardTariff ? $money((int) $act->standardTariff->amount) : '-' }}</td>
                             <td data-l="Taux propre">
                                 <input name="acts[{{ $act->id }}][rate]" inputmode="numeric"
                                        value="{{ is_int($rule) && $rule > 0 ? $rule : '' }}" placeholder="{{ $insurer->default_rate }}" @disabled(! $canManage)>

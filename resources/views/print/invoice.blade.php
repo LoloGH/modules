@@ -21,10 +21,10 @@
         </div>
 
         <dl class="rows" style="max-width:60%;margin-bottom:1.25rem">
-            <div><dt>Patient</dt><dd>{{ $invoice->patient_name ?? '—' }}</dd></div>
-            <div><dt>Identifiant</dt><dd>{{ $invoice->patient_id ?? '—' }}</dd></div>
+            <div><dt>Patient</dt><dd>{{ $invoice->patient_name ?? '-' }}</dd></div>
+            <div><dt>Identifiant</dt><dd>{{ $invoice->patient_id ?? '-' }}</dd></div>
             @if ($invoice->isInsured())
-                <div><dt>Assureur</dt><dd>{{ $invoice->insurer?->name }}{{ $invoice->policy_number ? ' — PEC '.$invoice->policy_number : '' }}</dd></div>
+                <div><dt>Assureur</dt><dd>{{ $invoice->insurer?->name }}{{ $invoice->policy_number ? ' · PEC '.$invoice->policy_number : '' }}</dd></div>
             @endif
             @if ($invoice->created_by_name)
                 <div><dt>Établie par</dt><dd>{{ $invoice->created_by_name }}</dd></div>

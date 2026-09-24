@@ -58,7 +58,7 @@
                         <tr>
                             <td data-l="N°" class="mono">{{ $invoice->number }}</td>
                             <td data-l="Patient" class="strong">
-                                {{ $invoice->patient_name ?? '—' }}
+                                {{ $invoice->patient_name ?? '-' }}
                                 @if ($invoice->patient_id) <span class="sub mono">{{ $invoice->patient_id }}</span> @endif
                                 @if ($invoice->insurer_id) <span class="sub">Assurance {{ $invoice->coverage_rate }} %</span> @endif
                             </td>
@@ -78,9 +78,9 @@
 
             @if ($invoices->hasPages())
                 <div class="bd pager">
-                    @if ($invoices->previousPageUrl()) <a class="btn ghost sm" href="{{ $invoices->previousPageUrl() }}">← Précédentes</a> @endif
+                    @if ($invoices->previousPageUrl()) <a class="btn ghost sm" href="{{ $invoices->previousPageUrl() }}">Précédentes</a> @endif
                     <span class="muted">Page {{ $invoices->currentPage() }} sur {{ $invoices->lastPage() }}</span>
-                    @if ($invoices->nextPageUrl()) <a class="btn ghost sm" href="{{ $invoices->nextPageUrl() }}">Suivantes →</a> @endif
+                    @if ($invoices->nextPageUrl()) <a class="btn ghost sm" href="{{ $invoices->nextPageUrl() }}">Suivantes</a> @endif
                 </div>
             @endif
         @endif

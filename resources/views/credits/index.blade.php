@@ -61,7 +61,7 @@
                         </label>
                         <label>Facture
                             <select name="invoice_id">
-                                <option value="">— Aucune</option>
+                                <option value="">Aucune</option>
                                 @foreach ($invoices as $invoice)
                                     <option value="{{ $invoice->id }}" @selected((string) old('invoice_id') === (string) $invoice->id)>
                                         {{ $invoice->number }} · réglé {{ $money($invoice->paid) }}
@@ -115,7 +115,7 @@
                                     <span class="sub">Approuvée par {{ $discount->decided_by_name }}</span>
                                 @endif
                             </td>
-                            <td data-l="Demandée par">{{ $discount->requested_by_name ?? '—' }}</td>
+                            <td data-l="Demandée par">{{ $discount->requested_by_name ?? '-' }}</td>
                             <td data-l="Statut"><span class="badge {{ $discount->statusTone() }}">{{ $discount->statusLabel() }}</span></td>
                             <td data-l="Montant" class="num strong">{{ $money($discount->amount) }}</td>
                             <td data-l="" class="acts">
