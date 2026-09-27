@@ -26,6 +26,11 @@ class BillingHttpTest extends TestCase
         parent::setUp();
 
         $this->artisan('pharmacie:sync-permissions')->assertSuccessful();
+
+        // Cette suite decrit l'envoi en caisse d'une dispensation deja servie.
+        // Le parcours ou le patient regle d'abord a sa propre suite,
+        // PreparationTest et PreparationsHttpTest.
+        config(['pharmacie.dispensing.payment_before_delivery' => false]);
     }
 
     private function dispense(int $quantity = 5, int $price = 1_000): Dispensation
@@ -131,6 +136,26 @@ class BillingHttpTest extends TestCase
             ->assertSessionHas('pharmacie_error');
 
         $this->assertSame([], $sink->sales);
+    }
+
+    public function test_what_must_be_collected_is_not_sent_to_a_cashier_that_is_not_there(): void
+    {
+        // Aucun SaleSink lie. Dire « envoye a la caisse » serait un mensonge :
+        // personne n'attend le patient au guichet, et la piece ne pourrait
+        // meme plus etre renvoyee une fois marquee partie.
+        $dispensation = $this->dispense();
+
+        $this->actingAs($this->userWithRole(Rbac::ROLE_DISPENSER))
+            ->from(route('pharmacie.dispensing.show', $dispensation))
+            ->post(route('pharmacie.dispensing.bill', $dispensation), ['kind' => SendToCashier::KIND_DIRECT])
+            ->assertSessionHas('pharmacie_error');
+
+        $dispensation->refresh();
+
+        // Toujours a payer : elle pourra partir quand une caisse sera la.
+        $this->assertSame(Dispensation::PAYMENT_DUE, $dispensation->payment_status);
+        $this->assertNull($dispensation->billing_reference);
+        $this->assertNull($dispensation->billed_at);
     }
 
     public function test_without_a_cashier_branched_the_pharmacy_still_works(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Workbench\App\Models\DemoUser;
+use Workbench\App\Pharmacy\DemoCashier;
 
 /*
 | Application hôte de démonstration : une page pour choisir un profil (sans
@@ -45,6 +46,19 @@ Route::get('/dev/login/{user}', function (DemoUser $user) {
     Auth::login($user);
 
     return redirect('/pharmacie');
+});
+
+// Le guichet de la caisse de demonstration : encaisser la part du patient,
+// pour voir la preparation passer a « reglee » et devenir delivrable.
+Route::get('/dev/caisse/{piece}', function (string $piece) {
+    $encaisse = app(DemoCashier::class)->collect($piece);
+
+    return redirect('/pharmacie/preparations')->with(
+        $encaisse ? 'pharmacie_status' : 'pharmacie_error',
+        $encaisse
+            ? "Caisse de demonstration : part du patient encaissee sur {$piece}."
+            : "Caisse de demonstration : piece {$piece} inconnue.",
+    );
 });
 
 Route::get('/dev/logout', function () {

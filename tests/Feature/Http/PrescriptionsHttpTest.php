@@ -28,6 +28,11 @@ class PrescriptionsHttpTest extends TestCase
         parent::setUp();
 
         $this->artisan('pharmacie:sync-permissions')->assertSuccessful();
+
+        // Le comptoir n'est ici qu'un montage : ce qui est teste, c'est le lien a l'ordonnance.
+        // Le parcours ou le patient regle d'abord a sa propre suite,
+        // PreparationTest et PreparationsHttpTest.
+        config(['pharmacie.dispensing.payment_before_delivery' => false]);
     }
 
     /**

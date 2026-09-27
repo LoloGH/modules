@@ -29,6 +29,11 @@ class DispensingHttpTest extends TestCase
         parent::setUp();
 
         $this->artisan('pharmacie:sync-permissions')->assertSuccessful();
+
+        // Cette suite decrit le comptoir qui sert et encaisse ensuite.
+        // Le parcours ou le patient regle d'abord a sa propre suite,
+        // PreparationTest et PreparationsHttpTest.
+        config(['pharmacie.dispensing.payment_before_delivery' => false]);
     }
 
     public function test_dispensing_takes_what_expires_first_and_lowers_the_stock(): void

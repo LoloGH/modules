@@ -73,6 +73,12 @@
                 <div class="f"><dt>État</dt><dd><span class="badge {{ $dispensation->paymentTone() }}">{{ $dispensation->paymentLabel() }}</span></dd></div>
                 @if ($dispensation->billing_reference)
                     <div class="f"><dt>Pièce de la caisse</dt><dd class="mono">{{ $dispensation->billing_reference }}</dd></div>
+                @elseif ($dispensation->payment_status === \Keneya\Pharmacie\Models\Dispensation::PAYMENT_SENT
+                    && \Keneya\Pharmacie\Actions\SendToCashier::needsCashier((string) $dispensation->billing_kind))
+                    <div class="f">
+                        <dt>Pièce de la caisse</dt>
+                        <dd class="strong">Aucune : la caisse n'a rendu aucune référence</dd>
+                    </div>
                 @endif
                 @if ($dispensation->billing_note)
                     <div class="f"><dt>Motif</dt><dd>{{ $dispensation->billing_note }}</dd></div>

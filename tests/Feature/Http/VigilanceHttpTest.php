@@ -28,6 +28,11 @@ class VigilanceHttpTest extends TestCase
         parent::setUp();
 
         $this->artisan('pharmacie:sync-permissions')->assertSuccessful();
+
+        // Le comptoir n'est ici qu'un montage : ce qui est teste vient apres la delivrance.
+        // Le parcours ou le patient regle d'abord a sa propre suite,
+        // PreparationTest et PreparationsHttpTest.
+        config(['pharmacie.dispensing.payment_before_delivery' => false]);
     }
 
     public function test_a_controlled_product_is_not_dispensed_without_prescription_or_patient(): void

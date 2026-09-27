@@ -12,6 +12,7 @@ use Keneya\Pharmacie\Models\Dispensation;
 use Keneya\Pharmacie\Models\DispensationItem;
 use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Sales\DispensedSale;
+use Keneya\Pharmacie\Sales\NoSaleSink;
 use Keneya\Pharmacie\Support\Money;
 use Keneya\Pharmacie\Support\Text;
 
@@ -58,6 +59,23 @@ final class SendToCashier
         ];
     }
 
+    /**
+     * Ce titre demande-t-il qu'un guichet encaisse ?
+     *
+     * Le paiement direct et la prise en charge attendent de l'argent, ou une
+     * facture a poursuivre. La gratuite n'attend rien, et l'hospitalisation
+     * porte la depense au sejour.
+     */
+    public static function needsCashier(string $kind): bool
+    {
+        return in_array($kind, [self::KIND_DIRECT, self::KIND_COVERAGE], true);
+    }
+
+    private function label(string $kind): string
+    {
+        return self::kindLabels()[$kind] ?? $kind;
+    }
+
     public function handle(Dispensation $dispensation, string $kind, Authenticatable $actor, ?string $note = null): Dispensation
     {
         if (! array_key_exists($kind, self::kindLabels())) {
@@ -95,6 +113,19 @@ final class SendToCashier
                 $this->audit($fresh, $kind, null, $actor);
 
                 return $fresh;
+            }
+
+            // Ce qui doit etre encaisse a besoin d'une caisse. Sans elle, le
+            // dire vaut mieux qu'ecrire « envoye a la caisse » sur une piece
+            // que personne n'a recue : le comptoir croirait le patient
+            // attendu au guichet, et ne pourrait meme plus la renvoyer.
+            //
+            // Porte au sejour, en revanche, ne passe par aucun guichet : la
+            // depense suit l'hospitalisation, et la pharmacie a fait sa part.
+            if (self::needsCashier($kind) && Pharmacie::sales() instanceof NoSaleSink) {
+                throw new PharmacieRuleViolation(
+                    "Aucune caisse n'est branchée sur ce module : « {$this->label($kind)} » ne peut pas être envoyé à l'encaissement."
+                );
             }
 
             $reference = Pharmacie::sales()->send(new DispensedSale(

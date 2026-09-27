@@ -7,11 +7,14 @@ namespace Workbench\App\Providers;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
+use Keneya\Pharmacie\Contracts\SaleSink;
+use Keneya\Pharmacie\Contracts\SaleStatusProvider;
 use Keneya\Pharmacie\Contracts\StaffDirectory;
 use Keneya\Pharmacie\Pharmacie;
 use Workbench\App\Console\Commands\DemoData;
 use Workbench\App\Console\Commands\DemoSetup;
 use Workbench\App\Models\DemoUser;
+use Workbench\App\Pharmacy\DemoCashier;
 use Workbench\App\Pharmacy\DemoQueue;
 use Workbench\App\Pharmacy\DemoStaffDirectory;
 
@@ -50,6 +53,12 @@ class WorkbenchServiceProvider extends ServiceProvider
         // pour que le comptoir soit navigable avant l'intégration.
         $this->app->singleton(PharmacyQueueProvider::class, DemoQueue::class);
         $this->app->singleton(StaffDirectory::class, DemoStaffDirectory::class);
+
+        // Une caisse de demonstration : elle cree les pieces et dit ou elles
+        // en sont, comme Finance le fera dans WorkFlow.
+        $this->app->singleton(DemoCashier::class);
+        $this->app->singleton(SaleSink::class, DemoCashier::class);
+        $this->app->singleton(SaleStatusProvider::class, DemoCashier::class);
     }
 
     public function boot(): void

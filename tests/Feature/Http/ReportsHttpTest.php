@@ -25,6 +25,11 @@ class ReportsHttpTest extends TestCase
         parent::setUp();
 
         $this->artisan('pharmacie:sync-permissions')->assertSuccessful();
+
+        // Le comptoir n'est ici qu'un montage : ce qui est teste, c'est ce que le stock raconte.
+        // Le parcours ou le patient regle d'abord a sa propre suite,
+        // PreparationTest et PreparationsHttpTest.
+        config(['pharmacie.dispensing.payment_before_delivery' => false]);
     }
 
     public function test_consumption_counts_what_left_minus_what_came_back(): void

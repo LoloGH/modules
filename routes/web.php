@@ -9,6 +9,7 @@ use Keneya\Pharmacie\Http\Controllers\DispensingController;
 use Keneya\Pharmacie\Http\Controllers\HomeController;
 use Keneya\Pharmacie\Http\Controllers\InventoryController;
 use Keneya\Pharmacie\Http\Controllers\LocationController;
+use Keneya\Pharmacie\Http\Controllers\PreparationController;
 use Keneya\Pharmacie\Http\Controllers\PrescriptionController;
 use Keneya\Pharmacie\Http\Controllers\ProductController;
 use Keneya\Pharmacie\Http\Controllers\QueueController;
@@ -35,6 +36,14 @@ Route::get('file', [QueueController::class, 'index'])
 
 Route::post('file/appeler', [QueueController::class, 'callNext'])
     ->middleware('can:pharmacie.queue.call')->name('queue.call');
+
+// La sortie de la file : un patient servi se clôt, ou part ailleurs. Le même
+// droit que l'appel — c'est le comptoir qui tient la file d'un bout à l'autre.
+Route::post('file/clore', [QueueController::class, 'close'])
+    ->middleware('can:pharmacie.queue.call')->name('queue.close');
+
+Route::post('file/envoyer', [QueueController::class, 'refer'])
+    ->middleware('can:pharmacie.queue.call')->name('queue.refer');
 
 // Catalogue : produits et categories. Consulter et gerer sont deux droits
 // distincts ; fixer un prix en est un troisieme.
@@ -67,6 +76,26 @@ Route::middleware('can:pharmacie.dispensing.create')->group(function (): void {
     Route::get('comptoir', [DispensingController::class, 'create'])->name('dispensing.create');
     Route::post('dispensations', [DispensingController::class, 'store'])->name('dispensing.store');
 });
+
+// Les preparations : ce qui attend entre le comptoir et la caisse. Lire
+// demande le droit de voir les dispensations ; delivrer, celui de delivrer.
+Route::middleware('can:pharmacie.dispensing.view')->group(function (): void {
+    Route::get('preparations', [PreparationController::class, 'index'])->name('preparations.index');
+    Route::get('preparations/{preparation}', [PreparationController::class, 'show'])
+        ->whereNumber('preparation')->name('preparations.show');
+});
+
+Route::middleware('can:pharmacie.dispensing.create')->group(function (): void {
+    Route::post('preparations/{preparation}/delivrance', [PreparationController::class, 'deliver'])
+        ->whereNumber('preparation')->name('preparations.deliver');
+    Route::post('preparations/{preparation}/caisse', [PreparationController::class, 'resend'])
+        ->whereNumber('preparation')->name('preparations.resend');
+});
+
+// Abandonner rend le stock reserve : c'est le droit d'annuler, pas celui de
+// delivrer.
+Route::post('preparations/{preparation}/abandon', [PreparationController::class, 'abandon'])
+    ->middleware('can:pharmacie.dispensing.cancel')->whereNumber('preparation')->name('preparations.abandon');
 
 // Ce qui doit etre paye part a la caisse : la pharmacie ne tient pas de
 // tiroir.

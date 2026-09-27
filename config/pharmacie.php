@@ -80,6 +80,25 @@ return [
     ],
 
     /*
+    | Le comptoir.
+    |
+    | `payment_before_delivery` : le patient regle avant d'etre servi. Le
+    | comptoir monte alors une preparation, la caisse encaisse, et la
+    | delivrance n'a lieu qu'ensuite. A faux, le comptoir delivre tout de
+    | suite et l'encaissement suit.
+    |
+    | Ce n'est pas une preference d'affichage : c'est le parcours du patient,
+    | et il differe d'un etablissement a l'autre.
+    |
+    | `stale_after_hours` : au bout de combien de temps une preparation qui
+    | n'est toujours pas reglee est signalee. Zero : jamais signalee.
+    */
+    'dispensing' => [
+        'payment_before_delivery' => (bool) env('PHARMACIE_PAYMENT_BEFORE_DELIVERY', true),
+        'stale_after_hours' => (int) env('PHARMACIE_PREPARATION_STALE_HOURS', 24),
+    ],
+
+    /*
     | Stock.
     |
     | `expiry_warning_days` : à partir de combien de jours avant la date de

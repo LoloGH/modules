@@ -52,6 +52,7 @@ final class AlertCenter
             $can('pharmacie.stock.receive') ? $this->ordersToReceive() : [],
             $can('pharmacie.dispensing.view') ? $this->shortfalls() : [],
             $can('pharmacie.dispensing.create') ? $this->awaitingBilling() : [],
+            $can('pharmacie.dispensing.view') ? $this->preparations() : [],
             $can('pharmacie.queue.view') ? $this->queue() : [],
             $can('pharmacie.vigilance.view') ? $this->recalls() : [],
             $can('pharmacie.vigilance.view') ? $this->adverseEvents() : [],
@@ -196,6 +197,82 @@ final class AlertCenter
             route('pharmacie.stock.index'),
             'Voir le stock',
         )];
+    }
+
+    /**
+     * Les préparations : celles qui sont réglées et que personne n'a
+     * servies, et celles qui attendent depuis trop longtemps.
+     *
+     * La première fait patienter quelqu'un qui a déjà payé, au comptoir ou
+     * dans le couloir. La seconde immobilise parfois du stock réservé pour
+     * un patient qui ne reviendra pas.
+     *
+     * @return list<Alert>
+     */
+    private function preparations(): array
+    {
+        $preparations = Dispensation::query()->ofFacility()
+            ->where('status', Dispensation::STATUS_DRAFT)
+            ->with('reservations')
+            ->get();
+
+        if ($preparations->isEmpty()) {
+            return [];
+        }
+
+        $alerts = [];
+        $reglees = [];
+        $oubliees = [];
+        $heures = max(0, (int) config('pharmacie.dispensing.stale_after_hours', 24));
+
+        foreach ($preparations as $preparation) {
+            $status = $preparation->billing_reference === null
+                ? null
+                : Pharmacie::saleStatus()->status((string) $preparation->billing_reference);
+
+            if ($status !== null && $status->settledForPatient()) {
+                $reglees[] = $preparation;
+
+                continue;
+            }
+
+            $attente = $preparation->prepared_at?->diffInHours(now());
+
+            if ($heures > 0 && $attente !== null && $attente >= $heures) {
+                $oubliees[] = $preparation;
+            }
+        }
+
+        if ($reglees !== []) {
+            $alerts[] = new Alert(
+                'preparations_settled',
+                Alert::LEVEL_WARN,
+                sprintf('%d préparation(s) réglées attendent d\'être délivrées', count($reglees)),
+                'Le patient a payé sa part : il attend ses médicaments.',
+                route('pharmacie.preparations.index'),
+                'Servir',
+            );
+        }
+
+        if ($oubliees !== []) {
+            $immobilise = array_sum(array_map(
+                static fn (Dispensation $preparation): int => (int) $preparation->reservations->sum('quantity'),
+                $oubliees,
+            ));
+
+            $alerts[] = new Alert(
+                'preparations_stale',
+                Alert::LEVEL_INFO,
+                sprintf('%d préparation(s) sans paiement depuis plus de %d h', count($oubliees), $heures),
+                $immobilise > 0
+                    ? sprintf('%d unité(s) restent réservées : les abandonner les rendrait aux autres patients.', $immobilise)
+                    : 'À relancer ou à abandonner.',
+                route('pharmacie.preparations.index'),
+                'Voir',
+            );
+        }
+
+        return $alerts;
     }
 
     /**

@@ -17,12 +17,16 @@ use Keneya\Pharmacie\Console\Commands\SyncPermissions;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionSink;
+use Keneya\Pharmacie\Contracts\QueueDischarge;
 use Keneya\Pharmacie\Contracts\SaleSink;
+use Keneya\Pharmacie\Contracts\SaleStatusProvider;
 use Keneya\Pharmacie\Contracts\StaffDirectory;
 use Keneya\Pharmacie\Http\Middleware\EnsureHostGrantsAccess;
 use Keneya\Pharmacie\Prescriptions\NoPrescriptions;
 use Keneya\Pharmacie\Queue\NoPharmacyQueue;
+use Keneya\Pharmacie\Queue\NoQueueDischarge;
 use Keneya\Pharmacie\Sales\NoSaleSink;
+use Keneya\Pharmacie\Sales\NoSaleStatus;
 use Keneya\Pharmacie\Services\PharmacieSettings;
 use Keneya\Pharmacie\Staff\NoStaffDirectory;
 use Keneya\Pharmacie\Standalone\StandaloneMode;
@@ -56,7 +60,9 @@ class PharmacieServiceProvider extends ServiceProvider
         // fournit en liant ses propres implémentations. `singletonIf` pour ne
         // jamais écraser celle qu'un hôte aurait enregistrée avant le module.
         $this->app->singletonIf(PharmacyQueueProvider::class, NoPharmacyQueue::class);
+        $this->app->singletonIf(QueueDischarge::class, NoQueueDischarge::class);
         $this->app->singletonIf(SaleSink::class, NoSaleSink::class);
+        $this->app->singletonIf(SaleStatusProvider::class, NoSaleStatus::class);
 
         // Les ordonnances : lues chez l'hôte (le DME), et le retour de ce qui
         // a été servi. Sans hôte, aucune ordonnance et rien à rendre.

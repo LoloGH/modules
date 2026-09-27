@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\App;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionSink;
+use Keneya\Pharmacie\Contracts\QueueDischarge;
 use Keneya\Pharmacie\Contracts\SaleSink;
+use Keneya\Pharmacie\Contracts\SaleStatusProvider;
 use Keneya\Pharmacie\Contracts\StaffDirectory;
 
 /**
@@ -72,6 +74,15 @@ final class Pharmacie
     }
 
     /**
+     * La sortie de la file : clore le passage d'un patient servi, ou
+     * l'envoyer vers un autre service. Sans hôte, rien n'est proposé.
+     */
+    public static function discharge(): QueueDischarge
+    {
+        return App::make(QueueDischarge::class);
+    }
+
+    /**
      * Les ordonnances à servir, fournies par l'hôte (aucune par défaut).
      */
     public static function prescriptions(): PrescriptionProvider
@@ -85,6 +96,17 @@ final class Pharmacie
     public static function prescriptionSink(): PrescriptionSink
     {
         return App::make(PrescriptionSink::class);
+    }
+
+    /**
+     * Où en est ce qui a été envoyé à la caisse (rien de connu par défaut).
+     *
+     * Lecture seule : la pharmacie s'en sert pour savoir si elle peut
+     * délivrer, jamais pour décider qu'une facture est réglée.
+     */
+    public static function saleStatus(): SaleStatusProvider
+    {
+        return App::make(SaleStatusProvider::class);
     }
 
     /**

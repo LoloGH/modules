@@ -8,17 +8,15 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Keneya\Pharmacie\Audit\Auditor;
 use Keneya\Pharmacie\Exceptions\PharmacieRuleViolation;
-use Keneya\Pharmacie\Models\Batch;
 use Keneya\Pharmacie\Models\Dispensation;
-use Keneya\Pharmacie\Models\DispensationBatch;
 use Keneya\Pharmacie\Models\DispensationItem;
 use Keneya\Pharmacie\Models\Location;
 use Keneya\Pharmacie\Models\Product;
 use Keneya\Pharmacie\Models\StockMovement;
 use Keneya\Pharmacie\Pharmacie;
+use Keneya\Pharmacie\Services\LineDispenser;
 use Keneya\Pharmacie\Services\NumberGenerator;
 use Keneya\Pharmacie\Services\StockLedger;
-use Keneya\Pharmacie\Services\StockPicker;
 use Keneya\Pharmacie\Support\Actor;
 use Keneya\Pharmacie\Support\Controlled;
 use Keneya\Pharmacie\Support\Facility;
@@ -29,17 +27,21 @@ use Throwable;
 /**
  * Délivrer : le geste central de la pharmacie.
  *
+ * C'est le chemin court : on sert et on encaisse ensuite. Quand
+ * l'établissement demande le paiement avant la délivrance, le comptoir passe
+ * par {@see PrepareDispensation} puis {@see DeliverPreparation}.
+ *
  * Ce que cette action garantit :
  *
- *   - **FEFO d'office** : sans lot désigné, on sert celui qui périme le
- *     premier, en répartissant sur plusieurs lots si nécessaire ;
- *   - **une dérogation se justifie** : choisir un autre lot est possible,
- *     mais le motif est obligatoire et reste écrit ;
  *   - **la dispensation partielle est normale** : ce qui manque devient un
  *     reliquat visible, jamais un silence ;
  *   - **rien de périmé ni de bloqué ne sort** : le grand livre le refuse ;
  *   - **tout ou rien** : la sortie de stock, les lignes et la pièce sont
  *     écrites dans une seule transaction.
+ *
+ * Le choix des lots, lui, appartient à {@see LineDispenser}, partagé avec la
+ * délivrance d'une préparation : le FEFO et ses dérogations ne doivent pas
+ * dépendre du chemin emprunté.
  *
  * Ce qu'elle ne fait pas : encaisser. L'argent part par le contrat de vente
  * (`Contracts\SaleSink`), une fois la dispensation écrite.
@@ -49,7 +51,7 @@ final class DispenseProducts
     public function __construct(
         private readonly NumberGenerator $numbers,
         private readonly StockLedger $ledger,
-        private readonly StockPicker $picker,
+        private readonly LineDispenser $lines,
         private readonly Auditor $auditor,
     ) {}
 
@@ -219,6 +221,29 @@ final class DispenseProducts
      * @param  array{product_id: int, quantity: int, prescribed_quantity?: int, posology?: ?string, batch_id?: ?int, override_reason?: ?string, substituted_for_id?: ?int, substitution_reason?: ?string, comment?: ?string, unit_price?: ?int}  $line
      * @return array{amount: int, outstanding: int, quantity: int}
      */
+    /**
+     * L'emplacement d'où cette ligne est prise, s'il diffère de celui de la
+     * dispensation.
+     *
+     * @param  array<string, mixed>  $line
+     */
+    private function lineLocation(array $line, Dispensation $dispensation, int $position): ?Location
+    {
+        $id = $line['location_id'] ?? null;
+
+        if ($id === null) {
+            return null;
+        }
+
+        $location = Location::query()->ofFacility()->active()->whereKey((int) $id)->first();
+
+        if ($location === null) {
+            throw new PharmacieRuleViolation("Ligne {$position} : cet emplacement n'existe pas, ou n'est plus actif.");
+        }
+
+        return $location;
+    }
+
     private function dispenseLine(Dispensation $dispensation, Location $location, array $line, Authenticatable $dispenser, int $index): array
     {
         $position = $index + 1;
@@ -258,9 +283,15 @@ final class DispenseProducts
             ? max(0, (int) $line['unit_price'])
             : (int) ($product->sale_price ?? 0);
 
+        // La ligne peut être prise ailleurs qu'au comptoir : le vaccin dans la
+        // chaîne du froid, ce qui n'est pas descendu à la centrale. Nulle,
+        // elle suit l'emplacement de la dispensation.
+        $from = $this->lineLocation($line, $dispensation, $position) ?? $location;
+
         $item = DispensationItem::create([
             'dispensation_id' => $dispensation->id,
             'product_id' => $product->id,
+            'location_id' => $from->is($location) ? null : $from->id,
             'label' => $product->label(),
             'posology' => Text::clean($line['posology'] ?? null),
             'prescribed_quantity' => max($prescribed, 0),
@@ -272,122 +303,22 @@ final class DispenseProducts
             'comment' => Text::clean($line['comment'] ?? null),
         ]);
 
-        $plan = $this->planFor($product, $location, $wanted, $line, $position);
-
-        $served = 0;
-
-        foreach ($plan as $row) {
-            $this->ledger->issue(
-                $row['batch'],
-                $location,
-                $row['quantity'],
-                StockMovement::KIND_DISPENSING,
-                $dispenser,
-                ['document' => $dispensation, 'document_number' => $dispensation->number],
-            );
-
-            DispensationBatch::create([
-                'dispensation_item_id' => $item->id,
-                'batch_id' => $row['batch']->id,
-                'quantity' => $row['quantity'],
-                'overrode_fefo' => $row['overrode_fefo'],
-                'override_reason' => $row['override_reason'],
-            ]);
-
-            $served += $row['quantity'];
-        }
+        $served = $this->lines->serve(
+            $dispensation,
+            $item,
+            $from,
+            $wanted,
+            ['batch_id' => $line['batch_id'] ?? null, 'override_reason' => $line['override_reason'] ?? null],
+            $dispenser,
+            $position,
+        );
 
         $amount = $served * $unitPrice;
-
-        $item->update(['quantity' => $served, 'amount' => $amount]);
-
-        // Un produit sous surveillance laisse une trace nominative, en plus
-        // du mouvement de stock : c'est ce qui rend le registre opposable.
-        if ($served > 0 && Controlled::applies($product)) {
-            $this->auditor->record(
-                'controlled_dispensed',
-                $dispensation,
-                sprintf(
-                    'Produit sous surveillance délivré : %d %s de %s à %s (%s)',
-                    $served,
-                    $product->unit ?? 'unité',
-                    $product->label(),
-                    $dispensation->patient_name ?? $dispensation->patient_id ?? 'patient non désigné',
-                    $dispensation->prescription_ref ?? 'sans ordonnance',
-                ),
-                [],
-                [
-                    'product' => $product->code,
-                    'quantity' => $served,
-                    'patient_id' => $dispensation->patient_id,
-                    'prescription' => $dispensation->prescription_ref,
-                ],
-                $dispenser,
-            );
-        }
 
         return [
             'amount' => $amount,
             'outstanding' => max(0, (int) $item->prescribed_quantity - $served),
             'quantity' => $served,
         ];
-    }
-
-    /**
-     * Le plan de sortie : FEFO par défaut, ou le lot désigné, et alors la
-     * dérogation est tracée.
-     *
-     * @param  array{batch_id?: ?int, override_reason?: ?string}  $line
-     * @return list<array{batch: Batch, quantity: int, overrode_fefo: bool, override_reason: ?string}>
-     */
-    private function planFor(Product $product, Location $location, int $wanted, array $line, int $position): array
-    {
-        if ($wanted <= 0) {
-            return [];
-        }
-
-        if (! isset($line['batch_id']) || $line['batch_id'] === null) {
-            return array_map(
-                static fn (array $row): array => [
-                    'batch' => $row['batch'],
-                    'quantity' => $row['quantity'],
-                    'overrode_fefo' => false,
-                    'override_reason' => null,
-                ],
-                $this->picker->plan($product, $location, $wanted)['lines'],
-            );
-        }
-
-        $batch = Batch::query()->find((int) $line['batch_id']);
-
-        if ($batch === null || (int) $batch->product_id !== (int) $product->id) {
-            throw new PharmacieRuleViolation("Ligne {$position} ({$product->name}) : ce lot n'appartient pas à ce produit.");
-        }
-
-        $suggested = $this->picker->suggest($product, $location);
-        $overrode = $suggested !== null && (int) $suggested->id !== (int) $batch->id;
-        $reason = Text::clean($line['override_reason'] ?? null);
-
-        // Servir un autre lot que celui proposé est permis, mais jamais en
-        // silence : c'est la règle qui protège le FEFO d'être contourné par
-        // habitude.
-        if ($overrode && $reason === null) {
-            throw new PharmacieRuleViolation(sprintf(
-                'Ligne %d (%s) : le lot %s périme avant le lot %s. Pour servir celui-ci, indiquez un motif.',
-                $position,
-                $product->name,
-                $suggested->number,
-                $batch->number,
-            ));
-        }
-
-        $available = $this->ledger->available($batch, $location);
-
-        return [[
-            'batch' => $batch,
-            'quantity' => min($wanted, $available),
-            'overrode_fefo' => $overrode,
-            'override_reason' => $overrode ? $reason : null,
-        ]];
     }
 }

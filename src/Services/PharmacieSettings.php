@@ -48,6 +48,20 @@ final class PharmacieSettings
                 'facility.email' => ['label' => 'Adresse e-mail', 'type' => self::TYPE_TEXT],
                 'currency.symbol' => ['label' => 'Symbole monétaire', 'type' => self::TYPE_TEXT, 'help' => 'Affiché après chaque montant.'],
             ],
+            'Comptoir' => [
+                'dispensing.payment_before_delivery' => [
+                    'label' => 'Le patient règle avant d\'être servi',
+                    'type' => self::TYPE_BOOL,
+                    'help' => 'Le comptoir monte une préparation, la caisse encaisse, et la délivrance suit. Décoché, le comptoir délivre tout de suite et l\'encaissement vient après.',
+                ],
+                'dispensing.stale_after_hours' => [
+                    'label' => 'Signaler une préparation non réglée après (heures)',
+                    'type' => self::TYPE_INT,
+                    'min' => 0,
+                    'max' => 720,
+                    'help' => 'Une préparation oubliée immobilise parfois du stock réservé. 0 : jamais signalée.',
+                ],
+            ],
             'Péremptions' => [
                 'stock.expiry_warning_days' => [
                     'label' => 'Signaler une péremption (jours avant)',

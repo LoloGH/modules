@@ -22,6 +22,11 @@ class AlertsHttpTest extends TestCase
         parent::setUp();
 
         $this->artisan('pharmacie:sync-permissions')->assertSuccessful();
+
+        // Le comptoir n'est ici qu'un montage : ce qui est teste, ce sont les alertes.
+        // Le parcours ou le patient regle d'abord a sa propre suite,
+        // PreparationTest et PreparationsHttpTest.
+        config(['pharmacie.dispensing.payment_before_delivery' => false]);
     }
 
     public function test_an_empty_pharmacy_has_nothing_to_signal(): void

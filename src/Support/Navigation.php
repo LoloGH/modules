@@ -33,6 +33,7 @@ final class Navigation
                     self::item('Alertes', 'bell', 'pharmacie.alerts.index'),
                     self::item('File d\'attente', 'horloge', 'pharmacie.queue.index', 'pharmacie.queue.view', ['pharmacie.queue.*']),
                     self::item('Comptoir', 'dispensation', 'pharmacie.dispensing.create', 'pharmacie.dispensing.create'),
+                    self::item('Préparations', 'horloge', 'pharmacie.preparations.index', 'pharmacie.dispensing.view', ['pharmacie.preparations.*']),
                     self::item('Dispensations', 'dispensation', 'pharmacie.dispensing.index', 'pharmacie.dispensing.view', ['pharmacie.dispensing.*']),
                     self::item('Ordonnances', 'ordonnance', 'pharmacie.prescriptions.index', 'pharmacie.dispensing.view', ['pharmacie.prescriptions.*']),
                 ],

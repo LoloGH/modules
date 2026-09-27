@@ -52,7 +52,10 @@ class Dispensation extends Model
             'total' => 'integer',
             'outstanding' => 'integer',
             'dispensed_at' => 'datetime',
+            'prepared_at' => 'datetime',
+            'billed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'coverage_rate' => 'integer',
         ];
     }
 
@@ -151,6 +154,21 @@ class Dispensation extends Model
     public function items(): HasMany
     {
         return $this->hasMany(DispensationItem::class, 'dispensation_id');
+    }
+
+    /**
+     * Ce qui est mis de côté pour cette préparation, tant qu'elle attend le
+     * paiement. Vide dès qu'elle est délivrée ou abandonnée.
+     */
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(DispensationReservation::class, 'dispensation_id');
+    }
+
+    /** Une préparation : écrite et facturée, dont rien n'est encore sorti. */
+    public function isPreparation(): bool
+    {
+        return $this->status === self::STATUS_DRAFT;
     }
 
     /**
