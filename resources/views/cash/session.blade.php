@@ -88,6 +88,12 @@
                             ({{ $fromQueue->patientRef }}), ticket n° {{ $fromQueue->token }}@if ($fromQueue->destinationService), vers {{ $fromQueue->destinationService }}@endif.
                             Vérifiez puis enregistrez : le patient poursuivra alors son parcours.
                         </p>
+                        @if ($fromQueue->reason)
+                            <p class="flash">
+                                {{ $fromQueue->reason }} : {{ $money((int) $fromQueue->expectedAmount()) }} à la charge du patient.
+                                Le prix vient du module qui a vendu ; il ne se ressaisit pas ici.
+                            </p>
+                        @endif
                     @endif
                     <form method="post" action="{{ route('finance.cash.payments.store', $session) }}"
                           data-coverage-form data-coverage='@json($fromInvoice ? [] : $coverage)'>
@@ -99,6 +105,11 @@
                             {{-- La visite réglée : l'encaissement la fera avancer chez l'hôte. --}}
                             <input type="hidden" name="queue_ref" value="{{ request()->query('file') }}">
                             <input type="hidden" name="visit_ref" value="{{ $fromQueue->ref }}">
+                            @if ($fromQueue->invoiceId)
+                                {{-- Déjà facturé ailleurs : l'encaissement se rattache à la
+                                     pièce, qui tient le décompte de ce qui reste dû. --}}
+                                <input type="hidden" name="invoice_id" value="{{ $fromQueue->invoiceId }}">
+                            @endif
                         @endif
                         <div class="row">
                             <label>Moyen de paiement

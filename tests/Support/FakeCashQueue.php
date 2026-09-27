@@ -35,6 +35,21 @@ final class FakeCashQueue implements CashQueueProvider
         return $visit;
     }
 
+    /**
+     * Un passage déjà facturé ailleurs : la pharmacie a vendu, Finance a émis
+     * la pièce, et le patient vient la régler.
+     */
+    public function addBilled(string $queueRef, string $ref, int $token, string $patientName, int $invoiceId, int $amount, string $reason, string $status = QueuedVisit::STATUS_CALLED): QueuedVisit
+    {
+        $visit = new QueuedVisit(
+            $ref, $token, $status, 'PAT-'.$ref, $patientName, 'Pharmacie', 'Pharmacie', null,
+            invoiceId: $invoiceId, amount: $amount, reason: $reason,
+        );
+        $this->visits[$queueRef][] = $visit;
+
+        return $visit;
+    }
+
     public function queues(): array
     {
         return $this->queues;
@@ -58,6 +73,7 @@ final class FakeCashQueue implements CashQueueProvider
                 $called = new QueuedVisit(
                     $visit->ref, $visit->token, QueuedVisit::STATUS_CALLED, $visit->patientRef, $visit->patientName,
                     $visit->originService, $visit->destinationService, $visit->act,
+                    $visit->invoiceId, $visit->amount, $visit->reason,
                 );
                 $this->visits[$queueRef][$index] = $called;
 

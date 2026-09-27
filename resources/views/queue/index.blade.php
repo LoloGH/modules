@@ -93,7 +93,12 @@
                                     <span class="sub mono">{{ $visit->patientRef }}</span>
                                 </td>
                                 <td data-l="Parcours">{{ $visit->originService ?? '-' }} vers {{ $visit->destinationService ?? '-' }}</td>
-                                <td data-l="Acte attendu">{{ $visit->act?->name ?? 'Montant à saisir' }}</td>
+                                <td data-l="Acte attendu">
+                                    {{ $visit->label() ?? 'Montant à saisir' }}
+                                    @if ($visit->invoiceId)
+                                        <span class="sub">déjà facturé</span>
+                                    @endif
+                                </td>
                                 <td data-l="Tarif" class="num">{{ $visit->expectedAmount() === null ? '-' : $money($visit->expectedAmount()) }}</td>
                                 <td data-l="État">
                                     <span class="badge {{ $visit->isCalled() ? 'info' : 'off' }}">{{ $visit->isCalled() ? 'Appelé' : 'En attente' }}</span>
@@ -101,9 +106,21 @@
                                 <td data-l="" class="acts">
                                     @if ($visit->isCalled() && $session !== null)
                                         @can('finance.payments.create')
-                                            <a class="btn sm" href="{{ route('finance.cash.sessions.show', ['session' => $session, 'file' => $current->ref, 'visite' => $visit->ref]) }}#encaisser">
-                                                <x-finance::icon name="recette" /> Encaisser
-                                            </a>
+                                            @if ($visit->invoiceId !== null && $visit->expectedAmount() === 0)
+                                                {{-- Pris en charge en entier, ou deja regle : il n'y a
+                                                     rien a mettre dans le tiroir, et le patient ne doit
+                                                     pas rester la pour autant. --}}
+                                                <form method="post" action="{{ route('finance.queue.release') }}" class="inline">
+                                                    @csrf
+                                                    <input type="hidden" name="file" value="{{ $current->ref }}">
+                                                    <input type="hidden" name="visite" value="{{ $visit->ref }}">
+                                                    <button type="submit" class="sm"><x-finance::icon name="check" /> Rien à encaisser</button>
+                                                </form>
+                                            @else
+                                                <a class="btn sm" href="{{ route('finance.cash.sessions.show', ['session' => $session, 'file' => $current->ref, 'visite' => $visit->ref]) }}#encaisser">
+                                                    <x-finance::icon name="recette" /> Encaisser
+                                                </a>
+                                            @endif
                                         @endcan
                                     @endif
                                 </td>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keneya\FinanceCaisse\Queue;
 
+use Keneya\FinanceCaisse\Actions\BillExternalSale;
 use Keneya\FinanceCaisse\Catalog\CatalogAct;
 
 /**
@@ -21,6 +22,12 @@ use Keneya\FinanceCaisse\Catalog\CatalogAct;
  *   tel quel sur l'encaissement ;
  * - `act` : l'acte attendu, résolu par l'hôte dans le catalogue de Finance,
  *   avec son tarif standard (`act->activeAmount`) ; null si rien ne s'applique.
+ *
+ * Tout ce qui se paie à une caisse ne vient pas du catalogue des actes : un
+ * autre module de l'établissement peut avoir déjà vendu, à ses prix, et fait
+ * émettre une facture ({@see BillExternalSale}).
+ * L'hôte remplit alors `invoiceId` et `reason` ; le montant attendu est ce que
+ * la facture laisse à la charge du patient, et l'encaissement s'y rattache.
  */
 final readonly class QueuedVisit
 {
@@ -37,6 +44,9 @@ final readonly class QueuedVisit
         public ?string $originService,
         public ?string $destinationService,
         public ?CatalogAct $act,
+        public ?int $invoiceId = null,
+        public ?int $amount = null,
+        public ?string $reason = null,
     ) {}
 
     public function isCalled(): bool
@@ -44,9 +54,21 @@ final readonly class QueuedVisit
         return $this->status === self::STATUS_CALLED;
     }
 
-    /** Le montant attendu : le tarif standard de l'acte, s'il est fixé. */
+    /**
+     * Le montant attendu : ce que laisse une facture rattachée, sinon le
+     * tarif standard de l'acte, s'il est fixé.
+     */
     public function expectedAmount(): ?int
     {
-        return $this->act?->activeAmount;
+        return $this->amount ?? $this->act?->activeAmount;
+    }
+
+    /**
+     * Ce que le caissier lit dans la colonne « Acte attendu » : le motif
+     * annoncé par l'hôte, sinon le nom de l'acte.
+     */
+    public function label(): ?string
+    {
+        return $this->reason ?? $this->act?->name;
     }
 }

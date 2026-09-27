@@ -61,6 +61,11 @@ Route::get('file', [CashQueueController::class, 'index'])
 Route::post('file/appeler', [CashQueueController::class, 'callNext'])
     ->middleware('can:finance.payments.create')->name('queue.call');
 
+// Rien a encaisser : un patient pris en charge a 100 %, ou dont la piece est
+// deja reglee, ne doit pas rester bloque au guichet.
+Route::post('file/laisser-passer', [CashQueueController::class, 'release'])
+    ->middleware('can:finance.payments.create')->name('queue.release');
+
 Route::post('caisse/sessions/{session}/cloture', [CashDeskController::class, 'close'])
     ->middleware('can:finance.sessions.close')->name('cash.sessions.close');
 

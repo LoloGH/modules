@@ -8,6 +8,8 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Keneya\FinanceCaisse\Actions\ReleaseQueuedVisit;
+use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Queue\CashQueue;
@@ -74,6 +76,28 @@ final class CashQueueController extends FinanceController
             $visit === null
                 ? "Aucun patient en attente à {$current->name}."
                 : sprintf('Ticket n° %d appelé : %s (%s).', $visit->token, $visit->patientName, $visit->patientRef),
+        );
+    }
+
+    /**
+     * Rien a encaisser : la visite poursuit son parcours sans passer par le
+     * tiroir. La regle, elle, est verifiee par l'action.
+     */
+    public function release(Request $request, ReleaseQueuedVisit $action): RedirectResponse
+    {
+        $queue = (string) $request->input('file');
+        $visit = (string) $request->input('visite');
+
+        try {
+            $released = $action->handle($queue, $visit, $this->user($request));
+        } catch (FinanceRuleViolation $e) {
+            return redirect()->route('finance.queue.index', ['file' => $queue])
+                ->with('finance_error', $e->getMessage());
+        }
+
+        return redirect()->route('finance.queue.index', ['file' => $queue])->with(
+            'finance_status',
+            sprintf('%s ne devait rien : il poursuit son parcours.', $released->patientName),
         );
     }
 
