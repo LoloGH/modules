@@ -66,6 +66,44 @@ final class StockPicker
     }
 
     /**
+     * Ce qui est disponible pour ces produits, emplacement par emplacement.
+     *
+     * Le comptoir a besoin de savoir non seulement qu'il n'a pas le produit,
+     * mais **où il est** : sinon il annonce une rupture alors que la réserve
+     * en a trois boîtes. Une seule requête, car cet écran regarde tout le
+     * catalogue à la fois.
+     *
+     * @param  list<int>  $productIds
+     * @return array<int, array<int, int>> [produit][emplacement] => disponible
+     */
+    public function availabilityByLocation(array $productIds): array
+    {
+        if ($productIds === []) {
+            return [];
+        }
+
+        $rows = Stock::query()
+            ->selectRaw('product_id, location_id, SUM(quantity - reserved) as available')
+            ->whereIn('product_id', $productIds)
+            ->inStock()
+            ->whereHas('batch', fn ($batch) => $batch->dispensable())
+            ->groupBy('product_id', 'location_id')
+            ->get();
+
+        $map = [];
+
+        foreach ($rows as $row) {
+            $available = (int) $row->available;
+
+            if ($available > 0) {
+                $map[(int) $row->product_id][(int) $row->location_id] = $available;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * Comment servir une quantité : la répartition sur les lots, du plus
      * proche de la péremption au plus lointain.
      *

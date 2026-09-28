@@ -50,7 +50,7 @@
                 <div class="tw">
                     <table class="stack wide">
                         <thead>
-                        <tr><th>Patient</th><th>Motif</th><th>Ordonnance</th><th>Attente</th><th>État</th></tr>
+                        <tr><th>Patient</th><th>Motif</th><th>Ordonnance</th><th>Attente</th><th>État</th><th>Ce qui reste à faire</th></tr>
                         </thead>
                         <tbody>
                         @foreach ($patients as $patient)
@@ -69,9 +69,71 @@
                                     @endif
                                 </td>
                                 <td data-l="État">
-                                    <span class="badge {{ $patient->isCalled() ? 'info' : 'muted' }}">
-                                        {{ $patient->isCalled() ? 'Appelé' : 'En attente' }}
-                                    </span>
+                                    @php($engage = $work[$patient->ref] ?? ['preparation' => null, 'served' => null])
+                                    @if ($engage['preparation'])
+                                        <span class="badge warn">À délivrer</span>
+                                    @elseif ($engage['served'])
+                                        <span class="badge ok">Servi</span>
+                                    @else
+                                        <span class="badge {{ $patient->isCalled() ? 'info' : 'muted' }}">
+                                            {{ $patient->isCalled() ? 'Appelé' : 'En attente' }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td data-l="Ce qui reste à faire" class="acts">
+                                    @can('pharmacie.dispensing.create')
+                                        @if ($engage['preparation'])
+                                            {{-- Revenu de la caisse : sa préparation l'attend. En écrire
+                                                 une seconde le renverrait payer une seconde fois. --}}
+                                            <a class="btn sm" href="{{ route('pharmacie.preparations.show', $engage['preparation']) }}">
+                                                <x-pharmacie::icon name="dispensation" /> Délivrer
+                                                <span class="sub mono">{{ $engage['preparation']->number }}</span>
+                                            </a>
+                                        @elseif ($engage['served'])
+                                            {{-- Servi : il n'a plus rien à faire ici. C'est au pharmacien
+                                                 de dire où il va, sinon il resterait dans la file. --}}
+                                            <details class="sortie">
+                                                <summary class="btn sm ghost">
+                                                    <x-pharmacie::icon name="check" /> Terminer
+                                                </summary>
+                                                <div class="menu">
+                                                    <form method="post" action="{{ route('pharmacie.queue.close') }}">
+                                                        @csrf
+                                                        <input type="hidden" name="file" value="{{ $current?->ref }}">
+                                                        <input type="hidden" name="patient" value="{{ $patient->ref }}">
+                                                        <button type="submit" class="sm block">Clôturer le passage</button>
+                                                    </form>
+                                                    @if ($destinations !== [])
+                                                        <form method="post" action="{{ route('pharmacie.queue.refer') }}">
+                                                            @csrf
+                                                            <input type="hidden" name="file" value="{{ $current?->ref }}">
+                                                            <input type="hidden" name="patient" value="{{ $patient->ref }}">
+                                                            <label class="sr">Service</label>
+                                                            <select name="destination" required>
+                                                                <option value="">Envoyer vers…</option>
+                                                                @foreach ($destinations as $destination)
+                                                                    <option value="{{ $destination->ref }}">{{ $destination->name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            <input name="reason" placeholder="Motif du renvoi">
+                                                            <button type="submit" class="sm block">Envoyer</button>
+                                                        </form>
+                                                    @else
+                                                        <p class="muted">
+                                                            L'application hôte ne propose aucun service de destination.
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            </details>
+                                        @elseif ($patient->isCalled())
+                                            <a class="btn sm" href="{{ route('pharmacie.dispensing.create', [
+                                                'file' => $current?->ref,
+                                                'patient' => $patient->ref,
+                                            ]) }}">
+                                                <x-pharmacie::icon name="dispensation" /> Préparer
+                                            </a>
+                                        @endif
+                                    @endcan
                                 </td>
                             </tr>
                         @endforeach

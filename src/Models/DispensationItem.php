@@ -40,6 +40,25 @@ class DispensationItem extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    /**
+     * L'emplacement d'ou cette ligne est prise, quand ce n'est pas celui du
+     * comptoir : la chaine du froid pour un vaccin, la centrale pour ce qui
+     * n'est pas descendu.
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'location_id');
+    }
+
+    /**
+     * L'emplacement qui sert cette ligne : le sien, sinon celui de la
+     * dispensation. C'est lui qui part au grand livre.
+     */
+    public function servingLocation(?Location $fallback = null): ?Location
+    {
+        return $this->location ?? $fallback ?? $this->dispensation?->location;
+    }
+
     public function substitutedFor(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'substituted_for_id');

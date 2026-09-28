@@ -287,6 +287,24 @@
 
     input.money { font-variant-numeric: tabular-nums; }
 
+    /* Le comptoir : une ligne par produit prescrit. Ce qui ne peut pas etre
+       servi se voit, sans qu'il faille lire les chiffres un par un. */
+    .line { padding: .875rem 0; border-top: 1px solid var(--line-soft); }
+    .line:first-of-type { padding-top: 0; border-top: 0; }
+    .line.out, .line.short { padding: .875rem; border-radius: var(--r); border-top: 0; margin: .5rem 0; }
+    .line.out { background: var(--danger-bg); box-shadow: inset .1875rem 0 0 var(--danger); }
+    .line.short { background: var(--warn-bg); box-shadow: inset .1875rem 0 0 var(--warn); }
+    .line.out select, .line.out input { border-color: var(--danger-ring); }
+    .line .pres { margin: 0 0 .625rem; font-size: .875rem; display: flex; flex-wrap: wrap; gap: .375rem .625rem; align-items: baseline; }
+    .line .pres .sub { display: inline; }
+
+    .flag { margin: 0 0 .625rem; font-size: .8125rem; font-weight: 500; }
+    .flag.out { color: var(--danger); }
+    .flag.short { color: var(--warn); }
+    /* Ce qui est ailleurs n'est pas une alerte : c'est une indication. */
+    .flag.ailleurs { color: var(--brand); }
+    .line.ailleurs { background: var(--brand-soft); box-shadow: inset .1875rem 0 0 var(--brand); padding: .875rem; border-radius: var(--r); border-top: 0; margin: .5rem 0; }
+
     /* Cases à cocher : elles ne suivent pas la mise en forme des champs texte. */
     input[type="checkbox"], input[type="radio"] { width: auto; display: inline-block; margin: 0; padding: 0; accent-color: var(--brand); }
     .checks { display: flex; flex-wrap: wrap; gap: .3125rem .875rem; }
@@ -322,6 +340,16 @@
     .switch .btn.on { background: var(--brand-soft); color: var(--brand); border-color: var(--brand-ring); cursor: default; }
     .switch .btn.on:hover { background: var(--brand-soft); color: var(--brand); }
     .switch .btn .pip { width: .5rem; height: .5rem; border-radius: 50%; background: var(--pip); display: inline-block; margin-left: .125rem; box-shadow: 0 0 0 2px var(--surface); }
+    /* Sortie de file : cloturer ou renvoyer. Les deux gestes restent ranges
+       sous un bouton tant qu'on n'en a pas besoin, pour que la ligne du
+       patient reste lisible. */
+    .sortie > summary { list-style: none; display: inline-flex; }
+    .sortie > summary::-webkit-details-marker { display: none; }
+    .sortie .menu { margin-top: .5rem; display: grid; gap: .625rem; min-width: 13rem; text-align: left; }
+    .sortie .menu form { display: grid; gap: .375rem; }
+    .sortie .menu p { margin: 0; }
+    td.acts .sortie { display: inline-block; }
+
     .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
     form.inline { display: flex; flex-wrap: wrap; gap: .375rem; align-items: center; }

@@ -140,6 +140,22 @@ class Batch extends Model
      * @param  Builder<Batch>  $query
      * @return Builder<Batch>
      */
+    /**
+     * Les lots qu'on peut servir : ni bloqués, ni détruits, ni périmés.
+     *
+     * Le pendant SQL de {@see isDispensable()}, pour les écrans qui lisent le
+     * stock de tout un catalogue d'un coup et ne peuvent pas charger chaque
+     * lot pour l'interroger.
+     */
+    public function scopeDispensable(Builder $query, ?Carbon $on = null): Builder
+    {
+        return $query
+            ->where('status', self::STATUS_ACTIVE)
+            ->where(fn (Builder $where) => $where
+                ->whereNull('expires_on')
+                ->orWhereDate('expires_on', '>=', ($on ?? now())->toDateString()));
+    }
+
     public function scopeFefo(Builder $query): Builder
     {
         return $query->orderByRaw('expires_on is null')->orderBy('expires_on')->orderBy('id');
