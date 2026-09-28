@@ -13,6 +13,7 @@ use Keneya\Pharmacie\Audit\Auditor;
 use Keneya\Pharmacie\Http\Requests\ProductRequest;
 use Keneya\Pharmacie\Models\Category;
 use Keneya\Pharmacie\Models\Product;
+use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Support\Facility;
 use Keneya\Pharmacie\Support\Text;
 
@@ -65,9 +66,12 @@ final class ProductController extends PharmacieController
     public function show(Product $product): View
     {
         return view('pharmacie::catalog.product', [
-            'product' => $product->load('category'),
+            'product' => $product->load('category', 'coverages'),
             'categories' => Category::query()->ofFacility()->active()->get(),
             'kinds' => Product::kindLabels(),
+            // Les organismes viennent de l'hote : la caisse sait lesquels sont
+            // actifs, la pharmacie dit seulement ce qu'ils couvrent.
+            'insurers' => Pharmacie::insurers()->insurers(),
         ]);
     }
 

@@ -14,6 +14,7 @@ use Keneya\Pharmacie\Actions\SendToCashier;
 use Keneya\Pharmacie\Models\Dispensation;
 use Keneya\Pharmacie\Models\Location;
 use Keneya\Pharmacie\Models\Product;
+use Keneya\Pharmacie\Models\ProductCoverage;
 use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Prescriptions\Prescription;
 use Keneya\Pharmacie\Services\PrescriptionMatcher;
@@ -122,6 +123,12 @@ final class DispensingController extends PharmacieController
             'elsewhere' => $elsewhere,
             'queued' => $queued,
             'prescription' => $prescription,
+            // Les organismes viennent de l'hote, et le choix appartient au
+            // comptoir : rien ne s'applique tout seul.
+            'insurers' => Pharmacie::insurers()->insurers(),
+            // Ce que chacun couvre sur les produits de l'ecran, pour que le
+            // preparateur sache avant de choisir.
+            'coverages' => $this->coverages($products),
             // Les lignes de l'écran : celles de l'ordonnance quand il y en a
             // une, sinon des lignes vides.
             'rows' => $this->lines($prescription, $location, $matcher, $elsewhere),
@@ -148,6 +155,30 @@ final class DispensingController extends PharmacieController
             ->where('status', Dispensation::STATUS_DRAFT)
             ->latest('id')
             ->first();
+    }
+
+    /**
+     * Ce que les organismes couvrent sur ces produits.
+     *
+     * @param  Collection<int, Product>  $products
+     * @return array<int, list<array{name: string, rate: int}>>
+     */
+    private function coverages($products): array
+    {
+        if ($products->isEmpty()) {
+            return [];
+        }
+
+        $rows = [];
+
+        foreach (ProductCoverage::query()->ofFacility()->whereIn('product_id', $products->pluck('id'))->get() as $coverage) {
+            $rows[(int) $coverage->product_id][] = [
+                'name' => (string) $coverage->insurer_name,
+                'rate' => (int) $coverage->rate,
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -301,6 +332,7 @@ final class DispensingController extends PharmacieController
             'prescription_ref' => ['nullable', 'string', 'max:64'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'coverage_insurer' => ['nullable', 'string', 'max:191'],
+            'coverage_insurer_ref' => ['nullable', 'string', 'max:64'],
             'coverage_rate' => ['nullable', 'integer', 'min:1', 'max:100'],
             'coverage_reference' => ['nullable', 'string', 'max:64'],
             'lines' => ['required', 'array', 'min:1'],
@@ -359,11 +391,7 @@ final class DispensingController extends PharmacieController
         // il prepare, et la facture part en caisse.
         if ($this->paymentFirst()) {
             $prepared = $preparation->handle($location, $rows, $this->user($request), $details + [
-                'coverage' => [
-                    'insurer' => $data['coverage_insurer'] ?? null,
-                    'rate' => isset($data['coverage_rate']) ? (int) $data['coverage_rate'] : null,
-                    'reference' => $data['coverage_reference'] ?? null,
-                ],
+                'coverage' => $this->chosenCoverage($data),
             ]);
 
             return redirect()->route('pharmacie.preparations.show', $prepared)->with(
@@ -378,7 +406,9 @@ final class DispensingController extends PharmacieController
             );
         }
 
-        $dispensation = $action->handle($location, $rows, $this->user($request), $details);
+        $dispensation = $action->handle($location, $rows, $this->user($request), $details + [
+            'coverage' => $this->chosenCoverage($data),
+        ]);
 
         // Le dossier medical apprend ce qui a ete servi sur son ordonnance.
         $action->reportToPrescriber($dispensation);
@@ -389,6 +419,45 @@ final class DispensingController extends PharmacieController
                 ? sprintf('Dispensation %s enregistrée, avec un reliquat de %d unité(s).', $dispensation->number, $dispensation->outstanding)
                 : sprintf('Dispensation %s enregistrée.', $dispensation->number),
         );
+    }
+
+    /**
+     * La prise en charge choisie au comptoir.
+     *
+     * Le preparateur choisit un organisme dans la liste de l'hote ; le taux
+     * de chaque ligne vient alors des regles posees sur les produits. Rien ne
+     * s'applique tout seul, et sans choix il n'y a pas de prise en charge.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{insurer: ?string, insurer_ref: ?string, rate: ?int, reference: ?string}|null
+     */
+    private function chosenCoverage(array $data): ?array
+    {
+        $ref = Text::clean($data['coverage_insurer_ref'] ?? null);
+        $name = Text::clean($data['coverage_insurer'] ?? null);
+
+        if ($ref !== null) {
+            foreach (Pharmacie::insurers()->insurers() as $insurer) {
+                if ($insurer->ref === $ref) {
+                    return [
+                        'insurer' => $insurer->name,
+                        'insurer_ref' => $insurer->ref,
+                        'rate' => null,
+                        'reference' => Text::clean($data['coverage_reference'] ?? null),
+                    ];
+                }
+            }
+        }
+
+        // Sans organisme de l'hote, le comptoir peut encore nommer l'organisme
+        // et son taux a la main : une pharmacie sans caisse branchee doit
+        // pouvoir travailler.
+        return $name === null ? null : [
+            'insurer' => $name,
+            'insurer_ref' => null,
+            'rate' => isset($data['coverage_rate']) ? (int) $data['coverage_rate'] : null,
+            'reference' => Text::clean($data['coverage_reference'] ?? null),
+        ];
     }
 
     /**

@@ -110,6 +110,9 @@
                                     @unless ($row['substitutable'])
                                         <span class="badge warn">Non substituable</span>
                                     @endunless
+                                    @foreach ($coverages[$row['product_id']] ?? [] as $prise)
+                                        <span class="badge info">{{ $prise['name'] }} {{ $prise['rate'] }} %</span>
+                                    @endforeach
                                 </p>
                                 @if ($etat === 'out')
                                     <p class="flag out">
@@ -194,21 +197,44 @@
                         </div>
                     @endforeach
 
-                    @if ($paymentFirst)
-                        <div class="row">
+                    <div class="row">
+                        @if ($insurers !== [])
+                            {{-- Le choix appartient au comptoir : rien ne s'applique tout
+                                 seul. Le taux de chaque ligne vient ensuite de ce que
+                                 l'organisme couvre sur ce produit. --}}
+                            <label>Prise en charge
+                                <select name="coverage_insurer_ref">
+                                    <option value="">Aucune : le patient paie tout</option>
+                                    @foreach ($insurers as $insurer)
+                                        <option value="{{ $insurer->ref }}"
+                                                @selected(old('coverage_insurer_ref') === $insurer->ref)>
+                                            {{ $insurer->name }} · {{ $insurer->kindLabel() }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <span class="help">
+                                    Chaque ligne prend le taux que cet organisme couvre sur son
+                                    produit. Les unités sont mises de côté jusqu'à la délivrance.
+                                </span>
+                            </label>
+                        @else
                             <label>Prise en charge
                                 <input name="coverage_insurer" value="{{ old('coverage_insurer') }}"
                                        placeholder="assureur ou aide sociale, si le patient en a une">
-                                <span class="help">Renseignée, les unités sont mises de côté jusqu'à la délivrance.</span>
+                                <span class="help">
+                                    Aucun organisme n'est fourni par l'application hôte : nommez-le
+                                    et donnez son taux. Les unités sont mises de côté jusqu'à la
+                                    délivrance.
+                                </span>
                             </label>
                             <label>Part prise en charge (%)
                                 <input name="coverage_rate" inputmode="numeric" value="{{ old('coverage_rate') }}" placeholder="ex. 80">
                             </label>
-                            <label>Référence de l'accord
-                                <input name="coverage_reference" value="{{ old('coverage_reference') }}">
-                            </label>
-                        </div>
-                    @endif
+                        @endif
+                        <label>Référence de l'accord
+                            <input name="coverage_reference" value="{{ old('coverage_reference') }}">
+                        </label>
+                    </div>
 
                     <label>Observations <input name="notes" value="{{ old('notes') }}"></label>
 

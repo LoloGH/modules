@@ -74,7 +74,12 @@ class BillingHttpTest extends TestCase
         $this->assertSame($dispensation->number, $sale->reference);
         $this->assertSame('PAT-000123', $sale->patientId);
         $this->assertSame(5_000, $sale->total);
-        $this->assertSame([['label' => 'Amoxicilline', 'quantity' => 5, 'unit_price' => 1_000, 'amount' => 5_000]], $sale->lines);
+        // Chaque ligne porte son taux de prise en charge : zero ici, personne
+        // ne couvrant ce produit.
+        $this->assertSame(
+            [['label' => 'Amoxicilline', 'quantity' => 5, 'unit_price' => 1_000, 'amount' => 5_000, 'insurer_rate' => 0]],
+            $sale->lines,
+        );
 
         $this->assertSame(1, AuditLog::where('event', 'dispensation_billed')->count());
     }

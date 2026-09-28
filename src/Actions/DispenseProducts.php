@@ -12,6 +12,7 @@ use Keneya\Pharmacie\Models\Dispensation;
 use Keneya\Pharmacie\Models\DispensationItem;
 use Keneya\Pharmacie\Models\Location;
 use Keneya\Pharmacie\Models\Product;
+use Keneya\Pharmacie\Models\ProductCoverage;
 use Keneya\Pharmacie\Models\StockMovement;
 use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Services\LineDispenser;
@@ -80,6 +81,11 @@ final class DispenseProducts
                 'dispensed_by_id' => Actor::id($dispenser),
                 'dispensed_by_name' => Actor::name($dispenser),
                 'dispensed_at' => now(),
+                // La prise en charge vaut ici aussi : la caisse decoupera la
+                // facture, que le patient ait paye avant ou apres.
+                'coverage_insurer' => Text::clean($details['coverage']['insurer'] ?? null),
+                'coverage_rate' => $details['coverage']['rate'] ?? null,
+                'coverage_reference' => Text::clean($details['coverage']['reference'] ?? null),
             ]);
 
             $total = 0;
@@ -87,7 +93,7 @@ final class DispenseProducts
             $served = 0;
 
             foreach ($lines as $index => $line) {
-                $result = $this->dispenseLine($dispensation, $location, $line, $dispenser, $index);
+                $result = $this->dispenseLine($dispensation, $location, $line, $dispenser, $index, $details['coverage'] ?? null);
                 $total += $result['amount'];
                 $outstanding += $result['outstanding'];
                 $served += $result['quantity'];
@@ -222,6 +228,33 @@ final class DispenseProducts
      * @return array{amount: int, outstanding: int, quantity: int}
      */
     /**
+     * Ce que l'organisme choisi couvre sur ce produit.
+     *
+     * Aucune regle veut dire « rien » : la ligne reste a la charge du
+     * patient. Un taux suppose se paierait en creances qu'aucun organisme ne
+     * reconnait.
+     *
+     * @param  array{insurer?: ?string, insurer_ref?: ?string, rate?: ?int}|null  $coverage
+     */
+    private function rateFor(?array $coverage, Product $product): int
+    {
+        if ($coverage === null) {
+            return 0;
+        }
+
+        $ref = $coverage['insurer_ref'] ?? null;
+
+        if ($ref === null) {
+            return (int) ($coverage['rate'] ?? 0);
+        }
+
+        return (int) (ProductCoverage::query()->ofFacility()
+            ->where('product_id', $product->getKey())
+            ->forInsurer($ref)
+            ->value('rate') ?? 0);
+    }
+
+    /**
      * L'emplacement d'où cette ligne est prise, s'il diffère de celui de la
      * dispensation.
      *
@@ -244,7 +277,7 @@ final class DispenseProducts
         return $location;
     }
 
-    private function dispenseLine(Dispensation $dispensation, Location $location, array $line, Authenticatable $dispenser, int $index): array
+    private function dispenseLine(Dispensation $dispensation, Location $location, array $line, Authenticatable $dispenser, int $index, ?array $coverage = null): array
     {
         $position = $index + 1;
         $product = Product::query()->find($line['product_id'] ?? null);
@@ -293,6 +326,8 @@ final class DispenseProducts
             'product_id' => $product->id,
             'location_id' => $from->is($location) ? null : $from->id,
             'label' => $product->label(),
+            // Ce que l'organisme choisi porte sur CE produit.
+            'insurer_rate' => $this->rateFor($coverage, $product),
             'posology' => Text::clean($line['posology'] ?? null),
             'prescribed_quantity' => max($prescribed, 0),
             'quantity' => 0,

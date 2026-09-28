@@ -12,6 +12,7 @@ use Keneya\Pharmacie\Models\Dispensation;
 use Keneya\Pharmacie\Models\DispensationItem;
 use Keneya\Pharmacie\Models\Location;
 use Keneya\Pharmacie\Models\Product;
+use Keneya\Pharmacie\Models\ProductCoverage;
 use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Sales\DispensedSale;
 use Keneya\Pharmacie\Services\NumberGenerator;
@@ -92,7 +93,7 @@ final class PrepareDispensation
             $prescribed = 0;
 
             foreach ($lines as $index => $line) {
-                $item = $this->prepareLine($dispensation, $line, $preparer, $index + 1);
+                $item = $this->prepareLine($dispensation, $line, $preparer, $index + 1, $coverage);
 
                 $total += (int) $item->amount;
                 $prescribed += (int) $item->prescribed_quantity;
@@ -240,6 +241,9 @@ final class PrepareDispensation
                 'quantity' => (int) $item->prescribed_quantity,
                 'unit_price' => (int) $item->unit_price,
                 'amount' => (int) $item->amount,
+                // Chaque ligne porte son taux : un organisme couvre
+                // l'amoxicilline et pas le sirop contre la toux.
+                'insurer_rate' => (int) $item->insurer_rate,
             ])->all(),
             total: (int) $dispensation->total,
             queueRef: $dispensation->queue_ref,
@@ -283,7 +287,7 @@ final class PrepareDispensation
     /**
      * @param  array{product_id: int, quantity: int, prescribed_quantity?: int, posology?: ?string, substituted_for_id?: ?int, substitution_reason?: ?string, comment?: ?string, unit_price?: ?int}  $line
      */
-    private function prepareLine(Dispensation $dispensation, array $line, Authenticatable $preparer, int $position): DispensationItem
+    private function prepareLine(Dispensation $dispensation, array $line, Authenticatable $preparer, int $position, ?array $coverage = null): DispensationItem
     {
         $product = Product::query()->find($line['product_id'] ?? null);
 
@@ -331,6 +335,9 @@ final class PrepareDispensation
             'location_id' => $this->lineLocation($line, $dispensation, $position)?->id,
             'label' => $product->label(),
             'posology' => Text::clean($line['posology'] ?? null),
+            // Ce que l'organisme choisi porte sur CE produit : un taux unique
+            // pour toute la piece couvrirait ce qui ne l'est pas.
+            'insurer_rate' => $this->rateFor($coverage, $product),
             'prescribed_quantity' => max($prescribed, $wanted),
             'quantity' => 0,
             'unit_price' => $unitPrice,
@@ -368,8 +375,41 @@ final class PrepareDispensation
 
         return [
             'insurer' => $insurer,
+            // La reference de l'organisme chez l'hote, quand le comptoir l'a
+            // choisi dans la liste : c'est elle qui permet de lire ce qu'il
+            // couvre, produit par produit.
+            'insurer_ref' => Text::clean($coverage['insurer_ref'] ?? null),
             'rate' => $rate,
             'reference' => Text::clean($coverage['reference'] ?? null),
         ];
+    }
+
+    /**
+     * Ce que l'organisme choisi couvre sur ce produit.
+     *
+     * Aucune regle veut dire « rien » : la ligne reste a la charge du
+     * patient. Un taux suppose se paierait en creances qu'aucun organisme ne
+     * reconnait.
+     *
+     * @param  array{insurer?: ?string, insurer_ref?: ?string, rate?: ?int}|null  $coverage
+     */
+    private function rateFor(?array $coverage, Product $product): int
+    {
+        if ($coverage === null) {
+            return 0;
+        }
+
+        $ref = $coverage['insurer_ref'] ?? null;
+
+        // Sans organisme choisi dans la liste, le comptoir a pu saisir un taux
+        // a la main : il vaut alors pour toutes les lignes, comme avant.
+        if ($ref === null) {
+            return (int) ($coverage['rate'] ?? 0);
+        }
+
+        return (int) (ProductCoverage::query()->ofFacility()
+            ->where('product_id', $product->getKey())
+            ->forInsurer($ref)
+            ->value('rate') ?? 0);
     }
 }

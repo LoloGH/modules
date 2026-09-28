@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Route;
 use Keneya\Pharmacie\Http\Controllers\AlertController;
 use Keneya\Pharmacie\Http\Controllers\CategoryController;
+use Keneya\Pharmacie\Http\Controllers\CoverageController;
 use Keneya\Pharmacie\Http\Controllers\DispensingController;
 use Keneya\Pharmacie\Http\Controllers\HomeController;
 use Keneya\Pharmacie\Http\Controllers\InventoryController;
@@ -225,6 +226,13 @@ Route::middleware('can:pharmacie.products.manage')->group(function (): void {
     Route::post('catalogue/produits', [ProductController::class, 'store'])->name('catalog.products.store');
     Route::post('catalogue/produits/{product}', [ProductController::class, 'update'])->name('catalog.products.update');
     Route::post('catalogue/produits/{product}/basculer', [ProductController::class, 'toggle'])->name('catalog.products.toggle');
+
+    // Ce qu'un organisme couvre sur un produit : une decision de gestion, au
+    // meme titre que son prix.
+    Route::post('catalogue/produits/{product}/prise-en-charge', [CoverageController::class, 'store'])
+        ->name('catalog.products.coverage.store');
+    Route::post('catalogue/produits/{product}/prise-en-charge/{coverage}/retirer', [CoverageController::class, 'destroy'])
+        ->name('catalog.products.coverage.destroy');
     Route::post('catalogue/categories', [CategoryController::class, 'store'])->name('catalog.categories.store');
     Route::post('catalogue/categories/{category}/basculer', [CategoryController::class, 'toggle'])->name('catalog.categories.toggle');
 });

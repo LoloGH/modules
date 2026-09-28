@@ -46,6 +46,86 @@
     @endif
 
     @can('pharmacie.products.manage')
+        @can('pharmacie.products.manage')
+            <x-pharmacie::card title="Prise en charge"
+                hint="Ce qu'un organisme couvre sur ce produit">
+                @if ($product->coverages->isEmpty())
+                    <p class="muted">
+                        Aucun organisme ne couvre ce produit : le patient le paie
+                        entierement. Une prise en charge se declare, elle ne se devine
+                        pas.
+                    </p>
+                @else
+                    <div class="tw">
+                        <table class="stack">
+                            <thead>
+                            <tr><th>Organisme</th><th class="num">Taux</th><th>Declare par</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                            @foreach ($product->coverages->sortByDesc('rate') as $coverage)
+                                <tr>
+                                    <td data-l="Organisme" class="strong">{{ $coverage->insurer_name }}</td>
+                                    <td data-l="Taux" class="num">{{ $coverage->rate }} %</td>
+                                    <td data-l="Declare par">
+                                        {{ $coverage->declared_by_name ?? '-' }}
+                                        <span class="sub">{{ $coverage->updated_at?->format('d/m/Y') }}</span>
+                                    </td>
+                                    <td data-l="" class="acts">
+                                        <form method="post" class="inline"
+                                              action="{{ route('pharmacie.catalog.products.coverage.destroy', [$product, $coverage]) }}">
+                                            @csrf
+                                            <button type="submit" class="danger sm">Retirer</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+
+                @if ($insurers === [])
+                    <p class="muted">
+                        L'application hote ne declare aucun organisme. Les assurances et
+                        les aides sociales se tiennent dans la caisse : c'est la qu'on les
+                        cree, et elles apparaitront ici.
+                    </p>
+                @else
+                    <form method="post" action="{{ route('pharmacie.catalog.products.coverage.store', $product) }}">
+                        @csrf
+                        <div class="row">
+                            <label>Organisme
+                                <select name="insurer_ref" required>
+                                    <option value="">Choisir un organisme</option>
+                                    @foreach ($insurers as $insurer)
+                                        <option value="{{ $insurer->ref }}"
+                                                @if ($insurer->defaultRate) data-rate="{{ $insurer->defaultRate }}" @endif>
+                                            {{ $insurer->name }} · {{ $insurer->kindLabel() }}@if ($insurer->defaultRate) · {{ $insurer->defaultRate }} % en general @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Taux pris en charge (%)
+                                <input name="rate" inputmode="numeric" placeholder="ex. 80" required>
+                                <span class="help">
+                                    Ce que l'organisme porte sur ce produit. Le reste est a la
+                                    charge du patient, et c'est la caisse qui decoupe la facture.
+                                </span>
+                            </label>
+                        </div>
+                        <div class="actions">
+                            <button type="submit"><x-pharmacie::icon name="check" /> Declarer la prise en charge</button>
+                        </div>
+                    </form>
+                    <p class="muted">
+                        Declarer ne suffit pas a appliquer : au comptoir, le preparateur
+                        choisit l'organisme du patient. Un taux applique sans qu'on l'ait
+                        voulu se paie en creances qu'aucun organisme ne reconnait.
+                    </p>
+                @endif
+            </x-pharmacie::card>
+        @endcan
+
         <x-pharmacie::card title="Modifier le produit">
             <form method="post" action="{{ route('pharmacie.catalog.products.update', $product) }}">
                 @csrf

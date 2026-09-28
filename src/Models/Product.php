@@ -7,6 +7,7 @@ namespace Keneya\Pharmacie\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Keneya\Pharmacie\Support\Facility;
 
 /**
@@ -78,6 +79,17 @@ class Product extends Model
             $this->dosage,
             $this->form === null ? null : '('.$this->form.')',
         ])));
+    }
+
+    /**
+     * Les organismes qui couvrent ce produit, et a quel taux.
+     *
+     * Aucune ligne veut dire « personne » : une prise en charge se declare,
+     * elle ne se devine pas.
+     */
+    public function coverages(): HasMany
+    {
+        return $this->hasMany(ProductCoverage::class, 'product_id');
     }
 
     public function category(): BelongsTo

@@ -7,6 +7,7 @@ namespace Keneya\Pharmacie;
 use Closure;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\App;
+use Keneya\Pharmacie\Contracts\InsurerDirectory;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionSink;
@@ -80,6 +81,15 @@ final class Pharmacie
     public static function discharge(): QueueDischarge
     {
         return App::make(QueueDischarge::class);
+    }
+
+    /**
+     * Les organismes qui prennent en charge, fournis par l'hôte (aucun par
+     * défaut) : la caisse les connaît, la pharmacie dit ce qu'ils couvrent.
+     */
+    public static function insurers(): InsurerDirectory
+    {
+        return App::make(InsurerDirectory::class);
     }
 
     /**

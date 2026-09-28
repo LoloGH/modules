@@ -27,6 +27,7 @@ class DispensationItem extends Model
             'quantity' => 'integer',
             'unit_price' => 'integer',
             'amount' => 'integer',
+            'insurer_rate' => 'integer',
         ];
     }
 

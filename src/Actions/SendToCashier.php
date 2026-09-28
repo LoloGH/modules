@@ -137,9 +137,20 @@ final class SendToCashier
                     'quantity' => (int) $item->quantity,
                     'unit_price' => (int) $item->unit_price,
                     'amount' => (int) $item->amount,
+                    // Chaque ligne porte son taux : un organisme couvre
+                    // l'amoxicilline et pas le sirop contre la toux.
+                    'insurer_rate' => (int) $item->insurer_rate,
                 ])->all(),
                 total: (int) $fresh->total,
                 queueRef: $fresh->queue_ref,
+                // La prise en charge constatee au comptoir : la caisse en a
+                // besoin pour decouper la facture, que le patient ait paye
+                // avant ou apres.
+                coverage: $fresh->coverage_insurer === null ? null : [
+                    'insurer' => $fresh->coverage_insurer,
+                    'rate' => $fresh->coverage_rate === null ? null : (int) $fresh->coverage_rate,
+                    'reference' => $fresh->coverage_reference,
+                ],
             ));
 
             $fresh->update([

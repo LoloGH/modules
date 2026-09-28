@@ -11,12 +11,18 @@ namespace Keneya\Pharmacie\Sales;
  * Volontairement pauvre : ni lot, ni péremption, ni stock. Ce qui sort d'ici
  * va à la caisse, pas au dossier pharmaceutique.
  *
- * @param  list<array{label: string, quantity: int, unit_price: int, amount: int}>  $lines
+ * Chaque ligne peut porter son propre taux de prise en charge : un organisme
+ * couvre l'amoxicilline à 80 % et ne couvre pas le sirop contre la toux. Un
+ * taux unique pour toute la pièce obligerait à choisir entre trop couvrir et
+ * pas assez, et la caisse hériterait d'une créance que l'organisme
+ * refuserait.
+ *
+ * @param  list<array{label: string, quantity: int, unit_price: int, amount: int, insurer_rate?: int}>  $lines
  */
 final readonly class DispensedSale
 {
     /**
-     * @param  list<array{label: string, quantity: int, unit_price: int, amount: int}>  $lines
+     * @param  list<array{label: string, quantity: int, unit_price: int, amount: int, insurer_rate?: int}>  $lines
      */
     public function __construct(
         public string $reference,
