@@ -82,6 +82,12 @@ class Location extends Model
      */
     public static function default(?int $facilityId = null): ?self
     {
-        return self::query()->ofFacility($facilityId)->active()->orderBy('id')->first();
+        // `active()` classe par nom, pour les listes. Ici c'est l'ancienneté
+        // qui décide : le premier emplacement déclaré est la pharmacie de
+        // l'établissement, pas celui dont le nom vient en tête de l'alphabet.
+        return self::query()->ofFacility($facilityId)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
     }
 }

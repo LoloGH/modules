@@ -6,15 +6,13 @@ namespace Keneya\Pharmacie\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Keneya\Pharmacie\Models\Batch;
 use Keneya\Pharmacie\Models\Dispensation;
 use Keneya\Pharmacie\Models\Location;
 use Keneya\Pharmacie\Models\Product;
 use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Prescriptions\NoPrescriptions;
 use Keneya\Pharmacie\Prescriptions\Prescription;
-use Keneya\Pharmacie\Prescriptions\PrescriptionLine;
-use Keneya\Pharmacie\Services\StockPicker;
+use Keneya\Pharmacie\Services\PrescriptionMatcher;
 
 /**
  * Les ordonnances venues du dossier médical, et l'écran qui les sert.
@@ -46,7 +44,7 @@ final class PrescriptionController extends PharmacieController
      * Préparer une ordonnance : les lignes prescrites, rapprochées du
      * catalogue et du stock.
      */
-    public function show(Request $request, string $reference, StockPicker $picker): View
+    public function show(Request $request, string $reference, PrescriptionMatcher $matcher): View
     {
         $prescription = Pharmacie::prescriptions()->find($reference);
 
@@ -59,93 +57,13 @@ final class PrescriptionController extends PharmacieController
             'location' => $location,
             'locations' => Location::query()->ofFacility()->active()->get(),
             'products' => Product::query()->ofFacility()->active()->get(),
-            'lines' => $this->matchLines($prescription, $location, $picker),
+            'lines' => $matcher->lines($prescription, $location),
             'history' => Dispensation::query()->ofFacility()
                 ->where('prescription_ref', $prescription->reference)
                 ->with('items')
                 ->latest('id')
                 ->get(),
         ]);
-    }
-
-    /**
-     * Rapproche chaque ligne prescrite du catalogue : le produit, ce qui est
-     * disponible, et le lot que le système propose.
-     *
-     * @return list<array{line: PrescriptionLine, product: ?Product, available: int, batch: ?Batch, served: int}>
-     */
-    private function matchLines(Prescription $prescription, ?Location $location, StockPicker $picker): array
-    {
-        $served = $this->servedQuantities($prescription->reference);
-        $rows = [];
-
-        foreach ($prescription->lines as $line) {
-            $product = $this->matchProduct($line);
-
-            $available = 0;
-            $batch = null;
-
-            if ($product !== null && $location !== null) {
-                $batches = $picker->batchesFor($product, $location);
-                $available = array_sum(array_column($batches, 'available'));
-                $batch = $batches[0]['batch'] ?? null;
-            }
-
-            $rows[] = [
-                'line' => $line,
-                'product' => $product,
-                'available' => $available,
-                'batch' => $batch,
-                'served' => $served[mb_strtolower($line->label)] ?? 0,
-            ];
-        }
-
-        return $rows;
-    }
-
-    /**
-     * Le produit du catalogue qui correspond : par code quand le DME le
-     * donne, sinon par nom ou par DCI. Une correspondance douteuse ne force
-     * rien, le pharmacien choisit.
-     */
-    private function matchProduct(PrescriptionLine $line): ?Product
-    {
-        if ($line->productCode !== null) {
-            $byCode = Product::query()->ofFacility()->active()->where('code', $line->productCode)->first();
-
-            if ($byCode !== null) {
-                return $byCode;
-            }
-        }
-
-        return Product::query()->ofFacility()->active()
-            ->where(fn ($query) => $query->where('name', $line->label)->orWhere('dci', $line->label))
-            ->first();
-    }
-
-    /**
-     * Ce qui a déjà été servi sur une ordonnance, par libellé de ligne.
-     *
-     * @return array<string, int>
-     */
-    private function servedQuantities(string $reference): array
-    {
-        $totals = [];
-
-        $dispensations = Dispensation::query()->ofFacility()
-            ->where('prescription_ref', $reference)
-            ->where('status', '!=', Dispensation::STATUS_CANCELLED)
-            ->with('items')
-            ->get();
-
-        foreach ($dispensations as $dispensation) {
-            foreach ($dispensation->items as $item) {
-                $key = mb_strtolower((string) $item->label);
-                $totals[$key] = ($totals[$key] ?? 0) + (int) $item->quantity;
-            }
-        }
-
-        return $totals;
     }
 
     /**
