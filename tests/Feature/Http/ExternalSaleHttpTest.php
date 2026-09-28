@@ -83,6 +83,39 @@ class ExternalSaleHttpTest extends HttpTestCase
         $this->assertSame('ACC-2026-12', $invoice->policy_number);
     }
 
+    public function test_each_line_can_carry_its_own_rate(): void
+    {
+        Insurer::create(['code' => 'AMO', 'name' => 'AMO', 'kind' => Insurer::KIND_INSURANCE, 'default_rate' => 70, 'is_active' => true]);
+
+        // L'organisme couvre l'amoxicilline a 80 %, et pas le paracetamol :
+        // un taux unique aurait couvert les deux, ou aucun.
+        $invoice = app(BillExternalSale::class)->handle(
+            BillExternalSale::SOURCE_PHARMACIE,
+            'DIS-2026-000002',
+            'PAT-00003',
+            'Sylla Baba',
+            [
+                ['label' => 'Amoxicilline 500 mg', 'quantity' => 14, 'unit_price' => 100, 'insurer_rate' => 80],
+                ['label' => 'Paracetamol 1 g', 'quantity' => 7, 'unit_price' => 100, 'insurer_rate' => 0],
+            ],
+            $this->cashier(),
+            ['insurer' => 'AMO', 'rate' => 80],
+        );
+
+        $lines = $invoice->lines()->orderBy('id')->get();
+
+        $this->assertSame(80, (int) $lines[0]->insurer_rate);
+        $this->assertSame(1_120, (int) $lines[0]->insurer_share);
+        $this->assertSame(0, (int) $lines[1]->insurer_rate);
+        $this->assertSame(700, (int) $lines[1]->patient_share);
+
+        // Le taux de la piece est celui que portent ses lignes : 1 120 sur
+        // 2 100, soit 53 %, et non les 80 % annonces pour l'organisme.
+        $this->assertSame(1_120, (int) $invoice->insurer_share);
+        $this->assertSame(980, $invoice->patientDue());
+        $this->assertSame(53, (int) $invoice->coverage_rate);
+    }
+
     public function test_an_unknown_organisation_leaves_everything_to_the_patient(): void
     {
         $invoice = $this->bill(['insurer' => 'Mutuelle inconnue', 'rate' => 50]);

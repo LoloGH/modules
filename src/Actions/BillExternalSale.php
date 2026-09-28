@@ -48,7 +48,7 @@ final class BillExternalSale
     ) {}
 
     /**
-     * @param  list<array{label: string, quantity: int, unit_price: int}>  $lines
+     * @param  list<array{label: string, quantity: int, unit_price: int, insurer_rate?: ?int}>  $lines
      * @param  array{insurer?: ?string, rate?: ?int, reference?: ?string}|null  $coverage
      */
     public function handle(
@@ -100,7 +100,28 @@ final class BillExternalSale
         }
 
         [$insurer, $rate] = $this->coverage($coverage);
-        $insurerShare = (int) round($total * $rate / 100);
+
+        // Le taux de chaque ligne : celui que le module a constate produit par
+        // produit, a defaut celui de la piece. Un organisme couvre rarement
+        // tout au meme taux, et jamais tout.
+        $rows = array_map(static function (array $row) use ($rate, $insurer): array {
+            $ligne = $insurer === null ? 0 : (int) ($row['insurer_rate'] ?? $rate);
+            $share = (int) round($row['amount'] * max(0, min(100, $ligne)) / 100);
+
+            // `array_replace` et non `+` : la ligne porte deja une clef
+            // `insurer_rate`, que l'union aurait laissee telle quelle.
+            return array_replace($row, [
+                'insurer_rate' => max(0, min(100, $ligne)),
+                'insurer_share' => $share,
+                'patient_share' => $row['amount'] - $share,
+            ]);
+        }, $rows);
+
+        $insurerShare = array_sum(array_column($rows, 'insurer_share'));
+
+        // Le taux de la piece est celui que portent ses lignes, rapporte au
+        // total : ecrire autre chose ferait mentir la facture sur elle-meme.
+        $rate = $total > 0 ? (int) round($insurerShare * 100 / $total) : 0;
 
         return DB::transaction(function () use (
             $source, $reference, $patientId, $patientName, $rows, $total,
@@ -126,17 +147,10 @@ final class BillExternalSale
                 'created_by_name' => Actor::name($actor),
             ]);
 
-            $invoice->lines()->createMany(array_map(static function (array $row) use ($rate): array {
-                $share = (int) round($row['amount'] * $rate / 100);
-
-                return $row + [
-                    'act_id' => null,
-                    'analytic_center_id' => null,
-                    'insurer_rate' => $rate,
-                    'insurer_share' => $share,
-                    'patient_share' => $row['amount'] - $share,
-                ];
-            }, $rows));
+            $invoice->lines()->createMany(array_map(static fn (array $row): array => $row + [
+                'act_id' => null,
+                'analytic_center_id' => null,
+            ], $rows));
 
             // Pris en charge à 100 % : le patient ne doit rien, et la facture
             // le dit sans qu'on invente un encaissement de zéro franc.
@@ -175,8 +189,8 @@ final class BillExternalSale
      * Les lignes, relues : un libellé, une quantité, un prix unitaire. Le
      * montant se recalcule ici ; on ne fait pas confiance à un total envoyé.
      *
-     * @param  list<array{label: string, quantity: int, unit_price: int}>  $lines
-     * @return list<array{label: string, quantity: int, unit_price: int, amount: int}>
+     * @param  list<array{label: string, quantity: int, unit_price: int, insurer_rate?: ?int}>  $lines
+     * @return list<array{label: string, quantity: int, unit_price: int, amount: int, insurer_rate: ?int}>
      */
     private function rows(array $lines): array
     {
@@ -208,6 +222,10 @@ final class BillExternalSale
                 'quantity' => $quantity,
                 'unit_price' => $unit,
                 'amount' => $unit * $quantity,
+                // Le taux que le module a constate sur cette ligne, s'il en a
+                // constate un. Relu comme le reste : on ne fait pas confiance
+                // a un pourcentage hors bornes.
+                'insurer_rate' => isset($line['insurer_rate']) ? max(0, min(100, (int) $line['insurer_rate'])) : null,
             ];
         }
 
