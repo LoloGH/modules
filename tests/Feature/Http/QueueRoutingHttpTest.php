@@ -76,13 +76,15 @@ class QueueRoutingHttpTest extends HttpTestCase
         $this->queue->add('10', '1', 1, 'Aminata Traoré', null, 'called');
         $this->queue->add('11', '2', 1, 'Moussa Diarra', null, 'called');
 
+        // La fenetre d'encaissement poste dans la session de la caisse qui
+        // porte le nom de la file : c'est elle qui recoit l'argent.
         $this->actingAs($cashier)->get('/finance/file?file=10')
             ->assertSee('Encaissement dans la session '.$ticket->number, false)
-            ->assertSee(route('finance.cash.sessions.show', ['session' => $ticket, 'file' => '10', 'visite' => '1']));
+            ->assertSee(route('finance.cash.payments.store', $ticket));
 
         $this->get('/finance/file?file=11')
             ->assertSee('Encaissement dans la session '.$services->number, false)
-            ->assertSee(route('finance.cash.sessions.show', ['session' => $services, 'file' => '11', 'visite' => '2']));
+            ->assertSee(route('finance.cash.payments.store', $services));
     }
 
     public function test_calling_the_next_patient_stays_on_the_matching_session(): void

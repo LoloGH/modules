@@ -266,7 +266,23 @@
 
     /* ---------------------------------------------------------- Formulaires */
 
-    form .row { display: grid; gap: .875rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+    /* Une seule trame pour tous les champs.
+
+       Avant, chaque rangee se partageait la largeur entre ses propres champs :
+       une rangee de trois etait donc plus large qu'une rangee de quatre, et
+       rien ne s'alignait d'une ligne a l'autre. Le nombre de colonnes est
+       desormais fixe : tous les champs d'une carte ont la meme largeur, au
+       meme endroit, et une rangee incomplete laisse un blanc a droite plutot
+       que d'etirer ses champs.
+
+       Quatre colonnes, parce que la rangee la plus chargee du comptoir en
+       compte quatre — produit, prescrit, delivre, posologie — et qu'elle doit
+       tenir sur une ligne. */
+    form .row { display: grid; gap: .875rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    form .row > * { min-width: 0; }
+
+    @media (max-width: 68rem) { form .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 40rem) { form .row { grid-template-columns: 1fr; } }
     form .actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: 1rem; }
 
     label { display: block; font-size: .8125rem; font-weight: 600; color: var(--ink-2); margin-bottom: .875rem; }
@@ -286,6 +302,47 @@
     select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M4 6.5 8 10.5 12 6.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .55rem center; background-size: 1rem; padding-right: 2rem; }
 
     input.money { font-variant-numeric: tabular-nums; }
+
+    /* Fenêtre d'encaissement, ouverte depuis la file.
+
+       `<dialog>` plutôt qu'une pile de div : le navigateur pose lui-même le
+       fond, le piège du clavier et la fermeture par Échap. Rien à écrire, et
+       rien à oublier — une fenêtre maison finit toujours par laisser le focus
+       s'échapper derrière elle. */
+    .modale {
+        width: min(56rem, calc(100vw - 2rem));
+        max-height: calc(100vh - 2rem);
+        padding: 1.25rem 1.5rem;
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 1.5rem 3rem rgb(15 23 42 / .18);
+    }
+
+    /* Le caissier doit voir le formulaire entier sans faire defiler : on
+       resserre ce qui peut l'etre, et les aides passent sous le champ sans
+       ecarter les lignes. Le defilement reste possible, mais il devient le
+       recours des petits ecrans, pas l'ordinaire. */
+    .modale .row { gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .modale label { margin-bottom: .625rem; }
+    .modale label > input, .modale label > select { margin-top: .25rem; }
+    .modale .help { font-size: .7188rem; line-height: 1.35; }
+    .modale .flash { margin: 0 0 .75rem; padding: .5rem .75rem; font-size: .8125rem; }
+    .modale .actions { margin-top: .75rem; }
+    .modale::backdrop { background: rgb(15 23 42 / .45); }
+    .modale__titre { margin: 0 0 .25rem; font-size: 1.125rem; }
+    .modale__sous-titre { margin: 0 0 1rem; color: var(--muted); font-size: .875rem; }
+    .modale__fermer { display: flex; justify-content: flex-end; margin: -.5rem -.5rem 0 0; }
+    .modale__fermer button {
+        background: none; border: 0; padding: .125rem .375rem;
+        font-size: 1.5rem; line-height: 1; color: var(--muted); cursor: pointer;
+    }
+    .modale__fermer button:hover { color: var(--ink); background: none; }
+
+    @media (max-width: 40rem) {
+        .modale { padding: 1rem; }
+    }
 
     /* Cases à cocher : elles ne suivent pas la mise en forme des champs texte. */
     input[type="checkbox"], input[type="radio"] { width: auto; display: inline-block; margin: 0; padding: 0; accent-color: var(--brand); }

@@ -47,6 +47,15 @@ final readonly class QueuedVisit
         public ?int $invoiceId = null,
         public ?int $amount = null,
         public ?string $reason = null,
+        /**
+         * Encaisser cette pièce met-il fin au passage ?
+         *
+         * Une vente couverte par deux organismes donne deux factures, et le
+         * patient règle sa part sur chacune. Tant qu'il en reste une, il ne
+         * quitte pas la caisse : l'hôte le dit ici, car lui seul sait
+         * combien de pièces ce passage doit encore.
+         */
+        public bool $endsPassage = true,
     ) {}
 
     public function isCalled(): bool

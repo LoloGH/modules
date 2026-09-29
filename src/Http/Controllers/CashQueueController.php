@@ -11,7 +11,10 @@ use Illuminate\Support\Collection;
 use Keneya\FinanceCaisse\Actions\ReleaseQueuedVisit;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
 use Keneya\FinanceCaisse\Finance;
+use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\CashSession;
+use Keneya\FinanceCaisse\Models\Insurer;
+use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Queue\CashQueue;
 use Keneya\FinanceCaisse\Support\Actor;
 
@@ -49,6 +52,11 @@ final class CashQueueController extends FinanceController
             'sessions' => $sessions,
             'session' => $session,
             'matched' => $matched,
+            // De quoi encaisser sans quitter la file : le caissier fait son
+            // geste la ou il voit le patient, pas deux ecrans plus loin.
+            'methods' => PaymentMethod::query()->active()->get(),
+            'acts' => $acts = Act::query()->active()->with(['center', 'standardTariff'])->get(),
+            'coverage' => Insurer::coverageMap($acts->pluck('id')),
         ]);
     }
 

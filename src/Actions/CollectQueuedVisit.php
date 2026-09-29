@@ -63,7 +63,19 @@ final class CollectQueuedVisit
             ->where('status', Payment::STATUS_VALID)
             ->value('number');
 
-        if ($already !== null) {
+        // Un passage peut demander plusieurs encaissements : une vente
+        // couverte par deux organismes donne deux pièces, et le patient règle
+        // sa part sur chacune. Ce qui reste interdit, c'est d'encaisser deux
+        // fois la même pièce — ou deux fois un passage qui n'en a qu'une.
+        $dejaRegle = $visit->invoiceId === null
+            ? $already !== null
+            : Payment::query()
+                ->where('host_visit_ref', $visitRef)
+                ->where('invoice_id', $visit->invoiceId)
+                ->where('status', Payment::STATUS_VALID)
+                ->exists();
+
+        if ($dejaRegle) {
             throw new FinanceRuleViolation("Ce passage a déjà été encaissé ({$already}).");
         }
 
@@ -71,8 +83,16 @@ final class CollectQueuedVisit
             ->first(fn (CashQueue $queue): bool => $queue->ref === $queueRef)?->name;
 
         try {
-            return DB::transaction(function () use ($session, $method, $amount, $cashier, $queueRef, $queueName, $visitRef, $details): Payment {
+            return DB::transaction(function () use ($session, $method, $amount, $cashier, $queueRef, $queueName, $visitRef, $details, $visit): Payment {
                 $payment = $this->record->handle($session, $method, $amount, $cashier, $details + ['host_visit_ref' => $visitRef]);
+
+                // Le patient ne quitte la caisse qu'a sa derniere piece : une
+                // reglee sur deux le laisse devant le guichet, et la file lui
+                // montre ce qui reste. C'est l'hote qui le sait, lui seul
+                // comptant les pieces de ce passage.
+                if (! $visit->endsPassage) {
+                    return $payment;
+                }
 
                 Finance::visitAdvancer()->advanceAfterPayment($visitRef, new SettledPayment(
                     number: $payment->number,

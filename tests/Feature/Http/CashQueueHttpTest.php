@@ -9,6 +9,7 @@ use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Models\Payment;
 use Keneya\FinanceCaisse\Queue\CashQueue;
 use Keneya\FinanceCaisse\Queue\NoCashQueue;
+use Keneya\FinanceCaisse\Queue\QueuedVisit;
 use Keneya\FinanceCaisse\Tests\Support\CatalogFixtures;
 use Keneya\FinanceCaisse\Tests\Support\FakeCashQueue;
 
@@ -106,10 +107,72 @@ class CashQueueHttpTest extends HttpTestCase
 
         $this->assertSame(['10:'.$cashier->id], $this->queue->calls);
 
-        // Appelé : le bouton « Encaisser » apparaît et mène à la session.
+        // Appelé : le bouton « Encaisser » apparaît et ouvre la fenêtre, sur
+        // place. Le caissier ne quitte plus sa file pour encaisser.
         $this->get(route('finance.queue.index', ['file' => '10']))
             ->assertSee('Encaisser')
-            ->assertSee(route('finance.cash.sessions.show', ['session' => $session, 'file' => '10', 'visite' => '1']));
+            ->assertSee('data-ouvre-encaissement="encaisser-1"', false)
+            ->assertSee('<dialog id="encaisser-1"', false)
+            ->assertDontSee(route('finance.cash.sessions.show', ['session' => $session, 'file' => '10', 'visite' => '1']));
+    }
+
+    public function test_la_fenetre_porte_le_formulaire_et_encaisse_sans_quitter_la_file(): void
+    {
+        $cashier = $this->cashier();
+        $session = $this->openSession($cashier);
+
+        $act = $this->makeAct('TICKET');
+        $this->setTariff($act, 1_000);
+        $this->queue->add('10', '1', 1, 'Aminata Traoré', Finance::catalog()->findAct($act->id), QueuedVisit::STATUS_CALLED);
+
+        // Tout ce qu'il faut pour encaisser est dans la fenetre : le patient,
+        // le montant, la visite et la file. Rien a aller chercher ailleurs.
+        $this->actingAs($cashier)->get(route('finance.queue.index', ['file' => '10']))
+            ->assertOk()
+            ->assertSee('<dialog id="encaisser-1"', false)
+            ->assertSee('name="visit_ref" value="1"', false)
+            ->assertSee('name="queue_ref" value="10"', false)
+            ->assertSee('value="1000"', false)
+            ->assertSee('Aminata Traoré')
+            ->assertSee(route('finance.cash.payments.store', $session));
+
+        // Et l'encaissement ramene a la file, pas au bureau de caisse.
+        $this->post(route('finance.cash.payments.store', $session), [
+            'payment_method_id' => $this->cashMethod()->id,
+            'act_id' => $act->id,
+            'amount' => '1 000',
+            'patient_id' => 'PAT-1',
+            'patient_name' => 'Aminata Traoré',
+            'queue_ref' => '10',
+            'visit_ref' => '1',
+        ])
+            ->assertRedirect(route('finance.queue.index', ['file' => '10', 'session' => $session->id]))
+            ->assertSessionHas('finance_status');
+    }
+
+    public function test_un_encaissement_refuse_rouvre_la_fenetre_du_patient(): void
+    {
+        $cashier = $this->cashier();
+        $session = $this->openSession($cashier);
+        $this->queue->add('10', '1', 1, 'Aminata Traoré', null, QueuedVisit::STATUS_CALLED);
+
+        // Le moyen de paiement exige une reference : l'encaissement est refuse.
+        $this->actingAs($cashier)
+            ->from(route('finance.queue.index', ['file' => '10']))
+            ->post(route('finance.cash.payments.store', $session), [
+                'payment_method_id' => $this->momoMethod()->id,
+                'amount' => '1 000',
+                'queue_ref' => '10',
+                'visit_ref' => '1',
+            ])
+            ->assertRedirect(route('finance.queue.index', ['file' => '10']))
+            ->assertSessionHas('finance_error');
+
+        // De retour sur la file, la fenetre se rouvre d'elle-meme plutot que
+        // de faire tout ressaisir.
+        $this->get(route('finance.queue.index', ['file' => '10']))
+            ->assertOk()
+            ->assertSee("ouvrir('encaisser-' + refuse", false);
     }
 
     public function test_an_empty_queue_says_so_when_calling(): void

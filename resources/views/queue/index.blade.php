@@ -3,6 +3,11 @@
 @section('title', 'File de caisse')
 
 @section('content')
+    @php
+        // La reference d'un passage n'est pas un identifiant HTML : on la rend
+        // utilisable sans perdre ce qui la rend unique.
+        $dialogue = fn ($visit): string => 'encaisser-'.preg_replace('/[^A-Za-z0-9_-]/', '-', (string) $visit->ref);
+    @endphp
     <x-finance::page
         title="File de caisse"
         sub="Les patients du jour qui attendent un encaissement. Appelez le suivant, puis encaissez dans votre session." />
@@ -117,9 +122,12 @@
                                                     <button type="submit" class="sm"><x-finance::icon name="check" /> Rien à encaisser</button>
                                                 </form>
                                             @else
-                                                <a class="btn sm" href="{{ route('finance.cash.sessions.show', ['session' => $session, 'file' => $current->ref, 'visite' => $visit->ref]) }}#encaisser">
+                                                {{-- Le caissier encaisse la ou il voit le patient : la
+                                                     fenetre s'ouvre sur place, et il reste dans sa file. --}}
+                                                <button type="button" class="sm"
+                                                        data-ouvre-encaissement="{{ $dialogue($visit) }}">
                                                     <x-finance::icon name="recette" /> Encaisser
-                                                </a>
+                                                </button>
                                             @endif
                                         @endcan
                                     @endif
@@ -131,13 +139,73 @@
                 </div>
             @endif
         </x-finance::card>
+        @can('finance.payments.create')
+            @if ($session !== null)
+                {{-- Une fenetre par patient appele. Elle porte le meme formulaire
+                     que le bureau de caisse : c'est le meme geste, et il ne doit
+                     pas dependre de la porte par laquelle on est entre. --}}
+                @foreach ($visits as $visit)
+                    @if ($visit->isCalled() && ! ($visit->invoiceId !== null && $visit->expectedAmount() === 0))
+                        <dialog id="{{ $dialogue($visit) }}" class="modale">
+                            <form method="dialog" class="modale__fermer">
+                                <button type="submit" aria-label="Fermer">&times;</button>
+                            </form>
+
+                            <h2 class="modale__titre">Encaisser</h2>
+                            <p class="modale__sous-titre">
+                                <strong>{{ $visit->patientName }}</strong> ({{ $visit->patientRef }}),
+                                ticket n° {{ $visit->token }}@if ($visit->destinationService), vers {{ $visit->destinationService }}@endif.
+                                Encaissement dans {{ $session->register->name }}.
+                            </p>
+                            @if ($visit->reason)
+                                <p class="flash">
+                                    {{ $visit->reason }} : {{ $money((int) $visit->expectedAmount()) }} à la charge
+                                    du patient. Le prix vient du module qui a vendu ; il ne se ressaisit pas ici.
+                                </p>
+                            @endif
+
+                            @include('finance::partials.payment-form', [
+                                'formId' => $dialogue($visit).'-form',
+                                'fromQueue' => $visit,
+                                'fromInvoice' => null,
+                                'queueRef' => $current->ref,
+                            ])
+                        </dialog>
+                    @endif
+                @endforeach
+
+                @include('finance::partials.tariff-fill')
+                @include('finance::partials.coverage-hint')
+
+                <script>
+                    (() => {
+                        const ouvrir = (id) => document.getElementById(id)?.showModal();
+
+                        document.querySelectorAll('[data-ouvre-encaissement]').forEach((bouton) => {
+                            bouton.addEventListener('click', () => ouvrir(bouton.dataset.ouvreEncaissement));
+                        });
+
+                        // Un encaissement refuse revient ici : on rouvre la fenetre du
+                        // patient concerne, plutot que de faire tout ressaisir.
+                        const refuse = @json(old('visit_ref'));
+
+                        if (refuse) {
+                            ouvrir('encaisser-' + refuse.replace(/[^A-Za-z0-9_-]/g, '-'));
+                        }
+                    })();
+                </script>
+            @endif
+        @endcan
     @endif
     {{-- La file bouge sans que le caissier touche à rien : on la relit toutes
          les 20 secondes, sauf pendant qu'il saisit quelque chose. --}}
     <script>
         setInterval(() => {
             const busy = document.activeElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName);
-            if (!document.hidden && !busy) window.location.reload();
+            // Une fenetre ouverte est un encaissement en cours : la recharger
+            // effacerait ce que le caissier vient de saisir.
+            const enCours = document.querySelector('dialog[open]') !== null;
+            if (!document.hidden && !busy && !enCours) window.location.reload();
         }, 20000);
     </script>
 @endsection
