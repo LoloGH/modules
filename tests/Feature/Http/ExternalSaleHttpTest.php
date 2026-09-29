@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keneya\FinanceCaisse\Tests\Feature\Http;
 
+use Illuminate\Support\Collection;
 use Keneya\FinanceCaisse\Actions\BillExternalSale;
 use Keneya\FinanceCaisse\Contracts\CashQueueProvider;
 use Keneya\FinanceCaisse\Contracts\VisitAdvancer;
@@ -69,6 +70,80 @@ class ExternalSaleHttpTest extends HttpTestCase
         $this->assertSame(1, Invoice::count());
     }
 
+    public function test_two_organisations_give_two_invoices_and_the_patient_his_own(): void
+    {
+        Insurer::create(['code' => 'AMO', 'name' => 'AMO', 'kind' => Insurer::KIND_INSURANCE, 'default_rate' => 80, 'is_active' => true]);
+        Insurer::create(['code' => 'INDIG', 'name' => 'Fonds des indigents', 'kind' => Insurer::KIND_SOCIAL_AID, 'default_rate' => 100, 'is_active' => true]);
+
+        // Une ordonnance n'est pas couverte d'un bloc : l'assurance porte
+        // l'antibiotique, l'aide sociale l'antipaludique, et personne ne porte
+        // le sirop.
+        $factures = $this->billAll(null, [
+            ['label' => 'Amoxicilline 500 mg', 'quantity' => 10, 'unit_price' => 100, 'insurer' => 'AMO', 'insurer_rate' => 80],
+            ['label' => 'Artemether', 'quantity' => 5, 'unit_price' => 200, 'insurer' => 'Fonds des indigents', 'insurer_rate' => 100],
+            ['label' => 'Sirop contre la toux', 'quantity' => 1, 'unit_price' => 500],
+        ]);
+
+        $this->assertCount(3, $factures);
+
+        $amo = $factures->first(fn (Invoice $f): bool => $f->insurer?->code === 'AMO');
+        $aide = $factures->first(fn (Invoice $f): bool => $f->insurer?->code === 'INDIG');
+        $patient = $factures->first(fn (Invoice $f): bool => $f->insurer_id === null);
+
+        $this->assertSame(1_000, (int) $amo->total);
+        $this->assertSame(800, (int) $amo->insurer_share);
+        $this->assertSame(200, $amo->patientDue());
+
+        // Pris en charge en entier : le patient ne doit rien sur cette piece.
+        $this->assertSame(1_000, (int) $aide->insurer_share);
+        $this->assertSame(0, $aide->patientDue());
+
+        // Ce que personne ne couvre vient en dernier, sans assureur.
+        $this->assertSame(500, (int) $patient->total);
+        $this->assertNull($patient->insurer_id);
+        $this->assertSame(500, $patient->patientDue());
+
+        // Chaque piece garde l'origine de la vente : c'est par elle qu'on les
+        // retrouve toutes.
+        $this->assertSame(
+            ['DIS-2026-000001'],
+            $factures->pluck('source_reference')->unique()->values()->all(),
+        );
+    }
+
+    public function test_renvoyer_la_meme_vente_ne_double_aucune_piece(): void
+    {
+        Insurer::create(['code' => 'AMO', 'name' => 'AMO', 'kind' => Insurer::KIND_INSURANCE, 'default_rate' => 80, 'is_active' => true]);
+
+        $lignes = [
+            ['label' => 'Amoxicilline 500 mg', 'quantity' => 10, 'unit_price' => 100, 'insurer' => 'AMO', 'insurer_rate' => 80],
+            ['label' => 'Sirop contre la toux', 'quantity' => 1, 'unit_price' => 500],
+        ];
+
+        $premier = $this->billAll(null, $lignes);
+        $second = $this->billAll(null, $lignes);
+
+        $this->assertSame(2, Invoice::count());
+        $this->assertSame(
+            $premier->pluck('number')->sort()->values()->all(),
+            $second->pluck('number')->sort()->values()->all(),
+        );
+    }
+
+    public function test_un_organisme_inconnu_sur_une_ligne_la_laisse_au_patient(): void
+    {
+        $factures = $this->billAll(null, [
+            ['label' => 'Amoxicilline 500 mg', 'quantity' => 10, 'unit_price' => 100, 'insurer' => 'Mutuelle fantome', 'insurer_rate' => 80],
+            ['label' => 'Sirop contre la toux', 'quantity' => 1, 'unit_price' => 500],
+        ]);
+
+        // Une seule piece, sans assureur : on ne refuse pas la vente, mais on
+        // n'invente pas un tiers payant que Finance ne connait pas.
+        $this->assertCount(1, $factures);
+        $this->assertNull($factures->first()->insurer_id);
+        $this->assertSame(1_500, $factures->first()->patientDue());
+    }
+
     public function test_a_declared_coverage_splits_what_each_one_owes(): void
     {
         Insurer::create(['code' => 'AMO', 'name' => 'AMO', 'kind' => Insurer::KIND_INSURANCE, 'default_rate' => 70, 'is_active' => true]);
@@ -83,37 +158,31 @@ class ExternalSaleHttpTest extends HttpTestCase
         $this->assertSame('ACC-2026-12', $invoice->policy_number);
     }
 
-    public function test_each_line_can_carry_its_own_rate(): void
+    public function test_un_organisme_annonce_pour_la_piece_ne_couvre_que_les_lignes_dotees_d_un_taux(): void
     {
         Insurer::create(['code' => 'AMO', 'name' => 'AMO', 'kind' => Insurer::KIND_INSURANCE, 'default_rate' => 70, 'is_active' => true]);
 
-        // L'organisme couvre l'amoxicilline a 80 %, et pas le paracetamol :
-        // un taux unique aurait couvert les deux, ou aucun.
-        $invoice = app(BillExternalSale::class)->handle(
-            BillExternalSale::SOURCE_PHARMACIE,
-            'DIS-2026-000002',
-            'PAT-00003',
-            'Sylla Baba',
-            [
-                ['label' => 'Amoxicilline 500 mg', 'quantity' => 14, 'unit_price' => 100, 'insurer_rate' => 80],
-                ['label' => 'Paracetamol 1 g', 'quantity' => 7, 'unit_price' => 100, 'insurer_rate' => 0],
-            ],
-            $this->cashier(),
-            ['insurer' => 'AMO', 'rate' => 80],
-        );
+        // Le module ne nomme qu'un organisme, mais donne le taux de chaque
+        // ligne : l'amoxicilline a 80 %, le paracetamol a rien.
+        $factures = $this->billAll(['insurer' => 'AMO', 'rate' => 80], [
+            ['label' => 'Amoxicilline 500 mg', 'quantity' => 14, 'unit_price' => 100, 'insurer_rate' => 80],
+            ['label' => 'Paracetamol 1 g', 'quantity' => 7, 'unit_price' => 100, 'insurer_rate' => 0],
+        ]);
 
-        $lines = $invoice->lines()->orderBy('id')->get();
+        // Deux payeurs, donc deux pieces : le suivi des creances n'en accepte
+        // pas deux sur la meme.
+        $this->assertCount(2, $factures);
 
-        $this->assertSame(80, (int) $lines[0]->insurer_rate);
-        $this->assertSame(1_120, (int) $lines[0]->insurer_share);
-        $this->assertSame(0, (int) $lines[1]->insurer_rate);
-        $this->assertSame(700, (int) $lines[1]->patient_share);
+        $amo = $factures->first(fn (Invoice $f): bool => $f->insurer !== null);
+        $patient = $factures->first(fn (Invoice $f): bool => $f->insurer_id === null);
 
-        // Le taux de la piece est celui que portent ses lignes : 1 120 sur
-        // 2 100, soit 53 %, et non les 80 % annonces pour l'organisme.
-        $this->assertSame(1_120, (int) $invoice->insurer_share);
-        $this->assertSame(980, $invoice->patientDue());
-        $this->assertSame(53, (int) $invoice->coverage_rate);
+        $this->assertSame(1_400, (int) $amo->total);
+        $this->assertSame(1_120, (int) $amo->insurer_share);
+        $this->assertSame(280, $amo->patientDue());
+        $this->assertSame(80, (int) $amo->coverage_rate);
+
+        $this->assertSame(700, (int) $patient->total);
+        $this->assertSame(700, $patient->patientDue());
     }
 
     public function test_an_unknown_organisation_leaves_everything_to_the_patient(): void
@@ -212,12 +281,22 @@ class ExternalSaleHttpTest extends HttpTestCase
      */
     private function bill(?array $coverage = null): Invoice
     {
+        return $this->billAll($coverage)->first();
+    }
+
+    /**
+     * @param  array{insurer?: ?string, rate?: ?int, reference?: ?string}|null  $coverage
+     * @param  list<array<string, mixed>>|null  $lines
+     * @return Collection<int, Invoice>
+     */
+    private function billAll(?array $coverage = null, ?array $lines = null, string $reference = 'DIS-2026-000001')
+    {
         return app(BillExternalSale::class)->handle(
             BillExternalSale::SOURCE_PHARMACIE,
-            'DIS-2026-000001',
+            $reference,
             'PAT-00003',
             'Sylla Baba',
-            [
+            $lines ?? [
                 ['label' => 'Amoxicilline 500 mg', 'quantity' => 14, 'unit_price' => 100],
                 ['label' => 'Paracétamol 1 g', 'quantity' => 7, 'unit_price' => 100],
             ],

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keneya\FinanceCaisse\Actions;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Keneya\FinanceCaisse\Audit\Auditor;
 use Keneya\FinanceCaisse\Exceptions\FinanceRuleViolation;
@@ -29,14 +30,16 @@ use Keneya\FinanceCaisse\Support\Text;
  * renégocie pas le prix d'une boîte déjà sortie du stock : il l'encaisse et
  * le trace, sans acte rattaché et avec l'origine écrite sur la pièce.
  *
- * L'appel est idempotent : une même pièce d'origine ne donne qu'une facture.
- * Un module qui renvoie après une panne retrouve la sienne au lieu d'en créer
- * une seconde.
+ * **Une vente peut donner plusieurs factures.** Une ordonnance n'est pas
+ * couverte d'un bloc : l'assurance porte l'amoxicilline, une aide sociale
+ * porte l'antipaludique, et le reste est à la charge du patient. Or une
+ * facture porte un seul assureur, un seul statut de créance, un seul montant
+ * réglé. Les lignes sont donc groupées par organisme, et chaque groupe donne
+ * sa pièce — ce que fait aussi un hôpital qui réclame à deux payeurs.
  *
- * La prise en charge est celle que le module a constatée au comptoir : un
- * organisme, un taux, une référence d'accord. Le taux par acte de l'organisme
- * ne s'applique pas ici — il porte sur des actes du catalogue, et ces lignes
- * n'en sont pas.
+ * L'appel est idempotent : une même pièce d'origine ne donne qu'une facture
+ * par organisme. Un module qui renvoie après une panne retrouve les siennes
+ * au lieu d'en créer d'autres.
  */
 final class BillExternalSale
 {
@@ -48,8 +51,11 @@ final class BillExternalSale
     ) {}
 
     /**
-     * @param  list<array{label: string, quantity: int, unit_price: int, insurer_rate?: ?int}>  $lines
-     * @param  array{insurer?: ?string, rate?: ?int, reference?: ?string}|null  $coverage
+     * Les factures de cette vente, une par organisme, la part du patient
+     * seul en dernier.
+     *
+     * @param  list<array{label: string, quantity: int, unit_price: int, insurer?: ?string, insurer_rate?: ?int}>  $lines
+     * @return Collection<int, Invoice>
      */
     public function handle(
         string $source,
@@ -60,7 +66,7 @@ final class BillExternalSale
         Authenticatable $actor,
         ?array $coverage = null,
         ?string $note = null,
-    ): Invoice {
+    ): Collection {
         $source = Text::clean($source) ?? '';
         $reference = Text::clean($reference) ?? '';
 
@@ -68,9 +74,100 @@ final class BillExternalSale
             throw new FinanceRuleViolation("Une vente venue d'un module doit dire d'où elle vient et sous quelle référence.");
         }
 
+        $patientId = Text::clean($patientId);
+        $patientName = Text::clean($patientName);
+
+        if ($patientId === null && $patientName === null) {
+            throw new FinanceRuleViolation('Indiquez le patient : son identifiant, son nom, ou les deux.');
+        }
+
+        $rows = $this->rows($lines);
+
+        // Ce que la piece annonce pour toutes ses lignes, quand elles ne
+        // nomment pas d'organisme elles-memes : le cas d'un module qui ne
+        // connait qu'un seul payeur.
+        [$parDefaut, $tauxParDefaut] = $this->coverage($coverage);
+
+        $groupes = $this->groupByInsurer($rows, $parDefaut, $tauxParDefaut);
+        $factures = collect();
+
+        foreach ($groupes as $groupe) {
+            $factures->push($this->invoice(
+                $source,
+                $reference,
+                $patientId,
+                $patientName,
+                $groupe['rows'],
+                $groupe['insurer'],
+                $coverage,
+                $note,
+                $actor,
+            ));
+        }
+
+        return $factures;
+    }
+
+    /**
+     * Les lignes rangées par organisme payeur.
+     *
+     * Celles que personne ne couvre finissent ensemble, en dernier : c'est la
+     * pièce que le patient règle sans tiers.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array{insurer: ?Insurer, rows: list<array<string, mixed>>}>
+     */
+    private function groupByInsurer(array $rows, ?Insurer $parDefaut, int $tauxParDefaut): array
+    {
+        $groupes = [];
+
+        foreach ($rows as $row) {
+            $nomme = $row['insurer'] ?? null;
+            $insurer = $nomme === null ? $parDefaut : $this->findInsurer($nomme);
+            $taux = $row['insurer_rate'] ?? ($nomme === null ? $tauxParDefaut : null);
+
+            // Un organisme inconnu de Finance, ou un taux nul : la ligne
+            // revient au patient. On ne l'invente pas, et on ne la perd pas.
+            if ($insurer === null || (int) $taux <= 0) {
+                $insurer = null;
+                $taux = 0;
+            }
+
+            $clef = $insurer?->getKey() ?? 0;
+
+            $groupes[$clef] ??= ['insurer' => $insurer, 'rows' => []];
+            $groupes[$clef]['rows'][] = array_replace($row, [
+                'insurer_rate' => max(0, min(100, (int) $taux)),
+            ]);
+        }
+
+        // Le patient seul en dernier : c'est la piece qu'il emporte.
+        uksort($groupes, static fn (int $a, int $b): int => [$a === 0, $a] <=> [$b === 0, $b]);
+
+        return array_values($groupes);
+    }
+
+    /**
+     * Une facture, pour un organisme et les lignes qu'il porte.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @param  array{insurer?: ?string, rate?: ?int, reference?: ?string}|null  $coverage
+     */
+    private function invoice(
+        string $source,
+        string $reference,
+        ?string $patientId,
+        ?string $patientName,
+        array $rows,
+        ?Insurer $insurer,
+        ?array $coverage,
+        ?string $note,
+        Authenticatable $actor,
+    ): Invoice {
         $existing = Invoice::query()
             ->where('source', $source)
             ->where('source_reference', $reference)
+            ->where('insurer_id', $insurer?->getKey())
             ->first();
 
         // Déjà facturée : on rend la pièce existante. Le module qui renvoie
@@ -85,42 +182,25 @@ final class BillExternalSale
             );
         }
 
-        $patientId = Text::clean($patientId);
-        $patientName = Text::clean($patientName);
+        $rows = array_map(static function (array $row): array {
+            $share = (int) round($row['amount'] * $row['insurer_rate'] / 100);
 
-        if ($patientId === null && $patientName === null) {
-            throw new FinanceRuleViolation('Indiquez le patient : son identifiant, son nom, ou les deux.');
-        }
+            return array_replace($row, [
+                'insurer_share' => $share,
+                'patient_share' => $row['amount'] - $share,
+            ]);
+        }, $rows);
 
-        $rows = $this->rows($lines);
         $total = array_sum(array_column($rows, 'amount'));
 
         if ($total <= 0) {
             throw new FinanceRuleViolation('Le montant de la facture doit être supérieur à zéro.');
         }
 
-        [$insurer, $rate] = $this->coverage($coverage);
-
-        // Le taux de chaque ligne : celui que le module a constate produit par
-        // produit, a defaut celui de la piece. Un organisme couvre rarement
-        // tout au meme taux, et jamais tout.
-        $rows = array_map(static function (array $row) use ($rate, $insurer): array {
-            $ligne = $insurer === null ? 0 : (int) ($row['insurer_rate'] ?? $rate);
-            $share = (int) round($row['amount'] * max(0, min(100, $ligne)) / 100);
-
-            // `array_replace` et non `+` : la ligne porte deja une clef
-            // `insurer_rate`, que l'union aurait laissee telle quelle.
-            return array_replace($row, [
-                'insurer_rate' => max(0, min(100, $ligne)),
-                'insurer_share' => $share,
-                'patient_share' => $row['amount'] - $share,
-            ]);
-        }, $rows);
-
         $insurerShare = array_sum(array_column($rows, 'insurer_share'));
 
-        // Le taux de la piece est celui que portent ses lignes, rapporte au
-        // total : ecrire autre chose ferait mentir la facture sur elle-meme.
+        // Le taux de la pièce est celui que portent ses lignes, rapporté au
+        // total : écrire autre chose ferait mentir la facture sur elle-même.
         $rate = $total > 0 ? (int) round($insurerShare * 100 / $total) : 0;
 
         return DB::transaction(function () use (
@@ -147,9 +227,16 @@ final class BillExternalSale
                 'created_by_name' => Actor::name($actor),
             ]);
 
-            $invoice->lines()->createMany(array_map(static fn (array $row): array => $row + [
+            $invoice->lines()->createMany(array_map(static fn (array $row): array => [
                 'act_id' => null,
                 'analytic_center_id' => null,
+                'label' => $row['label'],
+                'quantity' => $row['quantity'],
+                'unit_price' => $row['unit_price'],
+                'amount' => $row['amount'],
+                'insurer_rate' => $row['insurer_rate'],
+                'insurer_share' => $row['insurer_share'],
+                'patient_share' => $row['patient_share'],
             ], $rows));
 
             // Pris en charge à 100 % : le patient ne doit rien, et la facture
@@ -160,11 +247,12 @@ final class BillExternalSale
                 'invoice_created',
                 $invoice,
                 sprintf(
-                    'Facture %s émise pour %s depuis %s (%s) : %s',
+                    'Facture %s émise pour %s depuis %s (%s)%s : %s',
                     $invoice->number,
                     $patientName ?? $patientId,
                     $source,
                     $reference,
+                    $insurer === null ? '' : ', à la charge de '.$insurer->name,
                     Money::format($total),
                 ),
                 [],
@@ -189,8 +277,8 @@ final class BillExternalSale
      * Les lignes, relues : un libellé, une quantité, un prix unitaire. Le
      * montant se recalcule ici ; on ne fait pas confiance à un total envoyé.
      *
-     * @param  list<array{label: string, quantity: int, unit_price: int, insurer_rate?: ?int}>  $lines
-     * @return list<array{label: string, quantity: int, unit_price: int, amount: int, insurer_rate: ?int}>
+     * @param  list<array{label: string, quantity: int, unit_price: int, insurer?: ?string, insurer_rate?: ?int}>  $lines
+     * @return list<array<string, mixed>>
      */
     private function rows(array $lines): array
     {
@@ -222,9 +310,9 @@ final class BillExternalSale
                 'quantity' => $quantity,
                 'unit_price' => $unit,
                 'amount' => $unit * $quantity,
-                // Le taux que le module a constate sur cette ligne, s'il en a
-                // constate un. Relu comme le reste : on ne fait pas confiance
-                // a un pourcentage hors bornes.
+                // L'organisme que cette ligne nomme, et le taux qu'il porte
+                // sur elle. Nuls, la ligne suit ce que la pièce annonce.
+                'insurer' => Text::clean($line['insurer'] ?? null),
                 'insurer_rate' => isset($line['insurer_rate']) ? max(0, min(100, (int) $line['insurer_rate'])) : null,
             ];
         }
@@ -233,12 +321,7 @@ final class BillExternalSale
     }
 
     /**
-     * L'organisme qui prend en charge, et le taux retenu.
-     *
-     * Le module transmet un nom, pas une clé : il ne connaît pas la table des
-     * assureurs de Finance. Un organisme inconnu n'est pas une raison de
-     * refuser la vente, mais on ne l'invente pas non plus : la facture reste
-     * entièrement à la charge du patient, et l'audit garde le nom annoncé.
+     * L'organisme annoncé pour toute la pièce, et son taux.
      *
      * @param  array{insurer?: ?string, rate?: ?int, reference?: ?string}|null  $coverage
      * @return array{0: ?Insurer, 1: int}
@@ -248,7 +331,7 @@ final class BillExternalSale
         $name = Text::clean($coverage['insurer'] ?? null);
         $rate = (int) ($coverage['rate'] ?? 0);
 
-        if ($name === null || $rate <= 0) {
+        if ($name === null) {
             return [null, 0];
         }
 
@@ -256,10 +339,21 @@ final class BillExternalSale
             throw new FinanceRuleViolation('Une prise en charge ne dépasse pas 100 %.');
         }
 
-        $insurer = Insurer::query()->active()
+        return [$this->findInsurer($name), max(0, $rate)];
+    }
+
+    /**
+     * L'organisme que ce nom désigne chez Finance.
+     *
+     * Le module transmet un nom ou un code, pas une clé : il ne connaît pas
+     * la table des assureurs. Un organisme inconnu n'est pas une raison de
+     * refuser la vente, mais on ne l'invente pas non plus : la ligne revient
+     * à la charge du patient, et l'audit garde le nom annoncé.
+     */
+    private function findInsurer(string $name): ?Insurer
+    {
+        return Insurer::query()->active()
             ->where(fn ($query) => $query->where('name', $name)->orWhere('code', $name))
             ->first();
-
-        return $insurer === null ? [null, 0] : [$insurer, $rate];
     }
 }
