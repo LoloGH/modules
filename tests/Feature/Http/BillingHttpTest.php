@@ -77,7 +77,14 @@ class BillingHttpTest extends TestCase
         // Chaque ligne porte son taux de prise en charge : zero ici, personne
         // ne couvrant ce produit.
         $this->assertSame(
-            [['label' => 'Amoxicilline', 'quantity' => 5, 'unit_price' => 1_000, 'amount' => 5_000, 'insurer_rate' => 0]],
+            [[
+                'label' => 'Amoxicilline',
+                'quantity' => 5,
+                'unit_price' => 1_000,
+                'amount' => 5_000,
+                'insurer' => null,
+                'insurer_rate' => 0,
+            ]],
             $sale->lines,
         );
 

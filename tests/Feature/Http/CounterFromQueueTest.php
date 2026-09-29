@@ -7,6 +7,7 @@ namespace Keneya\Pharmacie\Tests\Feature\Http;
 use Keneya\Pharmacie\Contracts\PharmacyQueueProvider;
 use Keneya\Pharmacie\Contracts\PrescriptionProvider;
 use Keneya\Pharmacie\Models\DispensationItem;
+use Keneya\Pharmacie\Models\ProductCoverage;
 use Keneya\Pharmacie\Models\Stock;
 use Keneya\Pharmacie\Models\StockMovement;
 use Keneya\Pharmacie\Prescriptions\Prescription;
@@ -225,6 +226,34 @@ class CounterFromQueueTest extends TestCase
         // être un chiffre, sinon on ne rapproche rien.
         $this->assertNull($matcher->product(new PrescriptionLine('Eau oxygénée', 1)));
         $this->assertSame($eau->id, $matcher->product(new PrescriptionLine('Eau', 1))?->id);
+    }
+
+    public function test_une_ligne_prescrite_offre_les_organismes_qui_couvrent_son_produit(): void
+    {
+        $this->hostQueue();
+        $this->hostPrescription();
+
+        $comptoir = $this->makeLocation('COMPR', 'Comptoir');
+        $amoxicilline = $this->makeProduct(['name' => 'Amoxicilline 500 mg', 'dci' => 'Amoxicilline']);
+        $this->stockUp($this->makeBatch($amoxicilline, 'LOT-A', now()->addYear()->toDateString()), 40, $comptoir);
+
+        ProductCoverage::create([
+            'facility_id' => 1,
+            'product_id' => $amoxicilline->id,
+            'insurer_ref' => 'amo',
+            'insurer_name' => 'AMO',
+            'rate' => 80,
+        ]);
+
+        $page = $this->actingAs($this->userWithRole(Rbac::ROLE_PHARMACIST))
+            ->get('/pharmacie/comptoir?file=comptoir&patient=C-1')
+            ->assertOk()
+            ->assertSee('Prise en charge de cette ligne')
+            ->assertSee('À la charge du patient')
+            ->assertSee('AMO · 80 %');
+
+        // Une seule ligne est couverte : les deux autres ne proposent rien.
+        $this->assertSame(1, substr_count($page->getContent(), 'Prise en charge de cette ligne'));
     }
 
     private function hostQueue(): FakePharmacyQueue

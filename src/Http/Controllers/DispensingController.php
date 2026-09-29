@@ -161,7 +161,7 @@ final class DispensingController extends PharmacieController
      * Ce que les organismes couvrent sur ces produits.
      *
      * @param  Collection<int, Product>  $products
-     * @return array<int, list<array{name: string, rate: int}>>
+     * @return array<int, list<array{ref: string, name: string, rate: int}>>
      */
     private function coverages($products): array
     {
@@ -173,6 +173,7 @@ final class DispensingController extends PharmacieController
 
         foreach (ProductCoverage::query()->ofFacility()->whereIn('product_id', $products->pluck('id'))->get() as $coverage) {
             $rows[(int) $coverage->product_id][] = [
+                'ref' => (string) $coverage->insurer_ref,
                 'name' => (string) $coverage->insurer_name,
                 'rate' => (int) $coverage->rate,
             ];
@@ -340,6 +341,7 @@ final class DispensingController extends PharmacieController
             'lines.*.quantity' => ['nullable', 'integer', 'min:0'],
             'lines.*.prescribed_quantity' => ['nullable', 'integer', 'min:0'],
             'lines.*.posology' => ['nullable', 'string', 'max:191'],
+            'lines.*.insurer_ref' => ['nullable', 'string', 'max:64'],
             'lines.*.location_id' => ['nullable', 'integer', 'exists:pharmacie_locations,id'],
             'lines.*.batch_id' => ['nullable', 'integer', 'exists:pharmacie_batches,id'],
             'lines.*.override_reason' => ['nullable', 'string', 'max:500'],
@@ -367,6 +369,7 @@ final class DispensingController extends PharmacieController
             'quantity' => (int) $line['quantity'],
             'prescribed_quantity' => isset($line['prescribed_quantity']) ? (int) $line['prescribed_quantity'] : (int) $line['quantity'],
             'posology' => $line['posology'] ?? null,
+            'insurer_ref' => $line['insurer_ref'] ?? null,
             'location_id' => isset($line['location_id']) && $line['location_id'] !== null ? (int) $line['location_id'] : null,
             'batch_id' => isset($line['batch_id']) && $line['batch_id'] !== null ? (int) $line['batch_id'] : null,
             'override_reason' => $line['override_reason'] ?? null,

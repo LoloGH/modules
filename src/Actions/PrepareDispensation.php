@@ -243,6 +243,7 @@ final class PrepareDispensation
                 'amount' => (int) $item->amount,
                 // Chaque ligne porte son taux : un organisme couvre
                 // l'amoxicilline et pas le sirop contre la toux.
+                'insurer' => $item->insurer_name,
                 'insurer_rate' => (int) $item->insurer_rate,
             ])->all(),
             total: (int) $dispensation->total,
@@ -325,6 +326,8 @@ final class PrepareDispensation
             ? max(0, (int) $line['unit_price'])
             : (int) ($product->sale_price ?? 0);
 
+        $prise = $this->coverageFor($line, $coverage, $product);
+
         // `quantity` reste à zéro : rien n'est servi. Ce qui est facturé est
         // ce qui a été demandé, et la délivrance dira ce qui est sorti.
         return DispensationItem::create([
@@ -335,9 +338,11 @@ final class PrepareDispensation
             'location_id' => $this->lineLocation($line, $dispensation, $position)?->id,
             'label' => $product->label(),
             'posology' => Text::clean($line['posology'] ?? null),
-            // Ce que l'organisme choisi porte sur CE produit : un taux unique
-            // pour toute la piece couvrirait ce qui ne l'est pas.
-            'insurer_rate' => $this->rateFor($coverage, $product),
+            // Ce que porte CETTE ligne : un organisme unique pour toute la
+            // piece couvrirait ce qui ne l'est pas.
+            'insurer_ref' => $prise['ref'],
+            'insurer_name' => $prise['name'],
+            'insurer_rate' => $prise['rate'],
             'prescribed_quantity' => max($prescribed, $wanted),
             'quantity' => 0,
             'unit_price' => $unitPrice,
@@ -385,31 +390,43 @@ final class PrepareDispensation
     }
 
     /**
-     * Ce que l'organisme choisi couvre sur ce produit.
+     * L'organisme qui porte cette ligne, et son taux.
      *
-     * Aucune regle veut dire « rien » : la ligne reste a la charge du
-     * patient. Un taux suppose se paierait en creances qu'aucun organisme ne
+     * Une ordonnance n'est pas couverte d'un bloc : le comptoir choisit ligne
+     * par ligne, parmi les organismes qui couvrent ce produit-la. Ce qui
+     * n'est pas choisi reste a la charge du patient — un taux applique sans
+     * qu'on l'ait voulu se paierait en creances qu'aucun organisme ne
      * reconnait.
      *
+     * Un taux annonce pour toute la piece (comptoir sans caisse branchee)
+     * vaut encore, faute de mieux.
+     *
+     * @param  array<string, mixed>  $line
      * @param  array{insurer?: ?string, insurer_ref?: ?string, rate?: ?int}|null  $coverage
+     * @return array{ref: ?string, name: ?string, rate: int}
      */
-    private function rateFor(?array $coverage, Product $product): int
+    private function coverageFor(array $line, ?array $coverage, Product $product): array
     {
-        if ($coverage === null) {
-            return 0;
+        $ref = Text::clean($line['insurer_ref'] ?? null);
+
+        if ($ref !== null) {
+            $regle = ProductCoverage::query()->ofFacility()
+                ->where('product_id', $product->getKey())
+                ->forInsurer($ref)
+                ->first();
+
+            // Choisir un organisme qui ne couvre pas ce produit ne le couvre
+            // pas davantage : la ligne revient au patient.
+            if ($regle !== null) {
+                return ['ref' => $regle->insurer_ref, 'name' => $regle->insurer_name, 'rate' => (int) $regle->rate];
+            }
         }
 
-        $ref = $coverage['insurer_ref'] ?? null;
+        $global = $coverage['insurer'] ?? null;
+        $taux = (int) ($coverage['rate'] ?? 0);
 
-        // Sans organisme choisi dans la liste, le comptoir a pu saisir un taux
-        // a la main : il vaut alors pour toutes les lignes, comme avant.
-        if ($ref === null) {
-            return (int) ($coverage['rate'] ?? 0);
-        }
-
-        return (int) (ProductCoverage::query()->ofFacility()
-            ->where('product_id', $product->getKey())
-            ->forInsurer($ref)
-            ->value('rate') ?? 0);
+        return $global !== null && ($coverage['insurer_ref'] ?? null) === null && $taux > 0
+            ? ['ref' => null, 'name' => $global, 'rate' => $taux]
+            : ['ref' => null, 'name' => null, 'rate' => 0];
     }
 }

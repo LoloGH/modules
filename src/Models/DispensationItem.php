@@ -60,6 +60,12 @@ class DispensationItem extends Model
         return $this->location ?? $fallback ?? $this->dispensation?->location;
     }
 
+    /** Cette ligne est-elle portee par un organisme ? */
+    public function isCovered(): bool
+    {
+        return $this->insurer_name !== null && (int) $this->insurer_rate > 0;
+    }
+
     public function substitutedFor(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'substituted_for_id');

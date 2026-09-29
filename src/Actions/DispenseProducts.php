@@ -228,30 +228,36 @@ final class DispenseProducts
      * @return array{amount: int, outstanding: int, quantity: int}
      */
     /**
-     * Ce que l'organisme choisi couvre sur ce produit.
+     * L'organisme qui porte cette ligne, et son taux.
      *
-     * Aucune regle veut dire « rien » : la ligne reste a la charge du
-     * patient. Un taux suppose se paierait en creances qu'aucun organisme ne
-     * reconnait.
+     * Le comptoir choisit ligne par ligne, parmi les organismes qui couvrent
+     * ce produit-la. Ce qui n'est pas choisi reste a la charge du patient.
      *
+     * @param  array<string, mixed>  $line
      * @param  array{insurer?: ?string, insurer_ref?: ?string, rate?: ?int}|null  $coverage
+     * @return array{ref: ?string, name: ?string, rate: int}
      */
-    private function rateFor(?array $coverage, Product $product): int
+    private function coverageFor(array $line, ?array $coverage, Product $product): array
     {
-        if ($coverage === null) {
-            return 0;
+        $ref = Text::clean($line['insurer_ref'] ?? null);
+
+        if ($ref !== null) {
+            $regle = ProductCoverage::query()->ofFacility()
+                ->where('product_id', $product->getKey())
+                ->forInsurer($ref)
+                ->first();
+
+            if ($regle !== null) {
+                return ['ref' => $regle->insurer_ref, 'name' => $regle->insurer_name, 'rate' => (int) $regle->rate];
+            }
         }
 
-        $ref = $coverage['insurer_ref'] ?? null;
+        $global = $coverage['insurer'] ?? null;
+        $taux = (int) ($coverage['rate'] ?? 0);
 
-        if ($ref === null) {
-            return (int) ($coverage['rate'] ?? 0);
-        }
-
-        return (int) (ProductCoverage::query()->ofFacility()
-            ->where('product_id', $product->getKey())
-            ->forInsurer($ref)
-            ->value('rate') ?? 0);
+        return $global !== null && ($coverage['insurer_ref'] ?? null) === null && $taux > 0
+            ? ['ref' => null, 'name' => $global, 'rate' => $taux]
+            : ['ref' => null, 'name' => null, 'rate' => 0];
     }
 
     /**
@@ -320,14 +326,17 @@ final class DispenseProducts
         // chaîne du froid, ce qui n'est pas descendu à la centrale. Nulle,
         // elle suit l'emplacement de la dispensation.
         $from = $this->lineLocation($line, $dispensation, $position) ?? $location;
+        $prise = $this->coverageFor($line, $coverage, $product);
 
         $item = DispensationItem::create([
             'dispensation_id' => $dispensation->id,
             'product_id' => $product->id,
             'location_id' => $from->is($location) ? null : $from->id,
             'label' => $product->label(),
-            // Ce que l'organisme choisi porte sur CE produit.
-            'insurer_rate' => $this->rateFor($coverage, $product),
+            // Ce que porte CETTE ligne.
+            'insurer_ref' => $prise['ref'],
+            'insurer_name' => $prise['name'],
+            'insurer_rate' => $prise['rate'],
             'posology' => Text::clean($line['posology'] ?? null),
             'prescribed_quantity' => max($prescribed, 0),
             'quantity' => 0,

@@ -139,6 +139,7 @@ final class SendToCashier
                     'amount' => (int) $item->amount,
                     // Chaque ligne porte son taux : un organisme couvre
                     // l'amoxicilline et pas le sirop contre la toux.
+                    'insurer' => $item->insurer_name,
                     'insurer_rate' => (int) $item->insurer_rate,
                 ])->all(),
                 total: (int) $fresh->total,

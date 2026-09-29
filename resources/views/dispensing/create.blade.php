@@ -110,8 +110,8 @@
                                     @unless ($row['substitutable'])
                                         <span class="badge warn">Non substituable</span>
                                     @endunless
-                                    @foreach ($coverages[$row['product_id']] ?? [] as $prise)
-                                        <span class="badge info">{{ $prise['name'] }} {{ $prise['rate'] }} %</span>
+                                    @foreach ($coverages[$row['product_id']] ?? [] as $declaree)
+                                        <span class="badge info">{{ $declaree['name'] }} {{ $declaree['rate'] }} %</span>
                                     @endforeach
                                 </p>
                                 @if ($etat === 'out')
@@ -156,6 +156,31 @@
                                            placeholder="1 gélule matin et soir">
                                 </label>
                             </div>
+                            @php($prises = $row['product_id'] ? ($coverages[$row['product_id']] ?? []) : [])
+
+                            @if ($prises !== [])
+                                {{-- Une ordonnance n'est pas couverte d'un bloc : chaque ligne
+                                     choisit son payeur, parmi ceux qui couvrent CE produit.
+                                     Ne rien choisir laisse la ligne au patient. --}}
+                                <div class="row">
+                                    <label>Prise en charge de cette ligne
+                                        <select name="lines[{{ $i }}][insurer_ref]">
+                                            <option value="">À la charge du patient</option>
+                                            @foreach ($prises as $prise)
+                                                <option value="{{ $prise['ref'] }}"
+                                                        @selected(old('lines.'.$i.'.insurer_ref') === $prise['ref'])>
+                                                    {{ $prise['name'] }} · {{ $prise['rate'] }} %
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <span class="help">
+                                            Le taux est celui que cet organisme couvre sur ce produit.
+                                            La caisse émettra une facture par organisme.
+                                        </span>
+                                    </label>
+                                </div>
+                            @endif
+
                             @if ($ailleurs !== [])
                                 <div class="row">
                                     <label>Prendre depuis
@@ -198,41 +223,21 @@
                     @endforeach
 
                     <div class="row">
-                        @if ($insurers !== [])
-                            {{-- Le choix appartient au comptoir : rien ne s'applique tout
-                                 seul. Le taux de chaque ligne vient ensuite de ce que
-                                 l'organisme couvre sur ce produit. --}}
-                            <label>Prise en charge
-                                <select name="coverage_insurer_ref">
-                                    <option value="">Aucune : le patient paie tout</option>
-                                    @foreach ($insurers as $insurer)
-                                        <option value="{{ $insurer->ref }}"
-                                                @selected(old('coverage_insurer_ref') === $insurer->ref)>
-                                            {{ $insurer->name }} · {{ $insurer->kindLabel() }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <span class="help">
-                                    Chaque ligne prend le taux que cet organisme couvre sur son
-                                    produit. Les unités sont mises de côté jusqu'à la délivrance.
-                                </span>
-                            </label>
-                        @else
-                            <label>Prise en charge
-                                <input name="coverage_insurer" value="{{ old('coverage_insurer') }}"
-                                       placeholder="assureur ou aide sociale, si le patient en a une">
-                                <span class="help">
-                                    Aucun organisme n'est fourni par l'application hôte : nommez-le
-                                    et donnez son taux. Les unités sont mises de côté jusqu'à la
-                                    délivrance.
-                                </span>
-                            </label>
-                            <label>Part prise en charge (%)
-                                <input name="coverage_rate" inputmode="numeric" value="{{ old('coverage_rate') }}" placeholder="ex. 80">
-                            </label>
-                        @endif
+                        {{-- L'organisme se choisit ligne par ligne, plus haut : le meme
+                             patient peut etre couvert par une assurance sur un produit et
+                             par une aide sociale sur un autre. Ne reste ici que ce qui
+                             vaut pour toute la piece. --}}
                         <label>Référence de l'accord
-                            <input name="coverage_reference" value="{{ old('coverage_reference') }}">
+                            <input name="coverage_reference" value="{{ old('coverage_reference') }}"
+                                   placeholder="numéro de l'accord de prise en charge">
+                            <span class="help">
+                                @if ($insurers === [])
+                                    Aucun organisme n'est fourni par l'application hôte : les prises
+                                    en charge se déclarent dans la caisse, puis produit par produit.
+                                @else
+                                    Vaut pour toutes les lignes prises en charge de cette pièce.
+                                @endif
+                            </span>
                         </label>
                     </div>
 

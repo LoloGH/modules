@@ -110,9 +110,9 @@ class ProductCoverageHttpTest extends TestCase
             ->post(route('pharmacie.dispensing.store'), [
                 'location_id' => $location->id,
                 'patient_name' => 'Aminata Traoré',
-                'coverage_insurer_ref' => 'amo',
                 'lines' => [
-                    ['product_id' => $couvert->id, 'quantity' => '10'],
+                    // L'organisme se choisit ligne par ligne.
+                    ['product_id' => $couvert->id, 'quantity' => '10', 'insurer_ref' => 'amo'],
                     ['product_id' => $nu->id, 'quantity' => '4'],
                 ],
             ])
@@ -121,7 +121,11 @@ class ProductCoverageHttpTest extends TestCase
         $lignes = DispensationItem::query()->orderBy('id')->get();
 
         $this->assertSame(80, (int) $lignes[0]->insurer_rate);
+        $this->assertSame('amo', $lignes[0]->insurer_ref);
+        $this->assertSame('AMO', $lignes[0]->insurer_name);
+
         $this->assertSame(0, (int) $lignes[1]->insurer_rate);
+        $this->assertNull($lignes[1]->insurer_name);
 
         // Servie d'abord, facturee ensuite : c'est l'envoi a la caisse qui
         // transporte les taux.
@@ -132,8 +136,9 @@ class ProductCoverageHttpTest extends TestCase
         $vente = $this->caisse->sales[0];
 
         $this->assertSame(80, $vente->lines[0]['insurer_rate']);
+        $this->assertSame('AMO', $vente->lines[0]['insurer']);
         $this->assertSame(0, $vente->lines[1]['insurer_rate']);
-        $this->assertSame('AMO', $vente->coverage['insurer']);
+        $this->assertNull($vente->lines[1]['insurer']);
     }
 
     public function test_sans_choix_rien_n_est_pris_en_charge(): void
@@ -159,18 +164,75 @@ class ProductCoverageHttpTest extends TestCase
         $this->assertNull(Dispensation::query()->sole()->coverage_insurer);
     }
 
-    public function test_le_comptoir_annonce_ce_qui_est_couvert_avant_le_choix(): void
+    public function test_une_ligne_vierge_n_offre_pas_encore_de_prise_en_charge(): void
     {
         $location = $this->makeLocation();
         $product = $this->makeProduct(['name' => 'Amoxicilline 500 mg']);
         $this->stockUp($this->makeBatch($product, 'LOT-A', now()->addYear()->toDateString()), 50, $location);
         $this->couvrir($product, 'amo', 'AMO', 80);
 
+        // Le choix porte sur un produit : tant que la ligne n'en nomme aucun,
+        // on ne sait pas quel organisme le couvre ni a quel taux. L'ecran ne
+        // propose donc rien, plutot qu'une liste dont les taux seraient faux.
         $this->actingAs($this->userWithRole(Rbac::ROLE_PHARMACIST))
             ->get(route('pharmacie.dispensing.create'))
             ->assertOk()
-            ->assertSee('Aucune : le patient paie tout')
-            ->assertSee('AMO');
+            ->assertDontSee('Prise en charge de cette ligne')
+            ->assertSee("Référence de l'accord", false);
+    }
+
+    public function test_deux_organismes_sur_deux_lignes(): void
+    {
+        $location = $this->makeLocation();
+
+        $antibio = $this->makeProduct(['name' => 'Amoxicilline 500 mg', 'sale_price' => 100]);
+        $palu = $this->makeProduct(['name' => 'Artemether', 'sale_price' => 200]);
+
+        $this->stockUp($this->makeBatch($antibio, 'LOT-A', now()->addYear()->toDateString()), 50, $location);
+        $this->stockUp($this->makeBatch($palu, 'LOT-B', now()->addYear()->toDateString()), 50, $location);
+
+        // L'assurance porte l'antibiotique, l'aide sociale l'antipaludique.
+        $this->couvrir($antibio, 'amo', 'AMO', 80);
+        $this->couvrir($palu, 'indigents', 'Fonds des indigents', 100);
+
+        $this->actingAs($this->userWithRole(Rbac::ROLE_PHARMACIST))
+            ->post(route('pharmacie.dispensing.store'), [
+                'location_id' => $location->id,
+                'patient_name' => 'Aminata Traoré',
+                'lines' => [
+                    ['product_id' => $antibio->id, 'quantity' => '10', 'insurer_ref' => 'amo'],
+                    ['product_id' => $palu->id, 'quantity' => '5', 'insurer_ref' => 'indigents'],
+                ],
+            ])
+            ->assertSessionHas('pharmacie_status');
+
+        $lignes = DispensationItem::query()->orderBy('id')->get();
+
+        $this->assertSame('AMO', $lignes[0]->insurer_name);
+        $this->assertSame(80, (int) $lignes[0]->insurer_rate);
+        $this->assertSame('Fonds des indigents', $lignes[1]->insurer_name);
+        $this->assertSame(100, (int) $lignes[1]->insurer_rate);
+    }
+
+    public function test_choisir_un_organisme_qui_ne_couvre_pas_ce_produit_ne_le_couvre_pas(): void
+    {
+        $location = $this->makeLocation();
+        $product = $this->makeProduct(['sale_price' => 100]);
+        $this->stockUp($this->makeBatch($product, 'LOT-A', now()->addYear()->toDateString()), 50, $location);
+
+        // L'organisme existe, mais aucune regle ne le lie a ce produit.
+        $this->actingAs($this->userWithRole(Rbac::ROLE_PHARMACIST))
+            ->post(route('pharmacie.dispensing.store'), [
+                'location_id' => $location->id,
+                'patient_name' => 'Aminata Traoré',
+                'lines' => [['product_id' => $product->id, 'quantity' => '10', 'insurer_ref' => 'amo']],
+            ])
+            ->assertSessionHas('pharmacie_status');
+
+        $ligne = DispensationItem::query()->sole();
+
+        $this->assertSame(0, (int) $ligne->insurer_rate);
+        $this->assertNull($ligne->insurer_name);
     }
 
     private function couvrir(Product $product, string $ref, string $name, int $rate): ProductCoverage
