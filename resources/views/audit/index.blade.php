@@ -35,7 +35,7 @@
         sub="Qui a fait quoi, {{ $periode }}. Une ligne d'audit ne se modifie ni ne se supprime.">
         <x-slot:actions>
             <a class="btn ghost sm" href="{{ route('finance.audit.export', request()->query()) }}">
-                <x-finance::icon name="rapport" /> Exporter en CSV
+                <x-finance::icon name="rapport" /> Exporter (Excel)
             </a>
         </x-slot:actions>
     </x-finance::page>

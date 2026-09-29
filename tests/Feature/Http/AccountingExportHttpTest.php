@@ -155,12 +155,16 @@ class AccountingExportHttpTest extends HttpTestCase
             ->assertSee('Caisse')
             ->assertSee('Produits des services');
 
-        $csv = $this->get('/finance/comptabilite/journal')->assertOk()->streamedContent();
-        $this->assertStringContainsString('Date;Journal;Pièce;Compte', $csv);
-        $this->assertStringContainsString('571', $csv);
+        $journal = $this->get('/finance/comptabilite/journal')->assertOk()->streamedContent();
+        foreach (['Date', 'Journal', 'Pièce', 'Compte'] as $colonne) {
+            $this->assertStringContainsString('<Data ss:Type="String">'.$colonne.'</Data>', $journal);
+        }
+        $this->assertStringContainsString('571', $journal);
 
         $balance = $this->get('/finance/comptabilite/balance')->assertOk()->streamedContent();
-        $this->assertStringContainsString('Compte;Libellé;Débit', $balance);
+        foreach (['Compte', 'Libellé', 'Débit'] as $colonne) {
+            $this->assertStringContainsString('<Data ss:Type="String">'.$colonne.'</Data>', $balance);
+        }
 
         // Le caissier n'exporte pas la comptabilité.
         $this->actingAs($cashier)->get('/finance/comptabilite')->assertForbidden();

@@ -164,8 +164,15 @@ class AnalyticAttachmentHttpTest extends HttpTestCase
             ->assertSee('8 000 FCFA');  // resultat du pole : 10 000 - 2 000
 
         // Le total ne compte pas deux fois ce que le pôle partage avec ses services.
-        $csv = $this->get('/finance/rapports/export?type=resultat-centre')->streamedContent();
-        $this->assertStringContainsString('Total;10000;0;2000;8000', $csv);
+        $classeur = $this->get('/finance/rapports/export?type=resultat-centre')->streamedContent();
+        $this->assertStringContainsString(
+            '<Cell ss:StyleID="sTotal"><Data ss:Type="String">Total</Data></Cell>'
+            .'<Cell ss:StyleID="sTotalNum"><Data ss:Type="Number">10000</Data></Cell>'
+            .'<Cell ss:StyleID="sTotalNum"><Data ss:Type="Number">0</Data></Cell>'
+            .'<Cell ss:StyleID="sTotalNum"><Data ss:Type="Number">2000</Data></Cell>'
+            .'<Cell ss:StyleID="sTotalNum"><Data ss:Type="Number">8000</Data></Cell>',
+            $classeur,
+        );
     }
 
     public function test_a_center_is_renamed_reattached_and_never_becomes_its_own_parent(): void

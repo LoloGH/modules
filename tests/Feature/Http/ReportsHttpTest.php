@@ -69,7 +69,7 @@ class ReportsHttpTest extends HttpTestCase
             ->assertSee('4 000 FCFA')
             ->assertSee('2 500 FCFA')           // dépenses
             ->assertSee('13 000 FCFA')          // solde : 11 500 + 4 000 − 2 500
-            ->assertSee('Exporter (CSV)');
+            ->assertSee('Exporter (Excel)');
     }
 
     public function test_each_report_type(): void
@@ -109,21 +109,24 @@ class ReportsHttpTest extends HttpTestCase
             ->assertSee('Rien sur cette période');
     }
 
-    public function test_the_csv_export(): void
+    public function test_the_workbook_export(): void
     {
         $this->seedMovements();
 
         $response = $this->actingAs($this->accountant())->get('/finance/rapports/export?type=recettes-centre');
 
         $response->assertOk();
-        $this->assertStringContainsString('text/csv', (string) $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('application/vnd.ms-excel', (string) $response->headers->get('Content-Type'));
         $this->assertStringContainsString('attachment; filename=rapport-recettes-centre-', (string) $response->headers->get('Content-Disposition'));
 
-        $csv = $response->streamedContent();
-        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
-        $this->assertStringContainsString('"Service (centre analytique)";Nombre;Montant', $csv);
-        $this->assertStringContainsString('Imagerie;1;7500', $csv);
-        $this->assertStringContainsString('Total;3;11500', $csv);
+        $classeur = $response->streamedContent();
+
+        // Un vrai classeur : en-tete en couleur, colonnes nommees, et des
+        // montants qu'Excel additionne sans qu'on les retouche.
+        $this->assertStringContainsString('<Interior ss:Color="#1D4ED8"', $classeur);
+        $this->assertStringContainsString('Service (centre analytique)', $classeur);
+        $this->assertStringContainsString('<Data ss:Type="Number">7500</Data>', $classeur);
+        $this->assertStringContainsString('<Data ss:Type="Number">11500</Data>', $classeur);
     }
 
     public function test_rights(): void

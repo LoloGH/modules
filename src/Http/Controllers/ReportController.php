@@ -6,15 +6,17 @@ namespace Keneya\FinanceCaisse\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Models\Act;
 use Keneya\FinanceCaisse\Models\AnalyticCenter;
 use Keneya\FinanceCaisse\Models\PaymentMethod;
 use Keneya\FinanceCaisse\Services\ReportBuilder;
 use Keneya\FinanceCaisse\Support\LedgerFilters;
+use Keneya\FinanceCaisse\Support\Spreadsheet;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Rapports financiers : période, filtres, type de rapport, et export CSV.
+ * Rapports financiers : période, filtres, type de rapport, et export tableur.
  * Toujours tout l'établissement : c'est un écran de pilotage
  * (`finance.reports.view`).
  */
@@ -38,9 +40,12 @@ final class ReportController extends FinanceController
     }
 
     /**
-     * Le même rapport en CSV (séparateur « ; », encodage UTF-8 avec BOM :
-     * s'ouvre tel quel dans un tableur réglé en français). Montants entiers,
-     * sans séparateur de milliers, pour rester calculables.
+     * Le même rapport en classeur : de vraies colonnes, un en-tête figé, des
+     * montants qu'Excel additionne.
+     *
+     * Le CSV d'avant s'ouvrait en une seule colonne dès que le tableur n'était
+     * pas réglé sur le point-virgule, et il fallait redécouper le rapport à la
+     * main pour le relire.
      */
     public function export(Request $request, ReportBuilder $builder): StreamedResponse
     {
@@ -48,20 +53,13 @@ final class ReportController extends FinanceController
         $type = ReportBuilder::type($request->query('type'));
         $report = $builder->build($type, $filters);
 
-        $filename = sprintf('rapport-%s-%s-%s.csv', $type, $filters->from->format('Ymd'), $filters->to->format('Ymd'));
-
-        return response()->streamDownload(function () use ($report, $type, $filters): void {
-            $out = fopen('php://output', 'wb');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, [ReportBuilder::TYPES[$type].' · '.$filters->periodLabel()], ';');
-            fputcsv($out, $report['columns'], ';');
-
-            foreach ($report['rows'] as $row) {
-                fputcsv($out, $row, ';');
-            }
-
-            fputcsv($out, $report['total'], ';');
-            fclose($out);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return Spreadsheet::download(
+            sprintf('rapport-%s-%s-%s.xls', $type, $filters->from->format('Ymd'), $filters->to->format('Ymd')),
+            ReportBuilder::TYPES[$type],
+            $report['columns'],
+            $report['rows'],
+            $report['total'],
+            $filters->periodLabel().' · '.Finance::facility()['name'],
+        );
     }
 }

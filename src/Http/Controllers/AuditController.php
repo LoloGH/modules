@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Keneya\FinanceCaisse\Models\AuditLog;
 use Keneya\FinanceCaisse\Support\AuditEvents;
+use Keneya\FinanceCaisse\Support\Spreadsheet;
 use Keneya\FinanceCaisse\Support\Text;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -43,7 +44,7 @@ final class AuditController extends FinanceController
     }
 
     /**
-     * Le même journal, filtré de la même façon, en CSV : ce qu'on joint à un
+     * Le même journal, filtré de la même façon, en classeur : ce qu'on joint à un
      * rapport ou qu'on remet à un contrôleur.
      */
     public function export(Request $request): StreamedResponse
@@ -51,30 +52,38 @@ final class AuditController extends FinanceController
         $filters = $this->filters($request);
         $query = $this->query($filters);
 
-        $name = 'journal-audit-'.$filters['from']->toDateString().'-'.$filters['to']->toDateString().'.csv';
+        $name = 'journal-audit-'.$filters['from']->toDateString().'-'.$filters['to']->toDateString().'.xls';
 
-        return response()->streamDownload(function () use ($query): void {
-            $out = fopen('php://output', 'wb');
+        // Le journal se lit par milliers de lignes : on le parcourt par
+        // paquets plutot que de le charger entier.
+        $lignes = [];
 
-            // BOM : Excel lit l'UTF-8 sans le demander.
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Date', 'Événement', 'Description', 'Auteur', 'Objet', 'Adresse IP'], ';');
+        $query->latest('id')->chunk(500, function ($rows) use (&$lignes): void {
+            foreach ($rows as $entry) {
+                $lignes[] = [
+                    $entry->created_at?->format('d/m/Y H:i:s'),
+                    AuditEvents::label((string) $entry->event),
+                    $entry->description,
+                    $entry->user_name ?? $entry->user_id,
+                    $this->subject($entry),
+                    $entry->ip_address,
+                ];
+            }
+        });
 
-            $query->latest('id')->chunk(500, function ($rows) use ($out): void {
-                foreach ($rows as $entry) {
-                    fputcsv($out, [
-                        $entry->created_at?->format('d/m/Y H:i:s'),
-                        AuditEvents::label((string) $entry->event),
-                        $entry->description,
-                        $entry->user_name ?? $entry->user_id,
-                        $this->subject($entry),
-                        $entry->ip_address,
-                    ], ';');
-                }
-            });
-
-            fclose($out);
-        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return Spreadsheet::download(
+            $name,
+            "Journal d'audit",
+            ['Date', 'Événement', 'Description', 'Auteur', 'Objet', 'Adresse IP'],
+            $lignes,
+            null,
+            sprintf(
+                'Du %s au %s · %d écriture(s)',
+                $filters['from']->format('d/m/Y'),
+                $filters['to']->format('d/m/Y'),
+                count($lignes),
+            ),
+        );
     }
 
     /**

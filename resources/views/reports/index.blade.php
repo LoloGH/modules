@@ -6,7 +6,7 @@
     <x-finance::page title="Rapports" sub="{{ $types[$type] }} · {{ $filters->periodLabel() }}, tout l'établissement.">
         <x-slot:actions>
             <a class="btn ghost sm" href="{{ route('finance.reports.export', ['type' => $type] + $filters->query()) }}">
-                <x-finance::icon name="rapport" /> Exporter (CSV)
+                <x-finance::icon name="rapport" /> Exporter (Excel)
             </a>
         </x-slot:actions>
     </x-finance::page>

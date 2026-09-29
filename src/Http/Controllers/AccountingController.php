@@ -6,8 +6,10 @@ namespace Keneya\FinanceCaisse\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Services\AccountingExport;
 use Keneya\FinanceCaisse\Support\LedgerFilters;
+use Keneya\FinanceCaisse\Support\Spreadsheet;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -71,23 +73,21 @@ final class AccountingController extends FinanceController
     }
 
     /**
+     * Un classeur plutôt qu'un CSV : les écritures comptables se relisent en
+     * colonnes, et les montants s'additionnent sans retouche.
+     *
      * @param  list<string>  $columns
      * @param  list<list<string|int>>  $rows
      */
     private function csv(string $name, array $columns, array $rows): StreamedResponse
     {
-        return response()->streamDownload(function () use ($columns, $rows): void {
-            $out = fopen('php://output', 'wb');
-
-            // BOM : Excel lit l'UTF-8 sans le demander.
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, $columns, ';');
-
-            foreach ($rows as $row) {
-                fputcsv($out, $row, ';');
-            }
-
-            fclose($out);
-        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return Spreadsheet::download(
+            str_replace('.csv', '.xls', $name),
+            pathinfo($name, PATHINFO_FILENAME),
+            $columns,
+            $rows,
+            null,
+            Finance::facility()['name'],
+        );
     }
 }

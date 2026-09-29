@@ -78,18 +78,21 @@ class AuditJournalHttpTest extends HttpTestCase
         $this->assertNotSame($entry->user_id, (string) $entry->new_values['cashier']);
     }
 
-    public function test_the_journal_is_exported_as_csv(): void
+    public function test_the_journal_is_exported_as_a_workbook(): void
     {
         $this->journee();
 
-        $csv = $this->actingAs($this->accountant())
+        $classeur = $this->actingAs($this->accountant())
             ->get('/finance/journal/export?du=2000-01-01')
             ->assertOk()
-            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
             ->streamedContent();
 
-        $this->assertStringContainsString('Date;Événement;Description;Auteur;Objet;', $csv);
-        $this->assertStringContainsString('Clôture validée', $csv);
+        foreach (['Date', 'Événement', 'Description', 'Auteur', 'Objet'] as $colonne) {
+            $this->assertStringContainsString('<Data ss:Type="String">'.$colonne.'</Data>', $classeur);
+        }
+
+        $this->assertStringContainsString('Clôture validée', $classeur);
     }
 
     public function test_the_journal_needs_its_right_and_never_rewrites_a_line(): void
