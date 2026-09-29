@@ -140,10 +140,14 @@ class ReportsHttpTest extends TestCase
         $response = $this->get(route('pharmacie.reports.export', ['quoi' => 'consommation']));
         $response->assertOk();
 
-        $csv = $response->streamedContent();
+        $classeur = $response->streamedContent();
 
-        $this->assertStringContainsString('AMOX500', $csv);
-        $this->assertStringContainsString('12;6000', $csv);
+        $this->assertStringContainsString('AMOX500', $classeur);
+
+        // Des nombres, pas du texte : le comptable additionne la colonne sans
+        // avoir a retoucher le fichier.
+        $this->assertStringContainsString('<Data ss:Type="Number">12</Data>', $classeur);
+        $this->assertStringContainsString('<Data ss:Type="Number">6000</Data>', $classeur);
     }
 
     public function test_the_dashboard_says_what_the_stock_holds(): void

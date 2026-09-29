@@ -50,10 +50,33 @@
         .signs { display: flex; gap: 1rem; margin-top: 1.5rem; }
         .signs div { flex: 1; border-top: 1px solid var(--ink); padding-top: .25rem; text-align: center; font-size: .85em; color: var(--muted); min-height: 3rem; }
         @media print {
-            body { background: #fff; }
+            /* La feuille decide de ses marges, pas le document.
+
+               Avant, `@page { margin: 0 }` collait une page de 210 mm au bord
+               du papier : des que le navigateur gardait ses marges par defaut,
+               la zone imprimable tombait a 190 mm et la colonne de droite —
+               les montants — se retrouvait coupee. La page porte desormais ses
+               marges, et le document remplit ce qu'elle lui laisse. */
+            @page { size: A4 portrait; margin: 12mm 12mm 14mm; }
+
+            html, body { background: #fff; }
             .toolbar { display: none; }
+
             .paper { box-shadow: none; margin: 0; }
-            @page { margin: 0; }
+            .paper.a4 { width: auto; min-height: 0; padding: 0; }
+
+            /* Le ticket s'imprime sur son rouleau, pas sur une feuille. */
+            @page ticket { size: 80mm auto; margin: 4mm; }
+            .paper.ticket { page: ticket; width: auto; padding: 0; }
+
+            /* Un tableau qui deborde sur deux pages reprend son en-tete, et
+               aucune ligne ne se coupe en deux. */
+            thead { display: table-header-group; }
+            tr, .totals, .signs, dl.rows div { break-inside: avoid; }
+
+            /* Ce qui est en couleur le reste : un bon de sortie sans ses
+               filets ne se relit pas. */
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>

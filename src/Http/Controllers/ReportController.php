@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Keneya\Pharmacie\Models\Category;
 use Keneya\Pharmacie\Models\Location;
+use Keneya\Pharmacie\Pharmacie;
 use Keneya\Pharmacie\Services\Analytics;
+use Keneya\Pharmacie\Support\Spreadsheet;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -47,8 +49,8 @@ final class ReportController extends PharmacieController
     }
 
     /**
-     * L'export : le même tableau, en CSV, pour être repris dans un tableur.
-     * Aucune dépendance, un CSV s'écrit à la main.
+     * L'export : le même tableau, en classeur, pour être repris dans un
+     * tableur. Aucune dépendance : le format s'écrit à la main.
      */
     public function export(Request $request, Analytics $analytics): StreamedResponse
     {
@@ -79,21 +81,21 @@ final class ReportController extends PharmacieController
             ]);
         }
 
-        $name = sprintf('pharmacie-%s-%s-%s.csv', $what, $from->format('Y-m-d'), $to->format('Y-m-d'));
-
-        return response()->streamDownload(function () use ($header, $lines): void {
-            $handle = fopen('php://output', 'wb');
-
-            // Le BOM : sans lui, Excel affiche « pÃ©rimÃ© ».
-            fwrite($handle, "\xEF\xBB\xBF");
-            fputcsv($handle, $header, ';');
-
-            foreach ($lines as $line) {
-                fputcsv($handle, $line, ';');
-            }
-
-            fclose($handle);
-        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        // Un classeur plutot qu'un CSV : le rapport se relit en colonnes, les
+        // quantites s'additionnent, et l'en-tete reste visible en defilant.
+        return Spreadsheet::download(
+            sprintf('pharmacie-%s-%s-%s.xls', $what, $from->format('Y-m-d'), $to->format('Y-m-d')),
+            $what === 'prevision' ? 'Prévision de réapprovisionnement' : 'Consommation par produit',
+            $header,
+            $lines->all(),
+            null,
+            sprintf(
+                'Du %s au %s · %s',
+                $from->format('d/m/Y'),
+                $to->format('d/m/Y'),
+                Pharmacie::facility()['name'] ?? '',
+            ),
+        );
     }
 
     /**
