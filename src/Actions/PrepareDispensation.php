@@ -394,7 +394,7 @@ final class PrepareDispensation
      *
      * Une ordonnance n'est pas couverte d'un bloc : le comptoir choisit ligne
      * par ligne, parmi les organismes qui couvrent ce produit-la. Ce qui
-     * n'est pas choisi reste a la charge du patient — un taux applique sans
+     * n'est pas choisi reste a la charge du patient : un taux applique sans
      * qu'on l'ait voulu se paierait en creances qu'aucun organisme ne
      * reconnait.
      *

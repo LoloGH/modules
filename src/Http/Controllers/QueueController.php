@@ -26,7 +26,7 @@ use Keneya\Pharmacie\Support\Text;
  * arrivant : une préparation l'attend, et il faut la délivrer, pas en écrire
  * une seconde. Un patient servi n'attend plus rien à la pharmacie : il se
  * clôt, ou part vers un autre service. Sans cette lecture, le comptoir
- * tournerait en rond — préparer, encaisser, revenir, préparer.
+ * tournerait en rond : préparer, encaisser, revenir, préparer.
  */
 final class QueueController extends PharmacieController
 {

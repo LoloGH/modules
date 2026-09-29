@@ -8,7 +8,7 @@ namespace Keneya\Pharmacie\Coverage;
  * Un organisme qui prend en charge, tel que l'hôte le nomme.
  *
  * Volontairement pauvre : une référence opaque, un nom lisible, et de quoi
- * distinguer une assurance d'une aide sociale — la seconde ne se négocie pas
+ * distinguer une assurance d'une aide sociale : la seconde ne se négocie pas
  * comme la première, et le comptoir a besoin de le voir.
  *
  * `defaultRate` est le taux que l'organisme applique en général. Il ne

@@ -12,7 +12,7 @@ use Keneya\Pharmacie\Exceptions\PharmacieRuleViolation;
  * Sans hote branche : la pharmacie ne fait sortir personne d'une file
  * qu'elle ne tient pas.
  *
- * Le module reste utilisable — on sert au comptoir, sans file — et l'ecran
+ * Le module reste utilisable (on sert au comptoir, sans file) et l'ecran
  * dit clairement que le parcours du patient appartient a l'application hote,
  * plutot que de proposer un bouton qui ne ferait rien.
  */

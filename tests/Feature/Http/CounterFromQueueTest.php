@@ -155,7 +155,7 @@ class CounterFromQueueTest extends TestCase
             ->assertOk()
             ->assertSee('40 disponible(s)');
 
-        // Vu depuis la chaîne du froid, le produit n'y est pas — mais il est
+        // Vu depuis la chaîne du froid, le produit n'y est pas, mais il est
         // au comptoir, et la ligne propose d'aller l'y chercher plutôt que
         // d'annoncer une rupture.
         $this->get('/pharmacie/comptoir?file=comptoir&patient=C-1&emplacement='.$froid->id)

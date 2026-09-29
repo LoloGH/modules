@@ -12,7 +12,7 @@ use Keneya\Pharmacie\Models\ProductCoverage;
  *
  * Assurances et aides sociales ne sont pas une affaire de pharmacie : c'est
  * la caisse qui les connaît, qui suit leurs créances et qui sait lesquels
- * sont encore actifs. Le module ne duplique donc pas cette table — deux
+ * sont encore actifs. Le module ne duplique donc pas cette table : deux
  * listes d'assureurs finiraient par diverger, et c'est alors la facture
  * qu'on cesse de croire.
  *

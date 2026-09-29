@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * confondaient avec les libellés. On relisait un rapport en le redécoupant à
  * la main.
  *
- * Ce format-ci — SpreadsheetML, le XML qu'Excel lit nativement depuis 2003 —
+ * Ce format-ci (SpreadsheetML, le XML qu'Excel lit nativement depuis 2003)
  * donne de vraies cellules : des colonnes larges de ce qu'elles contiennent,
  * un en-tête figé qui reste visible en défilant, des nombres qu'Excel
  * additionne, et des couleurs pour séparer le titre, l'en-tête et le total.
@@ -258,7 +258,7 @@ final class Spreadsheet
      *
      * Les exports portent des montants deja mis en forme (« 15 080 ») : Excel
      * les prendrait pour du texte et refuserait de les additionner. On leur
-     * rend leur nature, sans toucher a ce qui n'en est pas — un code patient
+     * rend leur nature, sans toucher a ce qui n'en est pas : un code patient
      * « PAT-00001 » ou une adresse IP restent du texte.
      */
     private static function number(mixed $value): int|float|null

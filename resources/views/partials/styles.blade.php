@@ -276,7 +276,7 @@
        que d'etirer ses champs.
 
        Quatre colonnes, parce que la rangee la plus chargee du comptoir en
-       compte quatre — produit, prescrit, delivre, posologie — et qu'elle doit
+       compte quatre (produit, prescrit, delivre, posologie) et qu'elle doit
        tenir sur une ligne. */
     form .row { display: grid; gap: .875rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     form .row > * { min-width: 0; }

@@ -13,7 +13,7 @@ use Keneya\Pharmacie\Queue\QueueDestination;
  * Sans ce contrat, un patient servi resterait dans la file de la pharmacie.
  * Revenu de la caisse, il y réapparaîtrait « en attente », le comptoir le
  * rappellerait, préparerait une seconde fois, renverrait une seconde facture
- * — une boucle dont personne ne sort.
+ *une boucle dont personne ne sort.
  *
  * Servir n'est pas clore. Le patient a fini à la pharmacie, mais peut-être
  * pas dans l'établissement : il repart chez lui, ou il est attendu ailleurs.

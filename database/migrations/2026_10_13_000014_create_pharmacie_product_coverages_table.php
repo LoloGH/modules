@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Schema;
  * le comptoir sait de quoi on parlait.
  *
  * Aucune regle par defaut : un produit sans ligne ici n'est couvert par
- * personne. Une prise en charge se declare, elle ne se devine pas — un taux
+ * personne. Une prise en charge se declare, elle ne se devine pas : un taux
  * suppose se paie en creances qu'aucun organisme ne reconnait.
  */
 return new class extends Migration
