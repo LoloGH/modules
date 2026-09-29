@@ -266,7 +266,23 @@
 
     /* ---------------------------------------------------------- Formulaires */
 
-    form .row { display: grid; gap: .875rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+    /* Une seule trame pour tous les champs.
+
+       Avant, chaque rangee se partageait la largeur entre ses propres champs :
+       une rangee de trois etait donc plus large qu'une rangee de quatre, et
+       rien ne s'alignait d'une ligne a l'autre. Le nombre de colonnes est
+       desormais fixe : tous les champs d'une carte ont la meme largeur, au
+       meme endroit, et une rangee incomplete laisse un blanc a droite plutot
+       que d'etirer ses champs.
+
+       Quatre colonnes, parce que la rangee la plus chargee du comptoir en
+       compte quatre — produit, prescrit, delivre, posologie — et qu'elle doit
+       tenir sur une ligne. */
+    form .row { display: grid; gap: .875rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    form .row > * { min-width: 0; }
+
+    @media (max-width: 68rem) { form .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 40rem) { form .row { grid-template-columns: 1fr; } }
     form .actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: 1rem; }
 
     label { display: block; font-size: .8125rem; font-weight: 600; color: var(--ink-2); margin-bottom: .875rem; }
