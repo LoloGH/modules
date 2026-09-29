@@ -35,7 +35,7 @@ use Keneya\FinanceCaisse\Support\Text;
  * porte l'antipaludique, et le reste est à la charge du patient. Or une
  * facture porte un seul assureur, un seul statut de créance, un seul montant
  * réglé. Les lignes sont donc groupées par organisme, et chaque groupe donne
- * sa pièce — ce que fait aussi un hôpital qui réclame à deux payeurs.
+ * sa pièce : ce que fait aussi un hôpital qui réclame à deux payeurs.
  *
  * L'appel est idempotent : une même pièce d'origine ne donne qu'une facture
  * par organisme. Un module qui renvoie après une panne retrouve les siennes

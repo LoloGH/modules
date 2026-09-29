@@ -18,7 +18,7 @@ use Keneya\FinanceCaisse\Support\Money;
 /**
  * Laisser passer un patient qui ne doit rien.
  *
- * Pris en charge à 100 %, ou déjà réglé, un patient n'a rien à payer — et un
+ * Pris en charge à 100 %, ou déjà réglé, un patient n'a rien à payer, et un
  * encaissement de zéro franc n'existe pas : ce serait une ligne de caisse
  * fausse. Sans ce geste, il resterait pourtant planté devant le guichet, sa
  * visite bloquée à la caisse.

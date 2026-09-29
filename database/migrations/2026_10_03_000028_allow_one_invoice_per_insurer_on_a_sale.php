@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * suivi des creances ne veut plus rien dire.
  *
  * Les lignes sont donc groupees par organisme, et chaque groupe donne sa
- * facture — ce que fait aussi un hopital qui reclame a deux payeurs : chacun
+ * facture : ce que fait aussi un hopital qui reclame a deux payeurs : chacun
  * recoit la sienne.
  *
  * L'unicite change en consequence : elle portait sur la piece d'origine, elle

@@ -1,7 +1,7 @@
 {{--
     Prise en charge : le montant proposé devient la part patient de l'acte.
 
-    Le serveur recalcule toujours — ce script ne fait que montrer d'avance ce
+    Le serveur recalcule toujours : ce script ne fait que montrer d'avance ce
     que la facture dira, pour que le caissier ne découvre pas le partage après
     coup.
 

@@ -54,8 +54,8 @@
 
                Avant, `@page { margin: 0 }` collait une page de 210 mm au bord
                du papier : des que le navigateur gardait ses marges par defaut,
-               la zone imprimable tombait a 190 mm et la colonne de droite —
-               les montants — se retrouvait coupee. La page porte desormais ses
+               la zone imprimable tombait a 190 mm et la colonne de droite (
+               les montants) se retrouvait coupee. La page porte desormais ses
                marges, et le document remplit ce qu'elle lui laisse. */
             @page { size: A4 portrait; margin: 12mm 12mm 14mm; }
 

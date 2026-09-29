@@ -66,7 +66,7 @@ final class CollectQueuedVisit
         // Un passage peut demander plusieurs encaissements : une vente
         // couverte par deux organismes donne deux pièces, et le patient règle
         // sa part sur chacune. Ce qui reste interdit, c'est d'encaisser deux
-        // fois la même pièce — ou deux fois un passage qui n'en a qu'une.
+        // fois la même pièce, ou deux fois un passage qui n'en a qu'une.
         $dejaRegle = $visit->invoiceId === null
             ? $already !== null
             : Payment::query()

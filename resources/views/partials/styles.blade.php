@@ -276,7 +276,7 @@
        que d'etirer ses champs.
 
        Quatre colonnes, parce que la rangee la plus chargee du comptoir en
-       compte quatre — produit, prescrit, delivre, posologie — et qu'elle doit
+       compte quatre (produit, prescrit, delivre, posologie) et qu'elle doit
        tenir sur une ligne. */
     form .row { display: grid; gap: .875rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     form .row > * { min-width: 0; }
@@ -307,7 +307,7 @@
 
        `<dialog>` plutôt qu'une pile de div : le navigateur pose lui-même le
        fond, le piège du clavier et la fermeture par Échap. Rien à écrire, et
-       rien à oublier — une fenêtre maison finit toujours par laisser le focus
+       rien à oublier : une fenêtre maison finit toujours par laisser le focus
        s'échapper derrière elle. */
     .modale {
         width: min(56rem, calc(100vw - 2rem));

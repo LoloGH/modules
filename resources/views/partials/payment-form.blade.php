@@ -27,7 +27,7 @@
     $fromInvoice ??= null;
     $queueRef ??= null;
     // Repris après un refus : le formulaire se rouvre tel qu'il était, mais
-    // seulement celui du passage concerné — les autres restent vierges.
+    // seulement celui du passage concerné : les autres restent vierges.
     $mine = $fromQueue === null || old('visit_ref') === $fromQueue->ref;
     $recall = fn (string $champ, $defaut = null) => $mine ? old($champ, $defaut) : $defaut;
 @endphp
