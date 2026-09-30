@@ -23,8 +23,16 @@
     @include('pharmacie::partials.styles')
 </head>
 <body>
-{{-- Tiroir de navigation mobile : une case à cocher, aucun JavaScript. --}}
-<input type="checkbox" id="pha-nav" class="nav-switch" hidden>
+{{-- Tiroir de navigation mobile : une case a cocher, aucun JavaScript.
+
+     Sans attribut `hidden` : il ne tenait pas. La feuille de style donne aux
+     cases a cocher un `display: inline-block`, qui l'emporte sur la regle du
+     navigateur, et l'interrupteur s'affichait donc en haut de chaque page,
+     sous la forme d'un petit carre de 13 pixels que personne ne comprenait.
+
+     C'est `.nav-switch` qui le cache desormais, en le laissant atteignable au
+     clavier : le <label> qui l'actionne, lui, ne se tabule pas. --}}
+<input type="checkbox" id="pha-nav" class="nav-switch">
 
 <div class="shell">
     @include('pharmacie::partials.sidebar')
