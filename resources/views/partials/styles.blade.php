@@ -167,6 +167,26 @@
         border-bottom: 1px solid var(--line);
     }
 
+    /* L'interrupteur du tiroir de navigation.
+
+       Il porte l'etat ouvert ou ferme, et le <label class="burger"> le bascule.
+       Sur grand ecran la barre laterale est permanente : l'interrupteur ne
+       sert a rien et ne doit pas prendre un arret de tabulation. Il n'apparait
+       donc qu'avec le bouton, dans la requete de media plus bas.
+
+       Il etait jusqu'ici masque par l'attribut `hidden`, sans effet : la regle
+       `input[type="checkbox"]` de cette meme feuille lui rend un
+       `display: inline-block`, et une regle d'auteur l'emporte toujours sur
+       celle du navigateur. Le resultat se voyait sur chaque page, un carre de
+       13 pixels en haut a gauche.
+
+       Le selecteur nomme la classe ET le type. `input[type="checkbox"]` pese
+       autant que `input.nav-switch`, et se trouve plus bas dans la feuille :
+       a egalite, c'est l'ordre qui tranche, et la regle generique l'emportait.
+       Nommer les deux met cette declaration hors de portee, quel que soit
+       l'endroit ou on la deplace un jour. */
+    input[type="checkbox"].nav-switch { display: none; }
+
     .burger { display: none; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: var(--r); color: var(--ink-2); cursor: pointer; }
     .burger:hover { background: var(--line-soft); }
 
@@ -486,6 +506,23 @@
         }
         .nav-switch:checked ~ .shell .sidebar { transform: translateX(0); }
         .nav-switch:checked ~ .shell .scrim { display: block; position: fixed; inset: 0; z-index: 30; background: var(--scrim); }
+        /* Hors de l'ecran, mais toujours atteignable au clavier : un
+           <label> ne se tabule pas, et le supprimer de l'affichage rendrait
+           le menu inaccessible autrement qu'a la souris. Le focus se montre
+           sur le bouton, seul element visible des deux. */
+        input[type="checkbox"].nav-switch {
+            display: block;
+            position: absolute;
+            width: 1px; height: 1px;
+            margin: -1px; padding: 0; border: 0;
+            opacity: 0;
+            clip-path: inset(50%);
+        }
+        input[type="checkbox"].nav-switch:focus-visible ~ .shell .burger {
+            outline: 2px solid var(--brand-ring);
+            outline-offset: 2px;
+        }
+
         .burger { display: flex; }
         .topbar { padding: 0 1rem; }
         .content { padding: 1.25rem 1rem; }
