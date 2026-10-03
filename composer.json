@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "keneya/finance-caisse",
     "type": "library",
-    "description": "Module Finance, Caisse et Facturation de Keneya — se monte dans une application Laravel hôte (Keneya Workflow).",
+    "description": "Module Finance, Caisse et Facturation de Keneya : se monte dans une application Laravel hôte (Keneya Workflow).",
     "keywords": [
         "finance",
         "caisse",
