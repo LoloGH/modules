@@ -4,7 +4,7 @@ Module **Pharmacie** de Keneya : stock par lot, dispensation et file d'attente.
 Il se monte dans une application Laravel hôte (Keneya Workflow), comme le
 module `keneya/finance-caisse`, et se développe d'abord **seul**, sur Docker.
 
-État : **v0.1.0, le terrain** — montage, porte d'entrée, droits, file d'attente
+État : **v0.1.0, le terrain** : montage, porte d'entrée, droits, file d'attente
 fournie par l'hôte, journal d'audit, hôte de démonstration. Le stock et la
 dispensation viennent ensuite.
 
@@ -22,15 +22,15 @@ dispensation viennent ensuite.
 Le module ne possède ni le patient, ni son parcours, ni la caisse. Il demande
 trois choses à l'application hôte, qu'elle peut déclarer une par une :
 
-1. **Qui entre** — `Pharmacie::authorizeAccessUsing(fn ($user) => …)`.
+1. **Qui entre** : `Pharmacie::authorizeAccessUsing(fn ($user) => …)`.
    Sans accord explicite, le module reste fermé (403). Deux autres formes sont
    acceptées : une capacité (`pharmacie.access`) ou un attribut booléen du
    modèle utilisateur (voir `config/pharmacie.php`).
-2. **Qui attend** — une implémentation de `Contracts\PharmacyQueueProvider`,
+2. **Qui attend** : une implémentation de `Contracts\PharmacyQueueProvider`,
    liée dans le conteneur. Même mécanique que la file de caisse de Finance : le
    module affiche et appelle, l'hôte range. Par défaut `Queue\NoPharmacyQueue`
    rend une file vide, et les écrans le disent.
-3. **Où part ce qui doit être payé** — une implémentation de
+3. **Où part ce qui doit être payé** : une implémentation de
    `Contracts\SaleSink`. Elle reste volontairement neutre : on y branchera soit
    le module Finance (la caisse « Pharmacie » y existe déjà, avec ses sessions,
    ses écarts et son audit), soit une caisse propre. Par défaut

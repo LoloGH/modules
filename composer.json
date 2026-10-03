@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "keneya/pharmacie",
     "type": "library",
-    "description": "Module Pharmacie de Keneya — stock, dispensation et file d'attente ; se monte dans une application Laravel hôte (Keneya Workflow).",
+    "description": "Module Pharmacie de Keneya : stock, dispensation et file d'attente ; se monte dans une application Laravel hôte (Keneya Workflow).",
     "keywords": [
         "pharmacie",
         "stock",

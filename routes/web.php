@@ -39,7 +39,7 @@ Route::post('file/appeler', [QueueController::class, 'callNext'])
     ->middleware('can:pharmacie.queue.call')->name('queue.call');
 
 // La sortie de la file : un patient servi se clôt, ou part ailleurs. Le même
-// droit que l'appel — c'est le comptoir qui tient la file d'un bout à l'autre.
+// droit que l'appel : c'est le comptoir qui tient la file d'un bout à l'autre.
 Route::post('file/clore', [QueueController::class, 'close'])
     ->middleware('can:pharmacie.queue.call')->name('queue.close');
 

@@ -1,4 +1,4 @@
-# Keneya Pharmacy — analyse de l'existant et feuille de route d'intégration
+# Keneya Pharmacy : analyse de l'existant et feuille de route d'intégration
 
 Document de travail. Il répond à la règle 37 du cahier des charges : **comprendre
 l'existant avant de modifier quoi que ce soit**, puis proposer le parcours
@@ -32,7 +32,7 @@ fonctionnel complet avant l'implémentation.
 
 **Lecture** : le DME sait déjà prescrire, et il attend déjà qu'on lui dise
 qu'une ordonnance a été délivrée. Il ne sait rien du stock, des lots, ni des
-reliquats — et ce n'est pas son rôle.
+reliquats, et ce n'est pas son rôle.
 
 ### 1.3 Module Finance (`keneya/finance-caisse`, v0.22.0)
 
@@ -75,17 +75,17 @@ recommandation est donnée ; elles seront confirmées avant la tranche concerné
 ### 3.1 Le patient reste à l'hôte
 
 La pharmacie ne stocke qu'un `patient_id` (le `patient_code` de WorkFlow) et un
-nom copié pour l'historique. Tout le reste — identité, allergies, traitements en
-cours — se demande à l'hôte par un contrat `PatientDirectory`, implémenté
+nom copié pour l'historique. Tout le reste (identité, allergies, traitements en
+cours) se demande à l'hôte par un contrat `PatientDirectory`, implémenté
 au-dessus de WorkFlow et du DME. **Aucune troisième table patient.**
 
 ### 3.2 Les prescriptions se lisent, ne se dupliquent pas
 
 Deux contrats, implémentés par l'hôte au-dessus du DME :
 
-- `PrescriptionProvider` — lire les ordonnances à servir (patient, prescripteur,
+- `PrescriptionProvider` : lire les ordonnances à servir (patient, prescripteur,
   lignes, posologie, substituable, alertes d'allergie) ;
-- `PrescriptionSink` — dire au DME ce qui a été servi, et donc faire passer
+- `PrescriptionSink` : dire au DME ce qui a été servi, et donc faire passer
   l'ordonnance à « délivrée » quand elle est complète.
 
 **Le reliquat vit dans la pharmacie**, pas dans le DME : c'est un fait de stock,
@@ -99,7 +99,7 @@ Deux chemins, selon le cas :
   caisse de Finance, avec son montant attendu ; le caissier encaisse dans
   Finance, avec sa session, son tiroir, son reçu et son audit.
 - **Sur facture (prise en charge, assurance, hospitalisation)** : demande une
-  évolution de Finance — accepter des **lignes de facture venues d'un autre
+  évolution de Finance : accepter des **lignes de facture venues d'un autre
   module** (libellé, quantité, prix, centre analytique), au lieu d'actes du seul
   catalogue Finance. C'est une tranche à part entière, côté Finance.
 
@@ -128,7 +128,7 @@ bloqué n'est jamais proposé, et sa dispensation est refusée.
 Toutes les tables portent `facility_id`, et les stocks portent en plus
 `location_id` (pharmacie centrale, réserve, comptoir, urgences, maternité,
 bloc, hospitalisation…). Tant qu'un seul établissement existe, la colonne vaut
-une valeur par défaut — mais elle est là.
+une valeur par défaut, mais elle est là.
 
 ---
 
@@ -168,7 +168,7 @@ n'est pas référencé.
 ### Deux jalons de démonstration
 
 - **Après la tranche 4** : une pharmacie peut référencer, recevoir, stocker et
-  délivrer, avec lots et FEFO — sans WorkFlow, sur Docker.
+  délivrer, avec lots et FEFO, sans WorkFlow, sur Docker.
 - **Après la tranche 6** : le cycle complet de l'établissement, argent compris.
   C'est le moment naturel pour brancher WorkFlow (tranche 12 peut alors être
   anticipée si le terrain l'exige).
@@ -196,7 +196,7 @@ transferts, inventaires et pertes, contrôle renforcé et rappels de lots,
 analyse et prévision. Chaque tranche a ses tests, et la suite complète est
 verte.
 
-La **tranche 12 — intégration à WorkFlow** est volontairement gardée pour la
+La **tranche 12, intégration à WorkFlow**, est volontairement gardée pour la
 fin : le module se teste d'abord seul, sur sa propre pile Docker, avant
 d'être branché à l'application hôte.
 
@@ -210,8 +210,8 @@ docker compose run --rm app php vendor/bin/testbench pharmacie:demo-data
 
 Puis <http://localhost:8001/dev> : on y choisit un profil (pharmacien,
 préparateur, magasinier, administrateur) et on ouvre `/pharmacie`. Les
-données de démonstration passent par les actions réelles — réception,
-transfert, dispensation, perte — jamais par des écritures directes en base.
+données de démonstration passent par les actions réelles (réception,
+transfert, dispensation, perte), jamais par des écritures directes en base.
 
 Après une mise à jour du module, `pharmacie:sync-permissions` dit quelles
 permissions nouvelles manqueraient aux rôles déjà en place ; il ne les
