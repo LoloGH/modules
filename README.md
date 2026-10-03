@@ -83,6 +83,12 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
       - Les écrans présentent le tiroir dans son ensemble : le **fonds s'affiche
         sur chacune** de ses caisses (`drawerOpeningFloat`), et non « 0 FCFA »
         sur toutes sauf une.
+      - **La validation suit** (`ValidateCashSession`) : un tiroir compté une
+        fois ne se contrôle qu'une fois, et toutes ses caisses passent
+        ensemble. L'écran « Sessions à valider » montre **une ligne par
+        tiroir**, avec ses chiffres ; trois lignes, dont deux à zéro, donnaient
+        au contrôle trois gestes pour un seul fait, et le risque d'en valider
+        un en laissant le tiroir à moitié contrôlé.
   - **Quelles caisses un caissier peut ouvrir** : `finance_cashier_registers`
     affecte un caissier à des caisses précises. **Aucune ligne pour un
     caissier vaut « toutes les caisses »** : l'affectation est une restriction

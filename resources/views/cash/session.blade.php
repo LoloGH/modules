@@ -401,12 +401,21 @@
     @endif
 
     @if ($session->isClosed() && $canReview && ! $isOwner)
-        <x-finance::card title="Valider la clôture" hint="Le caissier ne valide jamais sa propre session">
+        <x-finance::card title="{{ $drawer ? 'Valider la clôture du tiroir' : 'Valider la clôture' }}"
+                         hint="Le caissier ne valide jamais sa propre session">
+            @if ($drawer)
+                {{-- Un tiroir compté une fois ne se contrôle qu'une fois. --}}
+                <p class="muted">
+                    Ce tiroir porte {{ $drawer['count'] }} caisses ({{ $drawer['names'] }}), comptées
+                    ensemble : <strong>une seule validation</strong> les couvre toutes.
+                </p>
+            @endif
             <form method="post" action="{{ route('finance.review.approve', $session) }}">
                 @csrf
                 <label>Note (facultatif) <input name="note" value="{{ old('note') }}"></label>
                 <div class="actions">
-                    <button type="submit" class="lg"><x-finance::icon name="check" /> Valider la session</button>
+                    <button type="submit" class="lg"><x-finance::icon name="check" />
+                        {{ $drawer ? 'Valider le tiroir et ses caisses' : 'Valider la session' }}</button>
                 </div>
             </form>
         </x-finance::card>

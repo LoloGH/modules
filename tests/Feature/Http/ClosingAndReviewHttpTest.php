@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keneya\FinanceCaisse\Tests\Feature\Http;
 
 use Keneya\FinanceCaisse\Actions\CloseCashSession;
+use Keneya\FinanceCaisse\Actions\OpenCashSessions;
 use Keneya\FinanceCaisse\Actions\RecordPayment;
 use Keneya\FinanceCaisse\Models\CashSession;
 
@@ -103,6 +104,48 @@ class ClosingAndReviewHttpTest extends HttpTestCase
         $this->assertSame('Conforme', $validated->validation_note);
 
         $this->get('/finance/sessions?status=validated')->assertOk()->assertSee($session->number);
+    }
+
+    /**
+     * Le controle voit UNE ligne par tiroir, avec les chiffres du tiroir, et
+     * une seule validation les couvre toutes.
+     *
+     * Trois lignes, dont deux a zero, donnaient trois gestes pour un seul
+     * fait : un tiroir compte une fois n'a qu'un ecart a controler.
+     */
+    public function test_a_shared_drawer_is_one_line_and_one_validation(): void
+    {
+        $cashier = $this->cashier();
+        $ticket = $this->makeRegister('CAISSE-TICKET');
+        $services = $this->makeRegister('CAISSE-SERVICES');
+        $pharmacie = $this->makeRegister('CAISSE-PHARMACIE');
+
+        [$premiere] = app(OpenCashSessions::class)->grouped(
+            [$ticket->id, $services->id, $pharmacie->id],
+            50_000,
+            $cashier,
+        );
+
+        app(CloseCashSession::class)->handle($premiere, 50_000, $cashier);
+
+        $controle = $this->accountant();
+
+        $page = $this->actingAs($controle)->get('/finance/sessions')->assertOk();
+
+        // Une seule ligne, qui nomme les trois caisses et porte le fonds.
+        $page->assertSee('Tiroir commun')
+            ->assertSee('et 2 autre(s)')
+            ->assertSee('50 000 FCFA');
+        $this->assertSame(1, substr_count((string) $page->getContent(), 'Tiroir commun'));
+
+        $this->post(route('finance.review.approve', $premiere), ['note' => 'Conforme'])
+            ->assertRedirect(route('finance.review.index'))
+            ->assertSessionHas('finance_status', function (string $message): bool {
+                return str_contains($message, 'Tiroir validé avec ses 3 caisses');
+            });
+
+        $this->assertSame(3, CashSession::query()->where('status', CashSession::STATUS_VALIDATED)->count());
+        $this->assertSame(0, CashSession::query()->where('status', CashSession::STATUS_CLOSED)->count());
     }
 
     public function test_the_cashier_cannot_validate(): void

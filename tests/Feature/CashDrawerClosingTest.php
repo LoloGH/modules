@@ -8,6 +8,7 @@ use Keneya\FinanceCaisse\Actions\CloseCashSession;
 use Keneya\FinanceCaisse\Actions\OpenCashSessions;
 use Keneya\FinanceCaisse\Actions\RecordDisbursement;
 use Keneya\FinanceCaisse\Actions\RecordPayment;
+use Keneya\FinanceCaisse\Actions\ValidateCashSession;
 use Keneya\FinanceCaisse\Models\AuditLog;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Tests\Support\CashFixtures;
@@ -188,5 +189,50 @@ class CashDrawerClosingTest extends TestCase
             'appartient à un autre caissier',
             fn () => app(CloseCashSession::class)->handle($ticket, 36_000, $this->makeUser()),
         );
+    }
+
+    /**
+     * Un tiroir compté une fois ne se contrôle qu'une fois : la validation
+     * emporte toutes ses caisses.
+     *
+     * Les presenter en trois validations distinctes donnait au controle trois
+     * gestes pour un seul fait, dont deux portant sur des lignes a zero, avec
+     * le risque d'en valider une et de laisser le tiroir a moitie controle.
+     */
+    public function test_validating_one_register_validates_the_whole_drawer(): void
+    {
+        [$cashier, $ticket, $services, $pharmacie] = $this->drawer();
+
+        app(CloseCashSession::class)->handle($ticket, 36_000, $cashier);
+
+        $controle = $this->makeUser(['name' => 'Comptable du centre']);
+        app(ValidateCashSession::class)->handle($services, $controle, 'Conforme');
+
+        foreach ([$ticket, $services, $pharmacie] as $session) {
+            $this->assertTrue($session->refresh()->isValidated());
+            $this->assertSame('Comptable du centre', $session->validator_name);
+            $this->assertSame('Conforme', $session->validation_note);
+        }
+
+        $this->assertSame(3, AuditLog::where('event', 'session_validated')->count());
+        $this->assertStringContainsString(
+            'validée avec son tiroir (3 caisses)',
+            (string) AuditLog::where('event', 'session_validated')->latest('id')->value('description'),
+        );
+    }
+
+    /** Le caissier ne valide pas davantage son tiroir que sa caisse. */
+    public function test_the_cashier_never_validates_his_own_drawer(): void
+    {
+        [$cashier, $ticket] = $this->drawer();
+
+        app(CloseCashSession::class)->handle($ticket, 36_000, $cashier);
+
+        $this->assertViolation(
+            'ne peut pas valider sa propre clôture',
+            fn () => app(ValidateCashSession::class)->handle($ticket, $cashier),
+        );
+
+        $this->assertSame(0, CashSession::query()->where('status', CashSession::STATUS_VALIDATED)->count());
     }
 }
