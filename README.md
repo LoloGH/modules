@@ -62,14 +62,27 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     - `CashierSetting::limitFor($cashierId)` donne la limite effective.
     - **Ouvrir plusieurs caisses d'un coup** (`finance.cash.sessions.open-many`,
       `Actions\OpenCashSessions`), dès que plusieurs caisses sont libres :
-      - **groupées** : un seul fonds, un seul **tiroir** — les sessions partagent
+      - **groupées** : un seul fonds, un seul **tiroir**. Les sessions partagent
         un `drawer_key`, le fonds est porté par la première caisse cochée, les
         autres s'ouvrent à zéro ;
       - **séparées** : un fonds et un tiroir par caisse.
       La limite d'un caissier se compte en **tiroirs** (`CashSession::openDrawersFor`) :
       avec une limite à 1, il ouvre plusieurs caisses groupées, pas séparées.
-      Chaque caisse garde sa session et se clôture séparément. Tout ou rien — une
-      caisse refusée (affectation, déjà tenue, limite) n'en ouvre aucune.
+      Chaque caisse garde sa session. Tout ou rien : une caisse refusée
+      (affectation, déjà tenue, limite) n'en ouvre aucune.
+    - **On clôture un tiroir, pas une caisse** (`CloseCashSession`). Des caisses
+      groupées partagent un tiroir, donc un fonds et un seul tas d'espèces : le
+      caissier le compte **une fois**, contre le théorique de l'ensemble, et les
+      caisses du groupe se ferment ensemble. Les clôturer une par une demandait
+      trois comptages du même tiroir contre des théoriques partiels, question à
+      laquelle personne ne pouvait répondre honnêtement.
+      - Chaque session garde le **théorique qu'elle a apporté** ; le compté se
+        répartit de sorte que la somme fasse exactement ce qui a été compté,
+        l'écart revenant à la caisse qui porte le fonds. Un écart de tiroir ne
+        se compte ainsi qu'une seule fois dans les totaux.
+      - Les écrans présentent le tiroir dans son ensemble : le **fonds s'affiche
+        sur chacune** de ses caisses (`drawerOpeningFloat`), et non « 0 FCFA »
+        sur toutes sauf une.
   - **Quelles caisses un caissier peut ouvrir** : `finance_cashier_registers`
     affecte un caissier à des caisses précises. **Aucune ligne pour un
     caissier vaut « toutes les caisses »** : l'affectation est une restriction

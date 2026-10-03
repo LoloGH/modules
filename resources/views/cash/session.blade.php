@@ -31,30 +31,51 @@
         </x-slot:actions>
     </x-finance::page>
 
-    {{-- Les quatre chiffres qui comptent pour le tiroir. --}}
+    {{-- Les quatre chiffres qui comptent pour le tiroir. Quand plusieurs
+         caisses le partagent, ils couvrent le tiroir entier : c'est lui qu'on
+         compte, et lui seul qui a un fonds. Le detail de CETTE caisse se lit
+         plus bas, dans ses mouvements et ses totaux par moyen. --}}
+    @php ($tiroir = $drawer ?? $totals)
+
+    @if ($drawer)
+        <p class="muted" style="margin:0 0 .5rem">
+            <x-finance::icon name="caisse" />
+            Tiroir commun à {{ $drawer['count'] }} caisses : {{ $drawer['names'] }}.
+            Les chiffres ci-dessous valent pour l'ensemble du tiroir.
+        </p>
+    @endif
+
     <div class="kpis">
-        <x-finance::kpi label="Fonds initial" icon="caisse" :value="$money($totals['opening_float'])" />
-        <x-finance::kpi label="Espèces encaissées" icon="recette" tone="green" :value="$money($totals['cash_in'])" />
-        <x-finance::kpi label="Espèces décaissées" icon="depense" tone="red" :value="$money($totals['cash_out'])" />
-        <x-finance::kpi label="Théorique en tiroir" icon="paiement" tone="blue" :value="$money($totals['expected_cash'])"
+        <x-finance::kpi label="Fonds initial" icon="caisse" :value="$money($tiroir['opening_float'])"
+                        foot="{{ $drawer ? 'Un seul fonds pour le tiroir' : '' }}" />
+        <x-finance::kpi label="Espèces encaissées" icon="recette" tone="green" :value="$money($tiroir['cash_in'])" />
+        <x-finance::kpi label="Espèces décaissées" icon="depense" tone="red" :value="$money($tiroir['cash_out'])" />
+        <x-finance::kpi label="Théorique en tiroir" icon="paiement" tone="blue" :value="$money($tiroir['expected_cash'])"
                         foot="Fonds initial + encaissements − décaissements" />
     </div>
 
     @if (! $session->isOpen())
         <x-finance::card title="Clôture">
+            @if ($drawer)
+                <p class="muted">
+                    Le tiroir a été compté une seule fois, pour ses {{ $drawer['count'] }} caisses.
+                </p>
+            @endif
             <dl class="facts">
-                <div class="f"><dt>Théorique</dt><dd>{{ $money((int) $session->expected_cash) }}</dd></div>
-                <div class="f"><dt>Compté</dt><dd>{{ $money((int) $session->counted_cash) }}</dd></div>
+                <div class="f"><dt>Théorique</dt><dd>{{ $money($drawer ? $drawer['expected_cash'] : (int) $session->expected_cash) }}</dd></div>
+                <div class="f"><dt>Compté</dt><dd>{{ $money($drawer ? $drawer['counted_cash'] : (int) $session->counted_cash) }}</dd></div>
+                @php ($ecart = $drawer ? $drawer['variance'] : (int) $session->variance)
                 <div class="f gap">
                     <dt>Écart</dt>
-                    <dd class="{{ $session->variance < 0 ? 'neg' : ($session->variance > 0 ? 'pos' : 'zero') }}">
-                        {{ $session->variance > 0 ? '+' : '' }}{{ $money((int) $session->variance) }}
+                    <dd class="{{ $ecart < 0 ? 'neg' : ($ecart > 0 ? 'pos' : 'zero') }}">
+                        {{ $ecart > 0 ? '+' : '' }}{{ $money($ecart) }}
                     </dd>
                 </div>
             </dl>
 
-            @if ($session->variance_reason)
-                <p style="margin-bottom:0"><strong>Justification :</strong> {{ $session->variance_reason }}</p>
+            @php ($justification = $drawer ? $drawer['variance_reason'] : $session->variance_reason)
+            @if ($justification)
+                <p style="margin-bottom:0"><strong>Justification :</strong> {{ $justification }}</p>
             @endif
             @if ($session->isValidated())
                 <p class="muted" style="margin-bottom:0">
@@ -345,23 +366,33 @@
 
     @if ($session->isOpen() && $isOwner)
         @can('finance.sessions.close')
-            <x-finance::card title="Clôturer la session">
+            <x-finance::card title="{{ $drawer ? 'Clôturer le tiroir' : 'Clôturer la session' }}">
                 <p class="muted">
                     Comptez les espèces du tiroir et saisissez le montant. Le système calcule
-                    l'écart avec le théorique (<strong>{{ $money($totals['expected_cash']) }}</strong>).
+                    l'écart avec le théorique (<strong>{{ $money($drawer ? $drawer['expected_cash'] : $totals['expected_cash']) }}</strong>).
                     Un écart, en plus ou en moins, doit être justifié.
                 </p>
+                @if ($drawer)
+                    {{-- Un tiroir, un comptage. Clôturer les caisses une par une
+                         aurait demandé de compter trois fois le même tas, et de
+                         répartir le résultat au jugé. --}}
+                    <p class="muted">
+                        Ce tiroir porte {{ $drawer['count'] }} caisses ({{ $drawer['names'] }}) : comptez-le
+                        <strong>une seule fois</strong>. Les {{ $drawer['count'] }} caisses se clôturent ensemble.
+                    </p>
+                @endif
                 <form method="post" action="{{ route('finance.cash.sessions.close', $session) }}">
                     @csrf
                     <label>Montant compté en espèces
                         <input name="counted_cash" class="money" inputmode="numeric" value="{{ old('counted_cash') }}" placeholder="0" required>
-                        <span class="help">En FCFA, ce que vous avez réellement compté.</span>
+                        <span class="help">En FCFA, ce que vous avez réellement compté{{ $drawer ? ' dans le tiroir, pour toutes ses caisses' : '' }}.</span>
                     </label>
                     <label>Justification de l'écart
                         <textarea name="variance_reason" rows="2" placeholder="Obligatoire si le compté diffère du théorique">{{ old('variance_reason') }}</textarea>
                     </label>
                     <div class="actions">
-                        <button type="submit" class="lg"><x-finance::icon name="verrou" /> Clôturer la session</button>
+                        <button type="submit" class="lg"><x-finance::icon name="verrou" />
+                            {{ $drawer ? 'Clôturer le tiroir et ses caisses' : 'Clôturer la session' }}</button>
                         <span class="muted" style="font-size:.8125rem">La session ne pourra plus être modifiée après la clôture.</span>
                     </div>
                 </form>

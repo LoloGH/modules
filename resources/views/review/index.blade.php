@@ -32,7 +32,14 @@
                     @foreach ($sessions as $item)
                         <tr>
                             <td data-l="Session" class="mono">{{ $item->number }}</td>
-                            <td data-l="Caisse">{{ $item->register->name }}</td>
+                            {{-- Le tiroir commun porte son écart sur la caisse qui
+                                 porte le fonds ; les autres clôturent à zéro, et c'est
+                                 juste : elles n'ont pas de tiroir à elles. La mention
+                                 évite de lire « écart 0 » comme un comptage séparé. --}}
+                            <td data-l="Caisse">
+                                {{ $item->register->name }}
+                                @if ($item->isGrouped()) <span class="badge info">Tiroir commun</span> @endif
+                            </td>
                             <td data-l="Caissier">{{ $item->cashier_name }}</td>
                             <td data-l="Clôturée le">{{ $item->closed_at?->format('d/m/Y H:i') ?? '-' }}</td>
                             <td data-l="Théorique" class="num">{{ $item->expected_cash === null ? '-' : $money($item->expected_cash) }}</td>

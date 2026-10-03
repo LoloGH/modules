@@ -75,6 +75,63 @@ class OpenManySessionsHttpTest extends HttpTestCase
             ->assertSee('Tiroir commun');
     }
 
+    /**
+     * Le fonds appartient au tiroir : les trois caisses du groupe l'affichent,
+     * au lieu de montrer « 0 FCFA » sur deux d'entre elles comme si elles
+     * avaient ouvert les mains vides.
+     */
+    public function test_the_drawer_fund_is_shown_on_every_register_of_the_group(): void
+    {
+        $cashier = $this->cashier();
+        $ticket = $this->makeRegister('CAISSE-TICKET');
+        $services = $this->makeRegister('CAISSE-SERVICES');
+
+        $this->actingAs($cashier)->post(route('finance.cash.sessions.open-many'), [
+            'mode' => 'groupees',
+            'registers' => [$ticket->id, $services->id],
+            'opening_float' => '15 000',
+        ]);
+
+        // Deux visites : la premiere consomme le message d'ouverture, qui cite
+        // lui aussi le fonds. Ce qu'on mesure ici, c'est le tableau.
+        $this->get('/finance/caisse');
+        $page = $this->get('/finance/caisse')->assertOk()->getContent();
+
+        // Les deux lignes portent le fonds du tiroir, et le disent.
+        $this->assertSame(2, substr_count((string) $page, 'fonds du tiroir'));
+        $this->assertSame(2, substr_count((string) $page, '15 000 FCFA'));
+    }
+
+    /**
+     * La clôture porte sur le tiroir, pas sur une caisse : un seul comptage,
+     * opposé au théorique de l'ensemble.
+     */
+    public function test_the_closing_form_speaks_of_the_drawer_and_closes_them_all(): void
+    {
+        $cashier = $this->cashier();
+        $ticket = $this->makeRegister('CAISSE-TICKET');
+        $services = $this->makeRegister('CAISSE-SERVICES');
+
+        $this->actingAs($cashier)->post(route('finance.cash.sessions.open-many'), [
+            'mode' => 'groupees',
+            'registers' => [$ticket->id, $services->id],
+            'opening_float' => '15 000',
+        ]);
+
+        $session = CashSession::query()->open()->orderBy('id')->firstOrFail();
+
+        $this->get(route('finance.cash.sessions.show', $session))
+            ->assertOk()
+            ->assertSee('Clôturer le tiroir')
+            ->assertSee('une seule fois', false)
+            ->assertSee('Tiroir commun à 2 caisses', false);
+
+        $this->post(route('finance.cash.sessions.close', $session), ['counted_cash' => '15 000'])
+            ->assertSessionHas('finance_status');
+
+        $this->assertSame(0, CashSession::query()->open()->count());
+    }
+
     public function test_after_a_grouped_opening_a_separate_drawer_needs_a_higher_limit(): void
     {
         $cashier = $this->cashier();

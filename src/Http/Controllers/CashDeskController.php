@@ -160,6 +160,9 @@ final class CashDeskController extends FinanceController
                 ? $this->reopenQueueRef($request)
                 : null,
             'totals' => $totals,
+            // Un tiroir commun se lit comme un tout : un seul fonds, un seul
+            // comptage. `null` pour une caisse seule.
+            'drawer' => $this->drawerTotals($session, $calculator),
             'movements' => $movements,
             'methods' => PaymentMethod::query()->active()->get(),
             // Le motif d'encaissement : le catalogue des actes, avec leur
@@ -182,6 +185,47 @@ final class CashDeskController extends FinanceController
                     ->orderBy('id')->get()
                 : collect(),
         ]);
+    }
+
+    /**
+     * Le tiroir vu comme un tout, quand plusieurs caisses le partagent.
+     *
+     * Un fonds, un tas d'espèces, un comptage : les chiffres qui parlent du
+     * tiroir n'ont de sens que pour l'ensemble. Lus caisse par caisse, ils
+     * donnaient un fonds sur l'une et zéro sur les autres, et un théorique
+     * partiel que personne ne pouvait compter.
+     *
+     * Rend `null` pour une caisse seule : l'écran reste celui d'avant.
+     *
+     * @return ?array<string, mixed>
+     */
+    private function drawerTotals(CashSession $session, CashSessionCalculator $calculator): ?array
+    {
+        if (! $session->isGrouped()) {
+            return null;
+        }
+
+        $sessions = $session->drawerSessions()->load('register');
+
+        $lignes = $sessions->map(fn (CashSession $item): array => $item->isOpen()
+            ? $calculator->totals($item)
+            : ($item->totals ?? $calculator->totals($item)));
+
+        return [
+            'count' => $sessions->count(),
+            'names' => $sessions->pluck('register.name')->implode(', '),
+            'opening_float' => (int) $sessions->sum('opening_float'),
+            'cash_in' => (int) $lignes->sum(fn (array $ligne): int => $ligne['cash_in']),
+            'cash_out' => (int) $lignes->sum(fn (array $ligne): int => $ligne['cash_out']),
+            'expected_cash' => (int) $lignes->sum(fn (array $ligne): int => $ligne['expected_cash']),
+            // Le compté et l'écart sont figés à la clôture. Leur somme sur le
+            // groupe rend exactement ce que le caissier a compté, et l'écart
+            // unique du tiroir : c'est pour cela qu'ils ne sont portés qu'une
+            // fois (voir CloseCashSession).
+            'counted_cash' => (int) $sessions->sum('counted_cash'),
+            'variance' => (int) $sessions->sum('variance'),
+            'variance_reason' => $sessions->firstWhere(fn (CashSession $item): bool => filled($item->variance_reason))?->variance_reason,
+        ];
     }
 
     /**
@@ -231,8 +275,19 @@ final class CashDeskController extends FinanceController
             $request->validated('variance_reason'),
         );
 
+        // Un tiroir commun se ferme d'un coup : le message nomme les caisses
+        // parties avec, et porte l'écart du tiroir, qui est le seul qui existe.
+        $tiroir = $closed->drawerSessions();
+
         return redirect()
             ->route('finance.cash.sessions.show', $closed)
-            ->with('finance_status', sprintf('Session %s clôturée. Écart : %s.', $closed->number, Money::format((int) $closed->variance)));
+            ->with('finance_status', $tiroir->count() > 1
+                ? sprintf(
+                    'Tiroir clôturé avec ses %d caisses : %s. Écart : %s.',
+                    $tiroir->count(),
+                    $tiroir->load('register')->pluck('register.name')->implode(', '),
+                    Money::format((int) $tiroir->sum('variance')),
+                )
+                : sprintf('Session %s clôturée. Écart : %s.', $closed->number, Money::format((int) $closed->variance)));
     }
 }

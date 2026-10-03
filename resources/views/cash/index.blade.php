@@ -13,6 +13,16 @@
                     <thead><tr><th>Caisse</th><th>Session</th><th>Ouverte le</th><th class="num">Fonds initial</th><th></th></tr></thead>
                     <tbody>
                     @foreach ($openSessions as $item)
+                        {{-- Le fonds appartient au TIROIR, pas à l'une de ses
+                             caisses. Il n'est porté en base que par la première
+                             ouverte ; l'afficher tel quel montrait « 0 FCFA »
+                             sur les autres, comme si elles avaient ouvert les
+                             mains vides. Les caisses d'un même tiroir sont
+                             toutes dans cette liste, puisqu'elles se clôturent
+                             ensemble : la somme se fait ici, sans requête. --}}
+                        @php ($fonds = $item->isGrouped()
+                            ? $openSessions->where('drawer_key', $item->drawer_key)->sum('opening_float')
+                            : $item->opening_float)
                         <tr>
                             <td data-l="Caisse" class="strong">
                                 {{ $item->register->name }}
@@ -20,7 +30,12 @@
                             </td>
                             <td data-l="Session" class="mono">{{ $item->number }}</td>
                             <td data-l="Ouverte le">{{ $item->opened_at?->format('d/m/Y H:i') }}</td>
-                            <td data-l="Fonds initial" class="num">{{ $money($item->opening_float) }}</td>
+                            <td data-l="Fonds initial" class="num">
+                                {{ $money($fonds) }}
+                                @if ($item->isGrouped())
+                                    <span class="muted" style="display:block;font-size:.75rem">fonds du tiroir</span>
+                                @endif
+                            </td>
                             <td data-l="" class="acts">
                                 <a class="btn sm" href="{{ route('finance.cash.sessions.show', $item) }}">Ouvrir</a>
                             </td>
