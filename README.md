@@ -3,7 +3,7 @@
 Module **Finance, Caisse et Facturation** de Keneya. Se monte dans une
 application Laravel hôte (Keneya Workflow), comme le module DME.
 
-État : **v0.22.0, exports comptables, alertes, paramètres financiers, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** — porte d'entrée, droits, mode autonome, numérotation
+État : **v0.22.0, exports comptables, alertes, paramètres financiers, statistiques du tableau de bord, journal d'audit, remises et remboursements, avances et comptes patients, rattachement analytique fin, capacités par utilisateur, prises en charge par acte, rapports, assurances, factures, caisse + catalogue exposé à l'hôte + file de caisse fournie par l'hôte + avancement de la visite après encaissement** ; porte d'entrée, droits, mode autonome, numérotation
 sans doublon, journal d'audit non modifiable, moyens de paiement configurables, sessions de caisse (ouverture, encaissements,
 décaissements, clôture avec écart, validation, annulations tracées), référentiel des
 actes facturables avec centres analytiques et tarifs historisés, lisible par l'hôte
@@ -123,7 +123,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   `CancelInvoice`) : numéro `FAC-AAAA-NNNNNN`, patient (identifiant et nom
   copiés de l'hôte), lignes du catalogue au **tarif standard du jour, figé**
   sur la ligne (le guichet ne saisit pas de prix), total, payé, solde.
-  - Statuts : `unpaid` Impayée, `partial` Partielle, `paid` Payée — tenus à
+  - Statuts : `unpaid` Impayée, `partial` Partielle, `paid` Payée, tenus à
     jour sous verrou à chaque encaissement rattaché (`finance_payments.invoice_id`)
     et à chaque annulation d'encaissement ; `cancelled` Annulée (contrôle,
     motif obligatoire, seulement sans encaissement valide) ; `refunded`
@@ -139,9 +139,9 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - **Organismes** : code, nom, **nature** (`insurance` Assurance, `social_aid`
     Aide sociale), taux par défaut, actif.
   - **Couverture par acte** (`assurances/assureurs/{id}`, `SetInsurerCoverage`,
-    table `finance_insurer_acts`) : portée « tous les actes » — au taux par
-    défaut, sauf les actes décochés (exclus) ou à taux propre — ou « actes
-    choisis » — seuls les actes cochés, à leur taux ou au défaut. La fiche acte
+    table `finance_insurer_acts`) : portée « tous les actes », au taux par
+    défaut, sauf les actes décochés (exclus) ou à taux propre ; ou « actes
+    choisis » : seuls les actes cochés, à leur taux ou au défaut. La fiche acte
     liste les organismes qui le couvrent.
   - **Calcul ligne par ligne** : chaque ligne de facture porte son taux, sa
     part prise en charge (arrondie au franc) et sa part patient ; un acte non
@@ -160,7 +160,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     charge par organisme et par acte), tableau de bord (prises en charge du
     mois), facture écran et imprimée (taux et parts par ligne).
 - **Exports comptables** (`comptabilite`, `finance.accounting.export`,
-  comptable ; `Services\AccountingExport`, `Support\AccountingEntry`) — les
+  comptable ; `Services\AccountingExport`, `Support\AccountingEntry`) : les
   écritures du module en **partie double**, pour que le comptable les
   reprenne dans son logiciel. Le module ne tient pas la comptabilité : il
   traduit ce qu'il a enregistré.
@@ -182,14 +182,14 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     d'équilibre** avant tout téléchargement : un export qui ne s'équilibre
     pas se voit ici plutôt que chez le comptable. Deux CSV : le journal
     (une ligne par écriture, avec sa pièce et son centre) et la balance.
-- **Alertes** (`alertes`, `Services\AlertCenter`, `Support\Alert`) — ce qui
+- **Alertes** (`alertes`, `Services\AlertCenter`, `Support\Alert`) : ce qui
   attend un geste, avec l'écran où le faire.
   - **Aucune table de notifications, aucun envoi** : ni courriel, ni SMS, ni
     dépendance nouvelle. Chaque alerte est un état de la base, relu à
     l'affichage : elle disparaît d'elle-même quand la situation est réglée,
     et ne peut donc jamais mentir.
   - **Adressées** : une alerte n'est calculée que pour qui a le droit d'agir
-    dessus — le caissier ne reçoit pas les clôtures à valider, le contrôle ne
+    dessus : le caissier ne reçoit pas les clôtures à valider, le contrôle ne
     reçoit pas le plafond du tiroir d'un autre. Un lien d'alerte ne mène
     jamais à un 403.
   - Ce qui est signalé : clôtures à valider (en rouge si elles portent un
@@ -201,20 +201,20 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     à la liste. Seuils réglables : `alerts.cash_ceiling` (0 : aucun plafond)
     et `alerts.session_max_hours` (0 : jamais signalée).
 - **Paramètres financiers** (`parametres`, `finance.settings.manage`,
-  administrateur ; `finance_settings`, `Services\FinanceSettings`) — ce que
+  administrateur ; `finance_settings`, `Services\FinanceSettings`) : ce que
   l'établissement règle depuis l'application plutôt que dans le fichier.
   - Le module continue de lire `config('finance.…')` : les réglages se
     posent par-dessus au démarrage. **Une ligne par paramètre changé** ;
     ramener une valeur au défaut du fichier efface la ligne. Sans table
     migrée, ou sans base joignable, le fichier fait foi comme avant.
-  - Réglables, et rien d'autre : identité imprimée (nom — l'hôte peut
-    l'imposer —, adresse, téléphone, e-mail), sessions ouvertes par caissier,
+  - Réglables, et rien d'autre : identité imprimée (nom, adresse, téléphone,
+    e-mail ; l'hôte peut imposer le nom), sessions ouvertes par caissier,
     symbole monétaire, délais de créance (patients, assureurs), préfixes de
     numérotation des huit pièces, catégories de dépenses.
   - Un préfixe ne vaut que pour les pièces à venir ; une catégorie de dépense
     déjà portée par un décaissement ne se retire pas. Chaque changement est
     inscrit au journal d'audit (`settings_updated`).
-- **Tableau de bord** (`Services\DashboardMetrics`, `Support\DashboardPeriod`) —
+- **Tableau de bord** (`Services\DashboardMetrics`, `Support\DashboardPeriod`) :
   la période se choisit (aujourd'hui, 7 jours, 30 jours, ce mois) et tout
   l'écran la suit, comparaison comprise : le jour se compare à la veille, le
   mois au mois dernier. Une période inconnue retombe sur le jour.
@@ -228,15 +228,15 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     et des assureurs, avances dues aux patients, remboursements approuvés à
     payer. Chaque ligne n'apparaît que pour qui a le droit de la lire.
   - **À traiter** : clôtures à valider, remises et remboursements à
-    approuver, remboursements à payer — chacun cliquable vers son écran.
+    approuver, remboursements à payer, chacun cliquable vers son écran.
   - Une avance n'est jamais comptée comme une recette : elle reste due au
     patient.
-- **Journal d'audit** (`journal`, `finance.audit.view`) — qui a fait quoi,
+- **Journal d'audit** (`journal`, `finance.audit.view`) : qui a fait quoi,
   quand, et sur quoi. Lecture seule : une ligne ne se modifie ni ne se
   supprime (`Models\AuditLog` lève une exception).
   - Les codes d'événement sont lus en français et groupés
-    (`Support\AuditEvents`) ; un code inconnu — écrit par une version plus
-    récente ou par l'hôte — s'affiche tel quel plutôt que de disparaître du
+    (`Support\AuditEvents`) ; un code inconnu, écrit par une version plus
+    récente ou par l'hôte, s'affiche tel quel plutôt que de disparaître du
     filtre.
   - Filtres : période, événement, auteur, recherche (description, numéro de
     pièce, objet). Chaque ligne montre l'avant et l'après en clair, l'auteur
@@ -246,28 +246,28 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     rouvrir la session. Depuis une session de caisse, un lien ouvre le
     journal filtré sur elle.
 - **Remises et remboursements** (`remises-et-remboursements`,
-  `finance.credits.view`) — deux gestes qui coûtent de l'argent, et que
+  `finance.credits.view`) : deux gestes qui coûtent de l'argent, et que
   **celui qui les demande n'approuve jamais**.
   - **Remise** (`finance_discounts`, `AVO-`, `Actions\RequestDiscount` puis
     `DecideDiscount`) : ce qu'on renonce à réclamer sur une facture.
     Demandée (`finance.discounts.request`) avec un motif, jamais au-delà du
-    reste dû — les demandes en attente retiennent leur montant. Approuvée
+    reste dû ; les demandes en attente retiennent leur montant. Approuvée
     (`finance.discounts.approve`), elle alimente la colonne `discount` de la
     facture : `patientDue()` en tient compte, donc les créances, les
     encaissements et le statut de la facture aussi. Refusée, elle ne change
     rien et son motif reste écrit.
   - **Remboursement** (`finance_refunds`, `RBT-`, `RequestRefund`,
-    `DecideRefund`, `PayRefund`) : de l'argent rendu. Trois origines — un
-    encaissement, une facture, ou le solde du compte du patient — et jamais
+    `DecideRefund`, `PayRefund`) : de l'argent rendu. Trois origines : un
+    encaissement, une facture, ou le solde du compte du patient. Jamais
     plus que ce que l'établissement a reçu, demandes en cours comprises.
   - **Payé à la caisse** : un remboursement approuvé apparaît dans la session
     du caissier et se paie par un **décaissement ordinaire** (catégorie
-    « Remboursements aux patients »), avec ses règles habituelles — session
+    « Remboursements aux patients »), avec ses règles habituelles : session
     ouverte, espèces disponibles. Le décaissement reste attaché au
     remboursement. Une facture dont tout ce qui a été réglé est rendu passe
     à « Remboursée » ; un remboursement sur compte en fait baisser le solde.
 - **Avances et compte patient** (`comptes`, `finance.accounts.view` ;
-  enregistrement `finance.deposits.create`) — de l'argent reçu d'avance, qui
+  enregistrement `finance.deposits.create`) : de l'argent reçu d'avance, qui
   n'est pas une recette.
   - **L'avance** (`finance_patient_deposits`, `AVA-`, `Actions\RecordDeposit`)
     se verse à la caisse, pour un patient désigné. Elle **entre dans le
@@ -276,10 +276,10 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     Reçu imprimable, qui rappelle le solde.
   - **Puiser dans le compte** : un encaissement réglé par le moyen « Compte
     patient » prélève le solde. Il ne peut pas dépasser ce qui reste, ni se
-    faire sans patient désigné, et n'ajoute rien au tiroir — l'argent y est
+    faire sans patient désigné, et n'ajoute rien au tiroir : l'argent y est
     depuis l'avance.
   - **Aucune table de solde** (`Services\PatientAccount`) : le solde est
-    toujours recalculé des écritures — avances valides moins encaissements
+    toujours recalculé des écritures : avances valides moins encaissements
     valides réglés sur le compte. Annuler une avance ou un encaissement le
     remet d'aplomb sans écriture de correction.
   - **Annuler une avance** n'est possible que si elle n'a pas servi : au-delà,
@@ -288,7 +288,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - **L'écran** liste les comptes (recherche par nom ou identifiant) et
     ouvre le relevé d'un patient : avances, utilisations, annulations, ses
     factures et ce qu'il doit encore.
-- **Rattachement analytique fin** — chaque écriture porte SON centre
+- **Rattachement analytique fin** : chaque écriture porte SON centre
   analytique, gravé au moment où elle est écrite (`analytic_center_id` sur
   `finance_payments`, `finance_invoice_lines` et `finance_disbursements`).
   - **Le passé ne se réécrit pas** : rattacher un acte à un autre centre
@@ -296,7 +296,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     aucune recette déjà encaissée ou facturée. Seules les écritures
     suivantes suivent le nouveau rattachement.
   - **Les dépenses se rattachent aussi** : le décaissement porte un centre,
-    choisi à la caisse. Un centre de produits refuse une charge — la dépense
+    choisi à la caisse. Un centre de produits refuse une charge : la dépense
     y serait invisible au moment de lire ce que le centre coûte
     (`kind` : Produits, Charges, Produits et charges).
   - **La hiérarchie totalise** (`Support\AnalyticTree`) : filtrer ou totaliser
@@ -333,16 +333,16 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     donc avant spatie et l'hôte. On ne règle pas ses propres capacités.
     Tracé : `user_permissions_set`, `user_permissions_reset`.
 - **Paiements** (`paiements`, `finance.payments.view`, `Support\LedgerFilters`) :
-  les encaissements, en lecture — n°, date et caisse, patient et identifiant,
+  les encaissements, en lecture : n°, date et caisse, patient et identifiant,
   objet, moyen, référence, facture associée (lien), statut, montant, reçu.
   Filtres période (défaut : du 1er du mois à aujourd'hui), moyen, statut,
   recherche (n°, patient, référence, facture). Indicateurs : total encaissé,
   nombre, annulés, répartition par moyen. Un caissier ne voit que ses
   sessions ; le contrôle (`finance.sessions.validate`) voit tout.
-- **Recettes** (`recettes`) : les encaissements valides — date, source (acte
+- **Recettes** (`recettes`), les encaissements valides : date, source (acte
   ou libellé, patient), service (centre analytique) et activité (acte), moyen,
   référence, montant ; filtres période, moyen, service, activité, recherche ;
-  répartition par service. **Dépenses** (`depenses`) : les décaissements —
+  répartition par service. **Dépenses** (`depenses`), les décaissements :
   date, catégorie, motif, bénéficiaire, moyen, référence, statut, montant, bon
   imprimable ; filtres période, moyen, catégorie (dont « non classées »),
   statut, recherche ; répartition par catégorie. Les catégories se règlent dans
@@ -355,7 +355,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     auto-référencée (Pôle → Service → Activité), `kind` = produits, charges ou les
     deux. Ils répondront à « combien rapporte le laboratoire ».
   - **Actes** (`finance_acts`) : rattachés à un centre, avec un `dme_service_id`
-    facultatif — lien **mou** vers `dme_services` de l'hôte, sans clé étrangère,
+    facultatif : lien **mou** vers `dme_services` de l'hôte, sans clé étrangère,
     utilisé seulement pour les rapprochements. Le module ne dépend pas de DME.
   - **Tarifs** (`finance_tariffs`) : plusieurs par acte selon le contexte (`kind` :
     `standard` aujourd'hui, un code d'assureur plus tard), mais **un seul actif par
@@ -372,7 +372,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     `consultation_ticket_set` / `consultation_ticket_unset`. Un acte désactivé ne
     peut pas le devenir. Case sur la fiche de l'acte, sous
     `can:finance.catalog.manage`.
-- **Catalogue exposé à l'hôte** — Finance est la source unique des actes et des
+- **Catalogue exposé à l'hôte** : Finance est la source unique des actes et des
   prix ; l'hôte les **lit** par un contrat, jamais par les modèles :
   - `Contracts\CatalogProvider`, résolu par `Finance::catalog()` (singleton,
     implémentation `Catalog\EloquentCatalogProvider`, remplaçable par l'hôte) :
@@ -384,7 +384,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
       tarif actif, ou null (pas de tarif, acte inconnu ou désactivé) ;
     - `ticketAct()` : l'acte « ticket de consultation » s'il est actif, ou null.
   - `Catalog\CatalogAct` : objet de valeur `final readonly`, uniquement des
-    scalaires — `id`, `code`, `name`, `hostServiceId`, `analyticCenterId`,
+    scalaires : `id`, `code`, `name`, `hostServiceId`, `analyticCenterId`,
     `activeAmount` (tarif **standard** actif, null s'il n'est pas fixé). Le modèle
     Eloquent ne sort jamais du module.
   - Un acte désactivé est invisible pour l'hôte, par toutes les méthodes.
@@ -393,12 +393,12 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   use Keneya\FinanceCaisse\Finance;
 
   foreach (Finance::catalog()->actsForService($service->id) as $act) {
-      echo $act->name, ' — ', $act->activeAmount ?? 'prix non fixé';
+      echo $act->name, ' : ', $act->activeAmount ?? 'prix non fixé';
   }
 
   $ticket = Finance::catalog()->ticketAct(); // ?CatalogAct
   ```
-- **File de caisse fournie par l'hôte** — le caissier appelle et encaisse dans
+- **File de caisse fournie par l'hôte** : le caissier appelle et encaisse dans
   Finance ; la file (visites, tickets) appartient à l'hôte, qui l'**implémente** :
   - `Contracts\CashQueueProvider`, lu par `Finance::cashQueue()` :
     `queues()` (les caisses), `pendingVisits($queueRef)` (appelés d'abord, puis
@@ -414,7 +414,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - Écran `file` (`finance.queue.index`, `can:finance.sessions.view`) : la file
     du jour d'une caisse ; « Appeler le suivant » (`finance.queue.call`,
     `can:finance.payments.create`) ; pour un patient appelé, « Encaisser » ouvre
-    la session avec patient, acte et montant **pré-remplis** — le caissier relit
+    la session avec patient, acte et montant **pré-remplis** ; le caissier relit
     et valide, rien n'est enregistré sans lui. Sans session ouverte, l'écran
     invite d'abord à l'ouvrir et l'appel est refusé.
   - **La bonne caisse** : un patient de la file « Caisse Ticket » s'encaisse
@@ -426,7 +426,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   - **« Rouvrir depuis la file »** : un encaissement venu de la file qui
     n'aboutit pas (patient déjà encaissé ou orienté, lien périmé) propose de
     revenir à la file au lieu d'une simple erreur.
-- **Après encaissement, la visite avance chez l'hôte** — `Contracts\VisitAdvancer`
+- **Après encaissement, la visite avance chez l'hôte** : `Contracts\VisitAdvancer`
   (`advanceAfterPayment($visitRef, SettledPayment $payment)`), lu par
   `Finance::visitAdvancer()`, implémenté par l'hôte (par défaut
   `Queue\NoVisitAdvancer`, qui ne fait rien).
@@ -434,7 +434,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
     l'encaissement passe alors par `Actions\CollectQueuedVisit` :
     1. la visite doit encore attendre à cette caisse (`findVisit`), et ne jamais
        avoir été encaissée (`finance_payments.host_visit_ref`, référence opaque
-       de la visite) — pas de double paiement ;
+       de la visite), pas de double paiement ;
     2. **dans une seule transaction** : `RecordPayment` (numéro, session, audit),
        puis `advanceAfterPayment` chez l'hôte ;
     3. si l'hôte lève une exception, tout est annulé (aucun encaissement
@@ -450,8 +450,8 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   affecté. Quand la limite est atteinte, le formulaire cède la place à un
   message. Depuis une session, un bandeau de boutons liste **toutes** ses
   caisses ouvertes, celle qu'il regarde comprise et marquée comme active ; il
-  n'apparaît que s'il en tient plus d'une. Avec la limite à 1 — le cas
-  courant — le bureau redirige directement vers l'unique session, exactement
+  n'apparaît que s'il en tient plus d'une. Avec la limite à 1 (le cas
+  courant), le bureau redirige directement vers l'unique session, exactement
   comme avant.
 - **Écrans** (`/finance`) : `/` (tableau de bord), `caisse` (bureau du caissier),
   `caisse/sessions/{id}` (encaisser, décaisser, clôturer), `sessions` (contrôle et
@@ -473,7 +473,7 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
   annulation, avoir, remboursement ou ajustement, liés à l'opération d'origine.
 - **Séparation des tâches sur les prix** : `finance.catalog.view` est donné à tous
   les profils (on facture avec le catalogue, il faut le lire) ;
-  `finance.catalog.manage` — créer ou désactiver un centre, un acte — reste
+  `finance.catalog.manage` (créer ou désactiver un centre, un acte) reste
   **administratif** ; `finance.tariffs.manage` va au **comptable** et à
   l'administrateur : fixer un prix est une décision de gestion, jamais celle du
   caissier qui encaisse.
@@ -485,8 +485,8 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
 
 ## Interface
 
-Keneya Finance a sa propre identité — marque « Keneya Finance », sous-titre
-« Gestion financière hospitalière » — et n'affiche aucun menu du DME. La
+Keneya Finance a sa propre identité (marque « Keneya Finance », sous-titre
+« Gestion financière hospitalière ») et n'affiche aucun menu du DME. La
 présentation reste celle de Keneya Workflow : fond très clair, cartes blanches,
 bordures discrètes, ombres légères, badges de statut sobres.
 
@@ -501,7 +501,7 @@ bordures discrètes, ombres légères, badges de statut sobres.
   `resources/views/partials/tariff-fill.blade.php` le
   report du tarif de l'acte choisi dans le champ « Montant » de l'encaissement.
   Une vingtaine de lignes sans bibliothèque, et la page reste entièrement
-  utilisable sans lui — le tarif figure aussi dans l'intitulé de chaque option.
+  utilisable sans lui : le tarif figure aussi dans l'intitulé de chaque option.
   Il ne piétine jamais une saisie manuelle : il ne remplit que si le champ est
   vide ou porte encore une valeur qu'il avait lui-même posée, et il ne vide
   jamais le champ.
