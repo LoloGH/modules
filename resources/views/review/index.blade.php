@@ -45,7 +45,17 @@
                             </td>
                             <td data-l="Caisse">
                                 {{ $ligne['caisses'] }}
-                                @if ($ligne['groupe']) <span class="badge info">Tiroir commun</span> @endif
+                                @if ($ligne['groupe'])
+                                    <span class="badge info">Tiroir commun</span>
+                                    {{-- Le tas est commun, les recettes ne le sont
+                                         pas : d'ou vient l'argent se lit ici, sans
+                                         ouvrir la session. --}}
+                                    <span class="muted" style="display:block;font-size:.75rem">
+                                        @foreach ($ligne['parts'] as $part)
+                                            {{ $part['name'] }} {{ $money($part['expected_cash']) }}@if (! $loop->last) · @endif
+                                        @endforeach
+                                    </span>
+                                @endif
                             </td>
                             <td data-l="Caissier">{{ $item->cashier_name }}</td>
                             <td data-l="Clôturée le">{{ $item->closed_at?->format('d/m/Y H:i') ?? '-' }}</td>

@@ -148,6 +148,40 @@ class ClosingAndReviewHttpTest extends HttpTestCase
         $this->assertSame(0, CashSession::query()->where('status', CashSession::STATUS_CLOSED)->count());
     }
 
+    /**
+     * Le tiroir est commun, les recettes ne le sont pas : on doit pouvoir
+     * lire ce que chaque caisse y a apporte.
+     */
+    public function test_each_register_share_of_the_drawer_is_readable(): void
+    {
+        $cashier = $this->cashier();
+        $ticket = $this->makeRegister('CAISSE-TICKET');
+        $services = $this->makeRegister('CAISSE-SERVICES');
+
+        [$premiere, $seconde] = app(OpenCashSessions::class)->grouped(
+            [$ticket->id, $services->id],
+            10_000,
+            $cashier,
+        );
+
+        app(RecordPayment::class)->handle($premiere, $this->cashMethod(), 4_000, $cashier);
+        app(RecordPayment::class)->handle($seconde, $this->cashMethod(), 25_000, $cashier);
+
+        // La page de la session detaille les parts, et leur somme fait le tiroir.
+        $this->actingAs($cashier)->get(route('finance.cash.sessions.show', $seconde))
+            ->assertOk()
+            ->assertSee('Ce que chaque caisse apporte au tiroir')
+            ->assertSeeInOrder(['Caisse CAISSE-TICKET', '14 000 FCFA', 'Caisse CAISSE-SERVICES', '25 000 FCFA'], false)
+            ->assertSee('39 000 FCFA');
+
+        app(CloseCashSession::class)->handle($premiere, 39_000, $cashier);
+
+        // Et le controle les lit sans ouvrir la session.
+        $this->actingAs($this->accountant())->get('/finance/sessions')
+            ->assertOk()
+            ->assertSeeInOrder(['Caisse CAISSE-TICKET 14 000 FCFA', 'Caisse CAISSE-SERVICES 25 000 FCFA'], false);
+    }
+
     public function test_the_cashier_cannot_validate(): void
     {
         $cashier = $this->cashier();

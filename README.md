@@ -83,6 +83,11 @@ catalogue des actes, fiche d'un acte et de ses tarifs, centres analytiques.
       - Les écrans présentent le tiroir dans son ensemble : le **fonds s'affiche
         sur chacune** de ses caisses (`drawerOpeningFloat`), et non « 0 FCFA »
         sur toutes sauf une.
+      - **Qui a rapporté quoi** : le tas est commun, les recettes ne le sont
+        pas. La page d'une session groupée détaille, caisse par caisse, le
+        fonds, les espèces encaissées et décaissées et la part du théorique,
+        avec le total du tiroir ; la liste de contrôle en donne le résumé sous
+        le nom des caisses.
       - **La validation suit** (`ValidateCashSession`) : un tiroir compté une
         fois ne se contrôle qu'une fois, et toutes ses caisses passent
         ensemble. L'écran « Sessions à valider » montre **une ligne par

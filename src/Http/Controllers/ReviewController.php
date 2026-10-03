@@ -83,6 +83,13 @@ final class ReviewController extends FinanceController
                     'groupe' => $tiroir->count() > 1,
                     'caisses' => $tiroir->sortBy('id')->pluck('register.name')->implode(', '),
                     'nombre' => $tiroir->count(),
+                    // Ce que chaque caisse a apporte au tiroir : le tas est
+                    // commun, les recettes ne le sont pas, et le controle doit
+                    // pouvoir lire d'ou vient l'argent sans ouvrir la session.
+                    'parts' => $tiroir->sortBy('id')->map(fn (CashSession $item): array => [
+                        'name' => $item->register->name,
+                        'expected_cash' => (int) $item->expected_cash,
+                    ])->values()->all(),
                     // Les colonnes d'argent sont celles du tiroir : la somme
                     // des parts rend exactement ce qui a été compté.
                     'expected_cash' => $tiroir->contains(fn (CashSession $s): bool => $s->expected_cash === null)

@@ -207,13 +207,24 @@ final class CashDeskController extends FinanceController
 
         $sessions = $session->drawerSessions()->load('register');
 
-        $lignes = $sessions->map(fn (CashSession $item): array => $item->isOpen()
+        $lignes = $sessions->values()->map(fn (CashSession $item): array => $item->isOpen()
             ? $calculator->totals($item)
             : ($item->totals ?? $calculator->totals($item)));
 
         return [
             'count' => $sessions->count(),
             'names' => $sessions->pluck('register.name')->implode(', '),
+            // Ce que chaque caisse apporte au tiroir. Un tiroir commun ne dit
+            // rien, a lui seul, de ce que chaque guichet a fait de sa journee :
+            // il faut pouvoir lire les deux, le tas d'especes et son origine.
+            'parts' => $sessions->values()->map(fn (CashSession $item, int $rang): array => [
+                'name' => $item->register->name,
+                'number' => $item->number,
+                'opening_float' => (int) $item->opening_float,
+                'cash_in' => (int) $lignes[$rang]['cash_in'],
+                'cash_out' => (int) $lignes[$rang]['cash_out'],
+                'expected_cash' => (int) $lignes[$rang]['expected_cash'],
+            ])->all(),
             'opening_float' => (int) $sessions->sum('opening_float'),
             'cash_in' => (int) $lignes->sum(fn (array $ligne): int => $ligne['cash_in']),
             'cash_out' => (int) $lignes->sum(fn (array $ligne): int => $ligne['cash_out']),

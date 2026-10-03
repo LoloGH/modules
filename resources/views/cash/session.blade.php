@@ -54,6 +54,52 @@
                         foot="Fonds initial + encaissements − décaissements" />
     </div>
 
+    {{-- Ce que chaque caisse a apporté au tiroir.
+
+         Le tiroir est un seul tas d'espèces, mais il vient de plusieurs
+         guichets, et savoir lequel a rapporté quoi est une question
+         légitime : c'est elle qui dit si la Caisse Ticket a travaillé, si
+         l'échographie a encaissé, où est passée la journée. Les colonnes
+         sont celles de chaque session, qui les a gardées en clôturant. --}}
+    @if ($drawer)
+        <x-finance::card title="Ce que chaque caisse apporte au tiroir"
+                         hint="Le tiroir est commun, les recettes restent distinctes" flush>
+            <div class="tw">
+                <table class="stack">
+                    <thead>
+                    <tr>
+                        <th>Caisse</th><th>Session</th>
+                        <th class="num">Fonds</th>
+                        <th class="num">Espèces encaissées</th>
+                        <th class="num">Espèces décaissées</th>
+                        <th class="num">Part du théorique</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($drawer['parts'] as $part)
+                        <tr @class(['strong' => $part['number'] === $session->number])>
+                            <td data-l="Caisse">{{ $part['name'] }}</td>
+                            <td data-l="Session" class="mono">{{ $part['number'] }}</td>
+                            <td data-l="Fonds" class="num">{{ $money($part['opening_float']) }}</td>
+                            <td data-l="Espèces encaissées" class="num">{{ $money($part['cash_in']) }}</td>
+                            <td data-l="Espèces décaissées" class="num">{{ $money($part['cash_out']) }}</td>
+                            <td data-l="Part du théorique" class="num">{{ $money($part['expected_cash']) }}</td>
+                        </tr>
+                    @endforeach
+                    <tr class="strong">
+                        <td data-l="Caisse">Tiroir</td>
+                        <td data-l="Session"></td>
+                        <td data-l="Fonds" class="num">{{ $money($drawer['opening_float']) }}</td>
+                        <td data-l="Espèces encaissées" class="num">{{ $money($drawer['cash_in']) }}</td>
+                        <td data-l="Espèces décaissées" class="num">{{ $money($drawer['cash_out']) }}</td>
+                        <td data-l="Part du théorique" class="num">{{ $money($drawer['expected_cash']) }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </x-finance::card>
+    @endif
+
     @if (! $session->isOpen())
         <x-finance::card title="Clôture">
             @if ($drawer)
