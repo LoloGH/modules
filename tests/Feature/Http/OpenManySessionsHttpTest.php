@@ -192,6 +192,77 @@ class OpenManySessionsHttpTest extends HttpTestCase
 
     // ------------------------------------------------------ Règles communes
 
+    /**
+     * Trois caisses séparées demandées par un caissier limité à un tiroir : le
+     * refus doit nommer la vraie cause.
+     *
+     * Le contrôle se faisait caisse par caisse : la première s'ouvrait, la
+     * deuxième butait, et le message annonçait « Ce caissier tient déjà un
+     * tiroir ouvert » à quelqu'un qui n'en tenait aucun, puisque le tiroir en
+     * question venait d'être annulé par le retour en arrière. On lui demandait
+     * de clôturer une session qui n'existait pas.
+     */
+    public function test_separate_registers_beyond_the_limit_explain_the_real_cause(): void
+    {
+        $cashier = $this->cashier();
+        $ticket = $this->makeRegister('CAISSE-TICKET');
+        $services = $this->makeRegister('CAISSE-SERVICES');
+        $pharmacie = $this->makeRegister('CAISSE-PHARMACIE');
+
+        $this->actingAs($cashier)->from('/finance/caisse')->post(route('finance.cash.sessions.open-many'), [
+            'mode' => 'separees',
+            'registers' => [$ticket->id, $services->id, $pharmacie->id],
+            'floats' => [$ticket->id => '3000', $services->id => '30000', $pharmacie->id => '5000'],
+        ])->assertSessionHas('finance_error', function (string $message): bool {
+            return str_contains($message, 'Vous ne pouvez tenir que 1 tiroir(s)')
+                && str_contains($message, '3 caisses séparées demandent 3 tiroirs')
+                && str_contains($message, 'Ouvrez-les ensemble')
+                // Ce qu'il ne doit plus dire : il n'en tient aucun.
+                && ! str_contains($message, 'tient déjà un tiroir ouvert');
+        });
+
+        $this->assertSame(0, CashSession::count());
+    }
+
+    /** Avec la limite relevée, les mêmes caisses s'ouvrent séparément. */
+    public function test_separate_registers_fit_once_the_limit_is_raised(): void
+    {
+        $cashier = $this->cashier();
+        $this->allow(3, (string) $cashier->id);
+        $ticket = $this->makeRegister('CAISSE-TICKET');
+        $services = $this->makeRegister('CAISSE-SERVICES');
+        $pharmacie = $this->makeRegister('CAISSE-PHARMACIE');
+
+        $this->actingAs($cashier)->post(route('finance.cash.sessions.open-many'), [
+            'mode' => 'separees',
+            'registers' => [$ticket->id, $services->id, $pharmacie->id],
+            'floats' => [$ticket->id => '3000', $services->id => '30000', $pharmacie->id => '5000'],
+        ])->assertSessionHas('finance_status');
+
+        $this->assertSame(3, CashSession::query()->open()->count());
+        $this->assertSame(3, CashSession::openDrawersFor((string) $cashier->id));
+    }
+
+    /** Un tiroir déjà tenu se dit comme tel, sans inventer de caisses. */
+    public function test_an_already_held_drawer_is_named_in_the_refusal(): void
+    {
+        $cashier = $this->cashier();
+        $ticket = $this->makeRegister('CAISSE-TICKET');
+        $services = $this->makeRegister('CAISSE-SERVICES');
+
+        $this->openSession($cashier, 1_000, $ticket);
+
+        $this->actingAs($cashier)->from('/finance/caisse')->post(route('finance.cash.sessions.open-many'), [
+            'mode' => 'groupees',
+            'registers' => [$services->id],
+            'opening_float' => '1000',
+        ])->assertSessionHas('finance_error', function (string $message): bool {
+            return str_contains($message, 'Vous tenez déjà 1 tiroir(s) sur 1 autorisé(s)');
+        });
+
+        $this->assertSame(1, CashSession::query()->open()->count());
+    }
+
     public function test_one_refused_register_opens_none_and_names_it(): void
     {
         $cashier = $this->cashier();
@@ -206,7 +277,7 @@ class OpenManySessionsHttpTest extends HttpTestCase
             'opening_float' => '1000',
         ])
             ->assertRedirect('/finance/caisse')
-            ->assertSessionHas('finance_error', 'Aucune session ouverte. Caisse CAISSE-SERVICES : Une session est déjà ouverte sur cette caisse.');
+            ->assertSessionHas('finance_error', "Aucune caisse n'a été ouverte. Caisse CAISSE-SERVICES : Une session est déjà ouverte sur cette caisse.");
 
         $this->assertSame(0, CashSession::query()->where('cashier_id', (string) $cashier->id)->count());
     }
