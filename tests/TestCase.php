@@ -61,6 +61,20 @@ abstract class TestCase extends BaseTestCase
 
         $config->set('view.compiled', $compiled);
         $config->set('database.default', 'testing');
+        // Le cache, la session et le courriel en memoire, imposes ici et non
+        // par phpunit.xml : une variable d'environnement deja posee l'emporte
+        // sur ce que ce fichier declare, meme avec `force`. Tant que la suite
+        // ne tourne que depuis ce depot, rien ne la pose, et le fichier
+        // suffit. Mais le module se monte dans une application hote, dont la
+        // pile injecte son propre `.env` dans le conteneur : la suite recevait
+        // alors CACHE_STORE=database puis SESSION_DRIVER=database, cherchait
+        // des tables que Testbench ne monte pas, et tous les tests echouaient
+        // sur la meme ligne sans qu'un seul ait rien a se reprocher. Ce que le
+        // module decide ici, en revanche, rien ne le recouvre : la suite dit
+        // la meme chose d'ou qu'on la lance.
+        $config->set('cache.default', 'array');
+        $config->set('session.driver', 'array');
+        $config->set('mail.default', 'array');
         $config->set('queue.default', 'sync');
         $config->set('app.locale', 'fr');
         $config->set('app.fallback_locale', 'fr');
