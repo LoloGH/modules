@@ -38,7 +38,17 @@
         'plus' => '<path d="M12 5v14M5 12h14"/>',
         'point' => '<circle cx="12" cy="12" r="3"/>',
         'utilisateur' => '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
-        'document' => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+        // Un registre, et non le trace de `facture` : les deux etaient
+        // identiques au trait pres, et le menu montrait la meme image pour
+        // les factures et pour le journal.
+        'document' => '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M11 8h6M11 12h6M11 16h4"/>',
+        // Trois entrees du menu portaient l'icone d'une voisine : les exports
+        // celle des factures, les comptes patients celle des utilisateurs, et
+        // les caisses celle des parametres. Une icone qui se repete ne
+        // distingue plus, elle remplit la colonne.
+        'export' => '<path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><path d="M12 3v12M8 11l4 4 4-4"/>',
+        'portefeuille' => '<path d="M3 7a2 2 0 0 1 2-2h12v3"/><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="16.5" cy="13.5" r="1.3"/>',
+        'tiroir' => '<rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M10 7.5h4M10 16.5h4"/>',
         'avoir' => '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M9 13h6M9 16h4"/>',
         'soleil' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
         'lune' => '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
