@@ -44,8 +44,22 @@
         'dispensation' => '<path d="M10.5 3.5a4.95 4.95 0 0 1 7 7l-7 7a4.95 4.95 0 0 1-7-7z"/><path d="M7 7l7 7"/>',
         'ordonnance' => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 12h3a1.5 1.5 0 0 1 0 3H9v-3zm0 3 3.5 3.5"/>',
         'utilisateur' => '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
-        'utilisateur' => '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
-        'document' => '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+        // Un registre, et non le trace de `facture` : les deux etaient
+        // identiques, et le menu montrait la meme image pour deux choses.
+        'document' => '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18M11 8h6M11 12h6M11 16h4"/>',
+        // Huit icones nees d'un meme constat : le comptoir montrait la meme
+        // image que les dispensations, les commandes la meme que les
+        // ordonnances, et l'alerte servait pour les peremptions, les pertes
+        // et les rappels. Un menu de vingt entrees ne se lit plus quand les
+        // icones se repetent : il faut relire chaque libelle.
+        'comptoir' => '<path d="M3 10h18"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M4 10v10M20 10v10M8 14h8"/>',
+        'preparation' => '<path d="M5 10h14a7 7 0 0 1-7 7 7 7 0 0 1-7-7z"/><path d="M12 17v4M8 21h8"/><path d="m16 3-3.5 5"/>',
+        'categorie' => '<path d="M3 7a2 2 0 0 1 2-2h3.5l2 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 11h18"/>',
+        'emplacement' => '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+        'commande' => '<path d="M3 5h2l2.2 9.5A2 2 0 0 0 9.2 16h7.8a2 2 0 0 0 2-1.6L20.5 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/>',
+        'sablier' => '<path d="M7 3h10M7 21h10"/><path d="M7 3v3.5a5 5 0 0 0 5 5 5 5 0 0 0 5-5V3"/><path d="M7 21v-3.5a5 5 0 0 1 5-5 5 5 0 0 1 5 5V21"/>',
+        'perte' => '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M12 12v6"/><path d="m9 15 3 3 3-3"/>',
+        'fournisseur' => '<path d="M2 7h11v9H2z"/><path d="M13 10h4l4 3.5V16h-8z"/><circle cx="6.5" cy="18.5" r="1.7"/><circle cx="17" cy="18.5" r="1.7"/>',
         'avoir' => '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M9 13h6M9 16h4"/>',
         'soleil' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
         'lune' => '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
