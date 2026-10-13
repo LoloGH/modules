@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keneya\FinanceCaisse\Tests\Feature\Http;
 
 use Keneya\FinanceCaisse\Actions\RecordPayment;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Support\Rbac;
 use Keneya\FinanceCaisse\Tests\Support\TestUser;
 
@@ -113,6 +114,22 @@ class DashboardHttpTest extends HttpTestCase
             ->assertOk()
             ->assertSee('Aucune session ouverte')
             ->assertDontSee('Solde théorique');
+    }
+
+    /**
+     * L'en-tête du tableau de bord porte le nom de l'établissement fourni par
+     * l'hôte, pas le défaut de la configuration du module.
+     */
+    public function test_the_header_shows_the_facility_given_by_the_host(): void
+    {
+        config()->set('finance.facility.name', 'Centre Hospitalier Keneya');
+        Finance::facilityUsing(fn (): array => ['name' => 'Clinique FALEA']);
+
+        $this->actingAs($this->cashier())
+            ->get('/finance')
+            ->assertOk()
+            ->assertSee('Clinique FALEA')
+            ->assertDontSee('Centre Hospitalier Keneya');
     }
 
     public function test_it_survives_a_user_model_without_roles(): void

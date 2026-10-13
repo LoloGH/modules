@@ -7,6 +7,7 @@ namespace Keneya\FinanceCaisse\Http\Controllers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Keneya\FinanceCaisse\Finance;
 use Keneya\FinanceCaisse\Models\CashSession;
 use Keneya\FinanceCaisse\Services\CashSessionCalculator;
 use Keneya\FinanceCaisse\Services\DashboardMetrics;
@@ -49,7 +50,7 @@ final class HomeController extends FinanceController
         $period = DashboardPeriod::fromRequest($request);
 
         return view('finance::home', [
-            'facility' => (string) config('finance.facility.name'),
+            'facility' => (string) (Finance::facility()['name'] ?? ''),
             'canReadFigures' => $canReadFigures,
             'metrics' => $canReadFigures ? $metrics->overview($period) : null,
             'latest' => $canReadFigures ? $metrics->latestPayments() : null,
