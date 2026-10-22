@@ -1,6 +1,6 @@
 # Environnement de test proche de la production : PHP 8.4 (comme le VPS).
 # La base MySQL 8.0 sera ajoutée quand les premières migrations arriveront.
-FROM php:8.4-cli
+FROM php:8.4.27-cli
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip libzip-dev libpng-dev libfreetype6-dev libjpeg62-turbo-dev \
