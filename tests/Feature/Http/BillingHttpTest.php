@@ -91,6 +91,43 @@ class BillingHttpTest extends TestCase
         $this->assertSame(1, AuditLog::where('event', 'dispensation_billed')->count());
     }
 
+    /**
+     * Un produit prescrit et absent du rayon est servi à zéro : la ligne garde
+     * la trace du manque, mais ne part pas à la caisse. Envoyée, elle faisait
+     * refuser toute la vente par la caisse, qui exige au moins une unité.
+     */
+    public function test_a_line_served_at_zero_is_not_sent_to_the_cashier(): void
+    {
+        $sink = new FakeSaleSink;
+        $this->app->instance(SaleSink::class, $sink);
+
+        $servi = $this->makeProduct(['name' => 'Amoxicilline', 'sale_price' => 1_000]);
+        $manquant = $this->makeProduct(['name' => 'Spironolactone', 'sale_price' => 1_600]);
+        $location = $this->makeLocation();
+        $this->stockUp($this->makeBatch($servi, 'LOT-A', now()->addYear()->toDateString()), 100);
+
+        $this->actingAs($this->userWithRole(Rbac::ROLE_DISPENSER))
+            ->post(route('pharmacie.dispensing.store'), [
+                'location_id' => $location->id,
+                'patient_id' => 'PAT-000123',
+                'patient_name' => 'Aminata Traoré',
+                'lines' => [
+                    ['product_id' => $servi->id, 'quantity' => '2'],
+                    ['product_id' => $manquant->id, 'quantity' => '1'],
+                ],
+            ])
+            ->assertSessionHas('pharmacie_status');
+
+        $dispensation = Dispensation::sole();
+        $this->assertSame(2, $dispensation->items()->count());
+
+        $this->post(route('pharmacie.dispensing.bill', $dispensation), ['kind' => SendToCashier::KIND_DIRECT])
+            ->assertSessionHas('pharmacie_status');
+
+        $this->assertSame(['Amoxicilline'], array_column($sink->sales[0]->lines, 'label'));
+        $this->assertSame(Dispensation::PAYMENT_SENT, $dispensation->fresh()->payment_status);
+    }
+
     public function test_nothing_is_sent_twice(): void
     {
         $sink = new FakeSaleSink;
