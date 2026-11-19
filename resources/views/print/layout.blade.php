@@ -15,7 +15,7 @@
         * { box-sizing: border-box; }
         body { margin: 0; background: #f1f5f9; color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
         .toolbar { display: flex; gap: .5rem; justify-content: center; padding: 1rem; }
-        .toolbar button, .toolbar a { font: inherit; padding: .5rem 1rem; border-radius: .5rem; border: 1px solid var(--line); background: #fff; color: var(--ink); text-decoration: none; cursor: pointer; }
+        .toolbar button, .toolbar a { font: inherit; padding: .5rem 1rem; border-radius:0; border: 1px solid var(--line); background: #fff; color: var(--ink); text-decoration: none; cursor: pointer; }
         .toolbar button { background: var(--brand); color: #fff; border-color: var(--brand); }
         .paper { position: relative; background: #fff; margin: 0 auto 2rem; box-shadow: 0 1px 3px rgba(15, 23, 42, .12); }
         .paper.a4 { width: 210mm; min-height: 297mm; padding: 16mm 15mm; }
@@ -43,7 +43,7 @@
         dl.rows dt { color: var(--muted); }
         dl.rows dd { margin: 0; text-align: right; font-weight: 600; }
         .amount { text-align: center; font-size: 1.6em; font-weight: 800; margin: .75rem 0; }
-        .badge { display: inline-block; padding: .1rem .5rem; border-radius: 1rem; border: 1px solid currentColor; font-size: .8em; font-weight: 700; }
+        .badge { display: inline-block; padding: .1rem .5rem; border-radius:0; border: 1px solid currentColor; font-size: .8em; font-weight: 700; }
         .stamp { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-18deg); font-size: 3.5em; font-weight: 900; color: rgba(185, 28, 28, .22); border: .12em solid rgba(185, 28, 28, .22); padding: .1em .4em; letter-spacing: .1em; pointer-events: none; }
         .ticket .stamp { font-size: 2.2em; }
         .foot { margin-top: 1.5rem; color: var(--muted); font-size: .85em; text-align: center; }
