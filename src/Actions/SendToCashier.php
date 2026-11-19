@@ -128,11 +128,23 @@ final class SendToCashier
                 );
             }
 
+            // Ce qui n'a pas ete servi ne se paie pas. Une ligne a zero garde
+            // la trace d'un produit prescrit et manquant au rayon ; l'envoyer a la
+            // caisse faisait refuser toute la vente (« la quantite doit etre d'au
+            // moins une unite »), et la piece restait a payer pour toujours.
+            $servis = $fresh->items->filter(static fn (DispensationItem $item): bool => (int) $item->quantity > 0);
+
+            if ($servis->isEmpty()) {
+                throw new PharmacieRuleViolation(
+                    "Rien n'a ete servi sur la dispensation {$fresh->number} : il n'y a rien a encaisser."
+                );
+            }
+
             $reference = Pharmacie::sales()->send(new DispensedSale(
                 reference: (string) $fresh->number,
                 patientId: (string) ($fresh->patient_id ?? ''),
                 patientName: $fresh->patient_name,
-                lines: $fresh->items->map(static fn (DispensationItem $item): array => [
+                lines: $servis->values()->map(static fn (DispensationItem $item): array => [
                     'label' => (string) $item->label,
                     'quantity' => (int) $item->quantity,
                     'unit_price' => (int) $item->unit_price,
